@@ -100,3 +100,15 @@ _Avoid_: Leftover material (informal synonym; "Surplus Material" is the canonica
 **Material Stock**:
 A running, per-project, per-material-type quantity of material physically on site but not yet consumed. Incremented when Stage Closeout carries Surplus Material forward; decremented as it's drawn into a later stage's Material Take-Off or Written Off. Exists so a Material Take-Off/Funding Request can check what's already on site and request only the shortfall, rather than over-asking the client for material they've already funded.
 _Avoid_: Inventory, on-site stock (both used loosely elsewhere; "Material Stock" is the canonical term for this specific tracked quantity)
+
+### Identity and tenancy
+
+_The app was single-user through Phase 1. The move to many independent engineers is being worked as a decision map at `.scratch/multi-tenancy/map.md`; only the terms settled so far are recorded here._
+
+**Engineer**:
+A person who uses the app — a working site engineer. The app is operated directly by the Engineer; clients and subcontractors never log in. Each Engineer signs themselves up.
+_Avoid_: User (say Engineer for the person and Account for their data), operator, supervisor (a role word from the Phase 1 spec — the person is still an Engineer even where the spec says "supervisor")
+
+**Account**:
+One Engineer's isolated world of data — every Project of theirs and everything beneath it (Stages, Tasks, Purchase Orders, Funding Requests, Deposits, Fee Invoices, Alerts). An Account belongs to exactly one Engineer (1:1). Engineers never share an Account or a Project, and one Engineer's data is never visible to another.
+_Avoid_: Tenant (an implementation term — the mechanism is a shared database with an account key on every row), Organisation, Team, Workspace (an Account is one person, not a group)
