@@ -1,8 +1,9 @@
 # Account lifecycle: sign up, sign in, reset, delete, first run
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: —
+Assignee: erickmalz (session 01EWWTWRzLEPnFoCAp3dmTeA)
 
 ## Question
 
