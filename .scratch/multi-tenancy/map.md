@@ -45,6 +45,16 @@ guessing. This map **produces decisions, not code**.
 
 ## Decisions so far
 
+- [What an Account owns, and what stays global](./issues/01-what-an-account-owns.md):
+  The multi-tenant v1 is the **financial-control app only** — Site Diary and
+  Progress Photos (and image storage) are out. **Everything the Engineer
+  touches is account-scoped**; no feature ever reads across Accounts. The full
+  record list is every guidelines §50 table plus two per-Account additions — a
+  **Material List** (price book, starts empty) and concrete **Stage Templates**
+  (start empty). Supplier and Subcontractor are per-Account registers reused
+  across the Account's projects; **Client stays fields on a Project**, not an
+  entity. Global: only the app + brand + design system, TZS currency, and legal
+  pages. Nothing is shared or seeded.
 - [Research: persistence + auth options for this Next.js 16 app](./issues/04-nextjs-persistence-and-auth-options.md):
   Next.js 16 `middleware` → `proxy` (Node-only, Edge deprecated), so a
   `server-only` Data Access Layer is the recommended enforcement point; nothing
@@ -79,6 +89,10 @@ guessing. This map **produces decisions, not code**.
 
 ## Out of scope
 
+- **Site Diary and Progress Photos (§30, §31) and image / binary storage** —
+  the multi-tenant v1 is the financial-control app only; site-execution records
+  are a later feature (the doc's own Phase 4). Settled resolving
+  [What an Account owns, and what stays global](./issues/01-what-an-account-owns.md).
 - **Team / firm accounts and sharing a Project between Engineers** — ruled out
   in charting (Account is one person). A later effort if it ever matters.
 - **Billing, pricing, payments** — the product launches free; adding payments

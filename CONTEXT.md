@@ -101,6 +101,28 @@ _Avoid_: Leftover material (informal synonym; "Surplus Material" is the canonica
 A running, per-project, per-material-type quantity of material physically on site but not yet consumed. Incremented when Stage Closeout carries Surplus Material forward; decremented as it's drawn into a later stage's Material Take-Off or Written Off. Exists so a Material Take-Off/Funding Request can check what's already on site and request only the shortfall, rather than over-asking the client for material they've already funded.
 _Avoid_: Inventory, on-site stock (both used loosely elsewhere; "Material Stock" is the canonical term for this specific tracked quantity)
 
+### Registers and reference data
+
+**Client**:
+The person or business a Project is run for — the source of that project's funds. Held as fields on the Project (name, phone, email), **not** a separate entity: there is no client list and Projects are not grouped by Client.
+_Avoid_: Customer; treating Client as a record with its own screen (it is Project data)
+
+**Supplier**:
+A business the Engineer buys materials from, kept in a per-Account **Supplier Register** and reused across that Account's projects — a Purchase Order names a Supplier from the register. Carries contact details, payment terms and, through its purchase history, an effective statement.
+_Avoid_: Vendor, merchant
+
+**Subcontractor**:
+A trade crew or individual the Engineer engages for a Task's labour, kept in a per-Account **Subcontractor Register** and reused across projects. Carries trade, contact details and labour history. One Subcontractor per Task (Phase 1 decision 05).
+_Avoid_: Contractor (the Engineer is not "the contractor" here), labourer, worker
+
+**Material List**:
+A per-Account reusable list of material items and the Engineer's usual unit prices, used to cut re-entry into Material Take-Offs and Purchase Orders. Starts empty for a new Account and is built up as the Engineer works. It is a convenience layer, not part of the financial model — the authoritative costs are always the ones on the actual take-off and PO lines.
+_Avoid_: Catalogue, price book (informal synonyms; "Material List" is canonical), and any sense that it is shared between Accounts
+
+**Stage Template**:
+A per-Account reusable set of Stages and their Tasks, applied to spin up a new Project quickly. Starts empty; the Engineer saves their own. Not shipped with the app.
+_Avoid_: Boilerplate, preset
+
 ### Identity and tenancy
 
 _The app was single-user through Phase 1. The move to many independent engineers is being worked as a decision map at `.scratch/multi-tenancy/map.md`; only the terms settled so far are recorded here._
