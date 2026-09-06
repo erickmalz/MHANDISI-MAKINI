@@ -263,17 +263,17 @@ export function PurchaseOrderBuilder({ project }: { project: Project }) {
               {parsedLines.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center justify-between gap-3 py-3 text-sm"
+                  className="flex items-start justify-between gap-3 py-3 text-sm"
                 >
-                  <span>
+                  <span className="min-w-0">
                     <span className="text-card-foreground">{l.item}</span>
-                    <span className="ml-2 text-sm text-muted-foreground">
+                    <span className="block text-sm text-muted-foreground">
                       {l.qtyNum} {l.unit} × {l.unitPriceNum.toLocaleString("en-US")}
                     </span>
                   </span>
                   <Money
                     amount={l.qtyNum * l.unitPriceNum}
-                    className="font-bold text-card-foreground"
+                    className="shrink-0 whitespace-nowrap font-bold text-card-foreground"
                   />
                 </li>
               ))}

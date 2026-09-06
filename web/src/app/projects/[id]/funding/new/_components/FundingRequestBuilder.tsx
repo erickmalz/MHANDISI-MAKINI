@@ -313,20 +313,26 @@ function LineTable({
     <div>
       <ul className="flex flex-col divide-y divide-border">
         {rows.map((r, i) => (
-          <li key={i} className="flex items-center justify-between gap-3 py-3 text-sm">
-            <span>
+          <li key={i} className="flex items-start justify-between gap-3 py-3 text-sm">
+            <span className="min-w-0">
               <span className="text-card-foreground">{r.label}</span>
               {r.detail && (
-                <span className="ml-2 text-sm text-muted-foreground">{r.detail}</span>
+                <span className="block text-sm text-muted-foreground">{r.detail}</span>
               )}
             </span>
-            <Money amount={r.amount} className="font-bold text-card-foreground" />
+            <Money
+              amount={r.amount}
+              className="shrink-0 whitespace-nowrap font-bold text-card-foreground"
+            />
           </li>
         ))}
       </ul>
-      <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
+      <div className="mt-2 flex items-center justify-between gap-3 border-t border-border pt-3">
         <span className="font-bold text-card-foreground">{totalLabel}</span>
-        <Money amount={total} className="text-lg font-bold text-card-foreground" />
+        <Money
+          amount={total}
+          className="shrink-0 whitespace-nowrap text-lg font-bold text-card-foreground"
+        />
       </div>
     </div>
   );

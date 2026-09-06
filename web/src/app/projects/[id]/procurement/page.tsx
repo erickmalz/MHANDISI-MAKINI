@@ -70,7 +70,7 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
                     {po.stageName} &middot; {po.supplier}
                   </p>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-right sm:gap-6">
+                <div className="flex shrink-0 flex-col gap-1 sm:grid sm:grid-cols-3 sm:gap-6 sm:text-right">
                   <MiniStat label="Ordered" amount={ordered} />
                   <MiniStat label="Delivered" amount={delivered} />
                   <MiniStat label="Paid" amount={paid} />
@@ -91,9 +91,12 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
 
 function MiniStat({ label, amount }: { label: string; amount: number }) {
   return (
-    <div>
+    <div className="flex items-baseline justify-between gap-3 sm:block">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <Money amount={amount} className="font-bold text-card-foreground" />
+      <Money
+        amount={amount}
+        className="shrink-0 whitespace-nowrap font-bold text-card-foreground"
+      />
     </div>
   );
 }
