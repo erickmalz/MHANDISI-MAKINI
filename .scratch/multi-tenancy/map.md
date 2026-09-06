@@ -70,13 +70,40 @@ guessing. This map **produces decisions, not code**.
   the practical picks, so round-trip count matters more than region.
   Full findings: [`research/04-findings.md`](./research/04-findings.md).
 
+- [Account lifecycle: sign up, sign in, reset, delete, first run](./issues/02-account-lifecycle.md):
+  The whole end-to-end life of an Account, as product decisions (implementation
+  goes to ticket 07). **Signup**: full name + email + phone + password, all
+  required; phone stored-only, never for auth; password min 10 chars + common-list
+  block; a required Terms/Privacy checkbox recorded with version + timestamp.
+  **Verification**: soft gate — full read/write immediately, only reset and
+  email-change disabled while unverified, a full-screen "verify to continue" at
+  7 days, nothing ever deleted for non-verification. **Sessions**: 7-day sliding,
+  no "remember me", no absolute cap; generic "email or password is incorrect";
+  throttle not lockout; a Devices list with per-session and "sign out everywhere"
+  revoke. **Expired session mid-task**: failed write → full-page "session ended"
+  with entered values recoverable, failed read → redirect; uniform across every
+  form; never a false "Saved". **Reset**: no enumeration, single-use 1h link,
+  revokes other sessions and marks the email verified. **Password change**:
+  current password required, revokes other sessions. **Email change**: current
+  password + verify the new address before it takes effect, old address notified,
+  sessions kept. **First run**: empty project picker + "Create your first
+  project" + a one-line explainer, nothing seeded. **Export**: JSON of the
+  Account's rows, from settings any time and as step one of deletion. **Deletion**:
+  password + confirm-phrase, export offered, 30-day grace (sign-in cancels), then
+  hard delete of every row on the account key and all sessions. **Email
+  re-registration**: blocked during grace, free after hard delete. **Dormancy**:
+  no auto-deletion, one reminder at 6 months. **Lost email**: no recovery in v1,
+  said plainly. **Five transactional emails only**: verify/welcome, reset,
+  email-change, deletion scheduled + completed, dormancy reminder.
+
 ## Not yet specified
 
 - **The project picker and "current project" under tenancy** — the picker shows
   only the Engineer's own projects; where "current project" lives (client route
-  vs. server session); the empty picker on a brand-new Account; whether the
-  AppChrome "Switch project" flow changes. Revisit once account lifecycle
-  (ticket 02) and the data-access layer (ticket 08) are settled.
+  vs. server session); whether the AppChrome "Switch project" flow changes. The
+  brand-new-Account empty state is now settled (see the account-lifecycle
+  decision: empty picker + "Create your first project" + a one-line explainer,
+  nothing seeded); the rest still waits on the data-access layer (ticket 08).
 - **The existing mock "issue" actions becoming real** — the funding-request
   wizard's "Issue to client", the purchase-order builder's "Issue", "Record
   delivery / payment", the "Marked as issued" states. Decide whether this map
