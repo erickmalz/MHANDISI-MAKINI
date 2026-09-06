@@ -1,0 +1,220 @@
+/* ==========================================================================
+   MHANDISI MAKINI — Design tokens
+   Brand Guidelines v1.1 (September 2026)
+   "Let's build together"
+
+   Drop this in as the single source of truth for brand values.
+   Never hardcode a brand hex anywhere else in the codebase.
+   ========================================================================== */
+
+:root {
+  /* --- Brand palette ---------------------------------------------------- */
+  --mm-yellow:            #FFBE00;  /* Site Yellow — accent + primary action ONLY */
+  --mm-charcoal:          #292D30;  /* Text, headings, dark surfaces */
+  --mm-white:             #FFFFFF;  /* Main surfaces, clear space */
+  --mm-concrete:          #F5F6F7;  /* Page background, panels */
+  --mm-slate:             #56616B;  /* Secondary text, metadata */
+
+  /* Support tints — derived, for borders and hover states only.
+     Not part of the core palette; do not introduce more. */
+  --mm-yellow-pressed:    #E6AB00;
+  --mm-border:            #E3E5E7;
+  --mm-border-strong:     #C7CBCF;
+  --mm-charcoal-hover:    #3A3F43;
+
+  /* --- Status palette — meaning, never decoration ----------------------- */
+  --mm-success:           #18794E;
+  --mm-warning:           #8A5800;
+  --mm-error:             #B42318;
+  --mm-info:              #175CD3;
+
+  --mm-success-surface:   #ECF6F1;
+  --mm-warning-surface:   #FBF3E6;
+  --mm-error-surface:     #FDF0EF;
+  --mm-info-surface:      #EDF2FC;
+
+  /* --- Semantic roles --------------------------------------------------- */
+  --mm-bg:                var(--mm-concrete);
+  --mm-surface:           var(--mm-white);
+  --mm-surface-inverse:   var(--mm-charcoal);
+  --mm-text:              var(--mm-charcoal);
+  --mm-text-secondary:    var(--mm-slate);
+  --mm-text-on-yellow:    var(--mm-charcoal);   /* 8.34:1 — never white */
+  --mm-text-on-charcoal:  var(--mm-white);      /* 13.89:1 */
+  --mm-action:            var(--mm-yellow);
+  --mm-focus-ring:        var(--mm-info);
+
+  /* --- Typography ------------------------------------------------------- */
+  --mm-font: "DejaVu Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+             Roboto, Helvetica, Arial, sans-serif;
+  /* Office documents fall back to Arial. */
+
+  --mm-size-hero:         2.25rem;  /* 36px — range 32–40 */
+  --mm-size-page-title:   1.75rem;  /* 28px */
+  --mm-size-section:      1.25rem;  /* 20px */
+  --mm-size-body:         1rem;     /* 16px */
+  --mm-size-label:        0.875rem; /* 14px */
+
+  --mm-weight-regular:    400;
+  --mm-weight-bold:       700;
+
+  --mm-leading-heading:   1.2;
+  --mm-leading-body:      1.5;
+
+  /* --- Spacing — 8px base, 4px micro ------------------------------------ */
+  --mm-space-1:  4px;
+  --mm-space-2:  8px;
+  --mm-space-3:  12px;
+  --mm-space-4:  16px;   /* card padding, mobile outer margin */
+  --mm-space-5:  24px;   /* minimum gap between major sections */
+  --mm-space-6:  32px;
+  --mm-space-7:  40px;
+  --mm-space-8:  48px;
+
+  --mm-margin-mobile:     16px;
+  --mm-margin-desktop:    32px;
+
+  /* --- Shape and interaction -------------------------------------------- */
+  --mm-radius:            8px;      /* cards, buttons, inputs */
+  --mm-radius-sm:         4px;
+  --mm-touch-target:      48px;     /* minimum interactive target */
+  --mm-icon-grid:         24px;
+  --mm-icon-stroke:       2px;
+  --mm-focus-width:       2px;
+  --mm-focus-offset:      2px;
+
+  /* --- Layout ----------------------------------------------------------- */
+  --mm-content-max:       72ch;
+  --mm-logo-min-width:    160px;    /* stacked signature */
+  --mm-logo-icon-min:     32px;     /* symbol only */
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+body {
+  margin: 0;
+  background: var(--mm-bg);
+  color: var(--mm-text);
+  font-family: var(--mm-font);
+  font-size: var(--mm-size-body);
+  line-height: var(--mm-leading-body);
+  font-weight: var(--mm-weight-regular);
+}
+
+h1, h2, h3 {
+  font-weight: var(--mm-weight-bold);
+  line-height: var(--mm-leading-heading);
+  margin: 0 0 var(--mm-space-3);
+  /* Sentence case. Do not text-transform: uppercase. */
+}
+
+h1 { font-size: var(--mm-size-page-title); }
+h2 { font-size: var(--mm-size-section); }
+h3 { font-size: var(--mm-size-body); }
+
+.mm-hero { font-size: var(--mm-size-hero); font-weight: var(--mm-weight-bold); }
+.mm-label { font-size: var(--mm-size-label); color: var(--mm-text-secondary); }
+.mm-meta  { font-size: var(--mm-size-label); color: var(--mm-text-secondary); }
+
+/* Focus is always visible. Never remove the outline without replacing it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--mm-focus-width) solid var(--mm-focus-ring);
+  outline-offset: var(--mm-focus-offset);
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
+/* Primary action — ONE per view. Charcoal label on yellow. */
+.mm-btn-primary {
+  min-height: var(--mm-touch-target);
+  padding: var(--mm-space-3) var(--mm-space-5);
+  background: var(--mm-action);
+  color: var(--mm-text-on-yellow);
+  font: var(--mm-weight-bold) var(--mm-size-body) / 1.2 var(--mm-font);
+  border: none;
+  border-radius: var(--mm-radius);
+  cursor: pointer;
+}
+.mm-btn-primary:hover  { background: var(--mm-yellow-pressed); }
+.mm-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Secondary action — white fill, charcoal border and text. */
+.mm-btn-secondary {
+  min-height: var(--mm-touch-target);
+  padding: var(--mm-space-3) var(--mm-space-5);
+  background: var(--mm-white);
+  color: var(--mm-charcoal);
+  font: var(--mm-weight-bold) var(--mm-size-body) / 1.2 var(--mm-font);
+  border: 1px solid var(--mm-charcoal);
+  border-radius: var(--mm-radius);
+  cursor: pointer;
+}
+
+.mm-card {
+  background: var(--mm-surface);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-radius);
+  padding: var(--mm-space-4);
+}
+
+/* Dark header / panel — white text on charcoal. */
+.mm-panel-dark {
+  background: var(--mm-surface-inverse);
+  color: var(--mm-text-on-charcoal);
+  padding: var(--mm-space-4);
+}
+
+/* Input — persistent label above, border visible, helper/error below. */
+.mm-field { display: flex; flex-direction: column; gap: var(--mm-space-1); }
+.mm-field > label {
+  font-size: var(--mm-size-label);
+  font-weight: var(--mm-weight-bold);
+  color: var(--mm-text);
+}
+.mm-field > input,
+.mm-field > select,
+.mm-field > textarea {
+  min-height: var(--mm-touch-target);
+  padding: var(--mm-space-3);
+  font: var(--mm-weight-regular) var(--mm-size-body) / 1.4 var(--mm-font);
+  color: var(--mm-text);
+  background: var(--mm-white);
+  border: 1px solid var(--mm-border-strong);
+  border-radius: var(--mm-radius);
+}
+.mm-field > .mm-help  { font-size: var(--mm-size-label); color: var(--mm-text-secondary); }
+.mm-field > .mm-error { font-size: var(--mm-size-label); color: var(--mm-error); font-weight: var(--mm-weight-bold); }
+.mm-field[data-invalid="true"] > input { border-color: var(--mm-error); }
+
+/* Status — colour is ALWAYS paired with the word. */
+.mm-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-space-2);
+  font-size: var(--mm-size-label);
+  font-weight: var(--mm-weight-bold);
+  padding: var(--mm-space-1) var(--mm-space-2);
+  border-radius: var(--mm-radius-sm);
+}
+.mm-status--success { color: var(--mm-success); background: var(--mm-success-surface); }
+.mm-status--warning { color: var(--mm-warning); background: var(--mm-warning-surface); }
+.mm-status--error   { color: var(--mm-error);   background: var(--mm-error-surface); }
+.mm-status--info    { color: var(--mm-info);    background: var(--mm-info-surface); }
+
+/* Active nav item — indicated by more than colour. */
+.mm-nav-item[aria-current="page"] {
+  font-weight: var(--mm-weight-bold);
+  box-shadow: inset 0 -3px 0 var(--mm-yellow);
+}
+
+/* Logo lockup: 2X clear space, X = visible hard-hat brim height.
+   Set --mm-logo-x to the measured brim height for the rendered size. */
+.mm-logo {
+  display: block;
+  min-width: var(--mm-logo-min-width);
+  margin: calc(var(--mm-logo-x, 16px) * 2);
+}

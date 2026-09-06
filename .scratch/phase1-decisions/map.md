@@ -1,0 +1,37 @@
+# Construction Supervision App — Phase 1 Decision Map
+
+**Status: Complete.** All 9 tickets (01–09) are resolved. The destination below has been reached — the guidelines doc plus the decisions recorded here are the build-ready spec for Phase 1.
+
+## Destination
+
+Lock every build-blocking commercial/product decision needed to start coding Phase 1 (Financial Backbone) of the Construction Supervision App — a single-user, TZS-only, multi-project financial-control system for a working construction supervisor (see `construction-supervision-app-expanded-guidelines.md` at the repo root). Reaching the end means every ticket below has a recorded answer, so a builder can start Phase 1 without guessing at the supervisor's actual business rules. This map produces decisions, not code or a rewritten spec — the guidelines doc plus these resolved decisions together become the build-ready spec.
+
+## Notes
+
+- Domain and full spec: `construction-supervision-app-expanded-guidelines.md` (repo root). Glossary: `CONTEXT.md` (repo root).
+- The user (the supervisor running 3 real projects today) answers every ticket personally from their own practice — no external stakeholder input is needed.
+- Every ticket on this map is a `grilling` ticket: when working one, call the Skill tool for "grilling" and "domain-modeling" per the wayfinder skill's ticket-type instructions.
+- Currency is TZS only; the app is single-user; these are confirmed as-is and are not open questions.
+
+## Decisions so far
+
+- [Material Estimate Model](./issues/01-material-estimate-model.md): Budget model, per-project setting, variance measured against the Approved Estimate; savings go to a new per-project Petty Cash pool (counts inside Available Float) rather than to the client or the supervisor; leftover physical material stays and is reused on the same project.
+- [Supervisor Fee Collection Method](./issues/02-fee-collection-method.md): Fee is entirely separate from client deposits (never split out of a deposit), invoiced per stage in step with that stage's funding request, raised at the request's Issue time, fixed across all projects. Still shown as a line on the client-facing Funding Request for transparency. A follow-up fee invoice is issued if an Additional Funding Request raises the fee mid-stage. Consequences: §6.1's Available Float formula drops the "Fee Portion Removed From Project Funds" line, §20 Client Deposits loses its fee/project-fund split (single amount only), and a new Fee Invoice record is needed alongside Deposits.
+- [Labour Retention Policy](./issues/04-labour-retention-policy.md): Retention isn't used in the supervisor's real subcontractor agreements — labour is paid in full via the Final payment type on completion. Phase 1 keeps the retention fields/payment type/formula term (§27, §28, §6.3) in the data model but dormant, defaulting to unused/0%, rather than removing them.
+- [Petty Cash Mechanics](./issues/09-petty-cash-mechanics.md): No dedicated Funding Request line — upfront petty cash contributions ride in as a normal Deposit. Supplier/Labour Payments gain a `funding_source` (Client Deposit vs Petty Cash) tag; a new lightweight "Petty Cash Expense" record covers costs with no existing home. Eligibility test is "unplanned work/purchase not in the original estimate"; a Variation never routes through petty cash regardless of size. Balance can go negative (soft earmark within Available Float, not a hard cap) with a new low-balance alert; reconciled continuously plus a Stage/Project Closeout checklist item.
+- [Fee Recognition Timing](./issues/03-fee-recognition-timing.md): Fee is earned when its Fee Invoice (§ from Issue 02) status changes to Paid — not at issuance, not progressively, not deferred to closeout. Consequence: `Fee Earned` and `Fee Received` always move together (same trigger event), so `Fee Outstanding` is redefined as `Fee Invoiced − Fee Received` (a plain AR figure) rather than `Fee Earned − Fee Received`, which would otherwise always be zero. Recognition is single-step (no partial-payment granularity, since Fee Invoices are binary Issued→Paid). The §35 Stage Closeout "Fee earned" check is a reconciliation, not a recognition event, and non-zero `Fee Outstanding` doesn't block closeout — non-blocking alert only.
+- [Multiple Subcontractors per Task](./issues/05-multiple-subcontractors-per-task.md): Single subcontractor per task stands unchanged for Phase 1 — no task work packages, no split payment ownership. Genuinely mixed-trade work is handled by splitting into separate Tasks (one per subcontractor), not by multi-assigning one Task.
+- [Surplus Material Handling](./issues/06-surplus-material-handling.md): Of §36's five options, only two are real in practice — Carried Forward (to the next sequential stage) and Written Off (breakage/waste/theft, no separate financial re-entry needed); Returned to Supplier and Transferred Within Same Project don't happen, and the cross-project ban holds as written. Carried-forward material isn't specially netted against a future request — every take-off already checks on-site stock first by default. New requirement surfaced: a formal on-site material inventory ledger (per project, per material type), incremented at Carried Forward, decremented when drawn into a later take-off or Written Off — needed for "orders only what's not available" to actually work, since §16's Material Take-Off model has no cross-stage stock field today.
+- ["Committed" Definition & Available Float Formula Completeness](./issues/07-committed-definition-available-float.md): "Total Committed" (§7) = Client Deposits − Available Float, already implied by the doc's own worked example — no separate rule needed. The §6.1 formula gains two lines: **Open Labour Commitments** (a signed Labour Agreement's unpaid remainder, = Outstanding Labour, reduces float immediately like a Purchase Order does — closing a real gap) and **Petty Cash Expenses** (real money spent, previously unaccounted for). Approved-but-unrealized Variations do NOT reduce float pre-emptively — only once they produce an actual Purchase Order/Labour Agreement/Petty Cash Expense.
+- [Financial Health Indicator Thresholds](./issues/08-financial-health-thresholds.md): Green/Amber/Red reuse the existing Forecast Funding Requirement (§9) rather than a new calculation. Red = Available Float < 0 or Forecast Funding Requirement > 0. Green = Float ≥ Remaining Stage Requirement × 1.20 (a 20% buffer, global for Phase 1, not per-project). Amber = everything in between. Blue is unchanged and takes priority while it applies.
+
+## Not yet specified
+
+_(none — every ticket above is resolved and consistent as of this update)_
+
+## Out of scope
+
+- **Historical-data migration for the 3 existing real projects**: how to enter each project's already-incurred deposits/purchases/labour when it's first added to the app. Deferred to after the app is built, not a Phase 1 blocker.
+- **Tech/architecture specifics**: auth provider, PDF generation library, image storage/CDN, hosting. A future implementation-planning effort once the decisions on this map are locked.
+- **Numbering pattern** (guidelines §46, e.g. `PRJ-2026-001`): an arbitrary implementation default, not a business judgment call — bucketed with tech/architecture specifics above.
+- **Fee basis defaults** (per-stage fee amount/percentage): already resolved by the existing data model, which lets the supervisor set fee basis/amount/percent per stage with no fixed global rule. Not a ticket.
