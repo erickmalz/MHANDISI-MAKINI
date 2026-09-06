@@ -45,7 +45,20 @@ guessing. This map **produces decisions, not code**.
 
 ## Decisions so far
 
-_(none yet — charting resolves nothing)_
+- [Research: persistence + auth options for this Next.js 16 app](./issues/04-nextjs-persistence-and-auth-options.md):
+  Next.js 16 `middleware` → `proxy` (Node-only, Edge deprecated), so a
+  `server-only` Data Access Layer is the recommended enforcement point; nothing
+  in the survey needs Vercel. Store shapes: managed Postgres + ORM (Drizzle best
+  RLS story) = most portable; BaaS (Supabase couples Postgres RLS + Auth, Neon
+  Postgres BYO-auth, Turso is DB-per-tenant SQLite that fights the shared-DB
+  rule, PlanetScale no free tier); embedded SQLite/PGlite = simplest ops but one
+  host, no RLS. Postgres RLS is mature but fiddly on a pooled DB. Auth: Lucia is
+  deprecated; **better-auth** now the self-hosted email/password + DB-session
+  default; Auth.js Credentials forces JWT; Clerk/WorkOS/Supabase are hosted.
+  Every option yields a stable id for the account key.
+  **No managed Postgres BaaS has an African region** — Frankfurt or Mumbai are
+  the practical picks, so round-trip count matters more than region.
+  Full findings: [`research/04-findings.md`](./research/04-findings.md).
 
 ## Not yet specified
 
