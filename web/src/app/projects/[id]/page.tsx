@@ -14,6 +14,7 @@ import { FinancialPosition } from "./_components/FinancialPosition";
 import { StageList } from "./_components/StageList";
 import { AlertsList } from "./_components/AlertsList";
 import { Breakdown } from "./_components/Breakdown";
+import { SupervisorFee } from "./_components/SupervisorFee";
 
 export default async function ProjectOverviewPage({
   params,
@@ -74,6 +75,10 @@ export default async function ProjectOverviewPage({
 
       <div className="mb-6">
         <Breakdown f={stage.financials} />
+      </div>
+
+      <div className="mb-6">
+        <SupervisorFee f={stage.financials} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

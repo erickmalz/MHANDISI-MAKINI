@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Info, CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, ArrowRight, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Project } from "@/lib/types";
 import { Money } from "@/components/ui/Money";
 import { Button } from "@/components/ui/Button";
@@ -11,16 +11,16 @@ import { StepIndicator } from "@/components/ui/StepIndicator";
 import { tasksForStage, materialTotal, labourTotal, type TaskLine } from "@/lib/funding-mock";
 import { today } from "@/lib/format";
 
-const STEP_LABELS = ["Stage", "Tasks", "Materials", "Labour", "Fee", "Review", "Issue"] as const;
+const STEP_LABELS = ["Stage", "Tasks", "Materials", "Labour", "Review", "Issue"] as const;
+const LAST_STEP = STEP_LABELS.length;
 
 /** The one dominant action for each step — a specific verb and object. */
 const NEXT_LABEL: Record<number, string> = {
   1: "Continue to tasks",
   2: "Continue to materials",
   3: "Continue to labour",
-  4: "Continue to the fee",
-  5: "Continue to review",
-  6: "Continue to issue",
+  4: "Continue to review",
+  5: "Continue to issue",
 };
 
 export function FundingRequestBuilder({ project }: { project: Project }) {
@@ -44,8 +44,12 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
   const selectedTasks: TaskLine[] = allTasks.filter((t) => selectedTaskIds.has(t.id));
   const materialSubtotal = selectedTasks.reduce((sum, t) => sum + materialTotal(t), 0);
   const labourSubtotal = selectedTasks.reduce((sum, t) => sum + labourTotal(t), 0);
-  const feeAmount = stage.financials.remainingFee;
   const totalRequested = materialSubtotal + labourSubtotal;
+
+  // The supervision fee is a separate ledger, billed through its own Fee Invoice
+  // and managed in the project's "Supervisor fee" section — it is not part of
+  // this request. One line stays on the issued document for client transparency.
+  const feeForStage = stage.financials.remainingFee;
 
   function toggleTask(id: string) {
     setSelectedTaskIds((prev) => {
@@ -56,7 +60,7 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
     });
   }
 
-  const goNext = () => setStep((s) => Math.min(7, s + 1));
+  const goNext = () => setStep((s) => Math.min(LAST_STEP, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const canProceedFromTasks = selectedTaskIds.size > 0;
@@ -158,21 +162,6 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
       )}
 
       {step === 5 && (
-        <StepCard title="Supervision fee">
-          <LineTable
-            rows={[{ label: "Supervision fee for this stage", amount: feeAmount }]}
-            total={feeAmount}
-          />
-          <p className="mt-4 flex items-start gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-            Shown here for client transparency only. The fee is billed separately
-            via its own Fee Invoice and is not included in the amount requested
-            below.
-          </p>
-        </StepCard>
-      )}
-
-      {step === 6 && (
         <StepCard title="Review">
           <LineTable
             rows={[
@@ -182,16 +171,14 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
             total={totalRequested}
             totalLabel="Total requested (deposit)"
           />
-          <div className="mt-4 flex items-center justify-between rounded-lg bg-muted p-3 text-sm">
-            <span className="text-muted-foreground">
-              Supervision fee (billed separately)
-            </span>
-            <Money amount={feeAmount} className="font-bold text-card-foreground" />
-          </div>
+          <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            The supervision fee for this stage is billed separately through its
+            own Fee Invoice and is not part of this request.
+          </p>
         </StepCard>
       )}
 
-      {step === 7 && (
+      {step === 6 && (
         <StepCard title={issued ? "Funding request issued" : "Generate and issue"}>
           <div className="rounded-lg border border-border bg-background p-4">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
@@ -225,9 +212,9 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
                 totalLabel="Total requested"
               />
             </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-              <span>Supervision fee (billed separately via Fee Invoice)</span>
-              <Money amount={feeAmount} />
+            <div className="mt-3 flex items-center justify-between gap-3 text-sm text-muted-foreground">
+              <span>Supervision fee for this stage — billed separately via Fee Invoice</span>
+              <Money amount={feeForStage} className="shrink-0 whitespace-nowrap" />
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
               Payment instructions: bank transfer, mobile money, or cheque —
@@ -259,13 +246,13 @@ export function FundingRequestBuilder({ project }: { project: Project }) {
         </StepCard>
       )}
 
-      {!(step === 7 && issued) && (
+      {!(step === LAST_STEP && issued) && (
         <div className="mt-6 flex items-center justify-between gap-3">
           <Button variant="ghost" type="button" onClick={goBack} disabled={step === 1}>
             <ArrowLeft size={16} aria-hidden="true" />
             Back
           </Button>
-          {step < 7 && (
+          {step < LAST_STEP && (
             <Button
               variant="primary"
               type="button"

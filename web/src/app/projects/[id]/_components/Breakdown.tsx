@@ -3,7 +3,6 @@ import {
   availableFloat,
   remainingStageRequirement,
   forecastFundingRequirement,
-  feeOutstanding,
 } from "@/lib/finance";
 import { Money } from "@/components/ui/Money";
 
@@ -46,7 +45,7 @@ export function Breakdown({ f }: { f: StageFinancials }) {
   return (
     <section>
       <h2 className="mb-4 text-xl font-bold text-foreground">Breakdown</h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Panel title="Materials">
           <Row label="Paid" amount={f.paidPurchases} />
           <Row label="Open commitments" amount={f.openPurchaseCommitments} />
@@ -56,11 +55,6 @@ export function Breakdown({ f }: { f: StageFinancials }) {
           <Row label="Paid" amount={f.labourPayments} />
           <Row label="Outstanding (signed, unpaid)" amount={f.openLabourCommitments} />
           <Row label="Remaining work" amount={f.remainingLabour} />
-        </Panel>
-        <Panel title="Supervisor fee">
-          <Row label="Invoiced" amount={f.feeInvoiced} />
-          <Row label="Received" amount={f.feeReceived} />
-          <Row label="Outstanding" amount={feeOutstanding(f)} />
         </Panel>
         <Panel title="Forecast">
           <Row label="Remaining expected cost" amount={remainingStageRequirement(f)} />

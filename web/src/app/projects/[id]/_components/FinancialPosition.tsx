@@ -16,10 +16,13 @@ export function FinancialPosition({ f }: { f: StageFinancials }) {
       <h2 className="text-xl font-bold text-card-foreground">
         Project financial position
       </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Client project funds only. The supervision fee is a separate ledger,
+        shown below.
+      </p>
       <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
         <StatTile label="Client deposited" amount={f.clientDeposits} emphasis />
         <StatTile label="Project commitments" amount={totalCommitted(f)} />
-        <StatTile label="Supervisor fee invoiced" amount={f.feeInvoiced} />
         <StatTile label="Available Float" amount={availableFloat(f)} emphasis />
         <StatTile label="Remaining expected" amount={remainingStageRequirement(f)} />
         <StatTile

@@ -53,6 +53,23 @@ export function feeOutstanding(f: StageFinancials): number {
   return f.feeInvoiced - f.feeReceived;
 }
 
+/**
+ * The Supervisor Fee Position — the supervisor's own earnings, a ledger of its
+ * own. It is billed through Fee Invoices, never through client deposits, and is
+ * shown apart from the project's client-funds figures. Fee Earned equals Fee
+ * Received by definition (CONTEXT.md §37). The client still ultimately funds the
+ * fee, so Remaining Fee stays inside the Forecast Funding Requirement above.
+ */
+export function supervisorFeePosition(f: StageFinancials) {
+  return {
+    invoiced: f.feeInvoiced,
+    received: f.feeReceived,
+    earned: f.feeReceived,
+    outstanding: f.feeInvoiced - f.feeReceived,
+    remaining: f.remainingFee,
+  };
+}
+
 /** Green/Amber/Red buffer (ticket 08): 20% headroom over the Remaining Stage Requirement. */
 export const HEALTH_BUFFER = 1.2;
 
