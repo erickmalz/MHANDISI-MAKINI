@@ -96,6 +96,39 @@ guessing. This map **produces decisions, not code**.
   said plainly. **Five transactional emails only**: verify/welcome, reset,
   email-change, deletion scheduled + completed, dormancy reminder.
 
+- [Data-protection stance for an open product holding clients' financial data](./issues/03-data-protection-stance.md):
+  The v1 posture for holding third-party client PII + financials. **Legal pages
+  are launch-blocking** — Privacy Policy + Terms `v1.0`, drafted by the Engineer
+  from a template, lawyer review is fast-follow. **Tanzania PDPA 2022**: comply in
+  substance, **file PDPC data-controller registration before launch**, and
+  **start** (not necessarily complete) the cross-border transfer permit. **The
+  database may be hosted outside Tanzania** (disclosed in the policy, permit in
+  progress) — a constraint handed to ticket 05, not a push toward `af-south-1`.
+  **Never store**: bank details, national ID numbers, ID/document scans or any
+  people-photos, dates of birth; Client phone/email optional. **Operator access**:
+  admits technical reach, commits to fault/legal/abuse only, never
+  analytics/marketing/training. **Breach**: notify affected Engineers + PDPC, one
+  policy paragraph, no runbook for v1. **Export**: ticket 02's JSON is sufficient.
+  Deletion-in-backups is left as a thread on the deployment-shape fog.
+
+- [Data store: category and the constraints it must meet](./issues/05-data-store-category.md):
+  **Category: one standard PostgreSQL instance, co-located with the app, behind a
+  thin SQL-first layer** — not a BaaS, not embedded SQLite. Portability is a hard
+  rule (whole DB moves with `pg_dump`, no vendor auth tables / realtime / SDK).
+  **App runs as one long-running Node/Docker container with a volume, not
+  serverless** — decided here because it is upstream of the store; it lets app +
+  DB share a region and removes pooling, cold-start, and per-query latency.
+  **Database-enforced isolation via Postgres RLS is a hard requirement** (defence
+  in depth: RLS backstop + a `server-only` DAL as the primary path); this rules
+  out SQLite and any single-god-role managed tier, and ticket 06 designs the
+  mechanism. **Query layer: Drizzle** (`drizzle-kit` migrations). Constraint
+  list: Postgres 15+, co-located, multi-statement transactions + `SET LOCAL`,
+  non-owner role + `FORCE ROW LEVEL SECURITY`, repo-checked migrations, daily
+  backup + tested restore, $0 at zero users / <~$25/mo at a few hundred. Hosting
+  outside Tanzania stays acceptable (ticket 03 unchanged); Frankfurt or closest.
+  **The specific Postgres product is a fast-follow**, decided with Deployment
+  shape.
+
 ## Not yet specified
 
 - **The project picker and "current project" under tenancy** — the picker shows
@@ -109,10 +142,16 @@ guessing. This map **produces decisions, not code**.
   delivery / payment", the "Marked as issued" states. Decide whether this map
   specifies their persisted lifecycle or hands it to the build, once the
   data-access model (ticket 08) is set.
-- **Deployment shape** — where the app and the database run, and the operational
-  surface of an open product (backups, uptime). Revisit after the data store
-  (ticket 05) is chosen; may prove to belong to a separate
-  implementation-planning effort.
+- **Deployment shape** — the data store (ticket 05) fixed the *shape*: one
+  long-running container + volume, standard co-located Postgres, no serverless.
+  What remains is the **specific Postgres host and PaaS** (Fly.io / Railway /
+  Render or similar, Frankfurt or closest), **backup cadence and tested-restore
+  procedure**, and the **uptime / monitoring surface** of an open product. This
+  is now operational rather than a product decision and likely belongs to a
+  separate implementation-planning effort. Still carries the **data-protection
+  thread** from ticket 03: when an Account is hard-deleted, how that propagates
+  to database backups holding its rows — a bounded retention window vs. active
+  scrubbing — which depends on the chosen backup mechanism.
 
 ## Out of scope
 

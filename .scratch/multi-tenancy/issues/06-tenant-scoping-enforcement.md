@@ -26,4 +26,15 @@ Decide:
   another Account — 404 (don't reveal existence) vs 403.
 - **How it is tested**: the check that proves isolation holds.
 
+**Constraint from ticket 05 (data-store category):** the enforcement *requirement*
+is already fixed — **database-enforced isolation via Postgres RLS is mandatory**,
+as a backstop beneath a single `server-only` data-access layer (defence in depth,
+not either/or). The store is standard co-located PostgreSQL with **Drizzle**, the
+app is one long-running container. So this ticket no longer chooses *whether* to
+use RLS; it designs the *mechanism*: the non-owner role + `FORCE ROW LEVEL
+SECURITY` setup, where the current account id comes from on each request and how
+it is bound to the query (Drizzle transaction wrapper + `SET LOCAL`), the DAL
+shape, plus the still-open id-exposure (slugs vs UUIDs) and 404-vs-403 questions
+and the isolation test.
+
 Resolve by fixing the enforcement mechanism and the id/failure-mode rules.

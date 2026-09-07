@@ -40,4 +40,14 @@ Still to decide here:
   (Resend, Postmark, SES, the store's built-in), given East African
   deliverability.
 
+**Constraint from ticket 05 (data-store category):** the store is **self-hosted
+standard PostgreSQL with Drizzle, no BaaS**, and the app is one long-running
+container (not serverless). So the store's-own-auth option (Supabase Auth) is
+**off the table**. The choice narrows to hand-rolled vs. an auth library that
+keeps users + sessions in that same Postgres — better-auth is ticket 04's lead
+for first-class email/password + reset + verification + DB-backed sessions
+self-hosted in your database, which also matches ticket 02's per-device session
+list. Auth.js Credentials remains a poor fit (it forces stateless JWT sessions).
+Whatever is chosen must mint (or wrap) a stable account id that never changes.
+
 Resolve by naming the approach, the session mechanism, and the email path.

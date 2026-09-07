@@ -31,5 +31,14 @@ data.
   create/edit screens and wiring every mutation is the downstream effort —
   confirm that boundary.
 
+**Constraint from ticket 05 (data-store category):** the store is **standard
+co-located PostgreSQL accessed through Drizzle**, and ticket 05 already fixed
+that a **single `server-only` data-access layer** is the primary path (with
+Postgres RLS as the backstop beneath it). So this ticket designs *that* funnel
+concretely — the module shape, the Drizzle queries, how `getProject` etc.
+become account-scoped through it — rather than choosing whether to have one.
+Ticket 02's first-run answer ("nothing seeded") already constrains the mock
+files' fate away from "seed a sample project."
+
 Resolve by fixing the data-access layer's shape, where the financial figures are
 computed, and what happens to the mock files.
