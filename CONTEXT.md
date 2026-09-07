@@ -53,22 +53,28 @@ An informational percentage produced by the Financial Reconciliation Engine's ch
 ### Funding & procurement flow
 
 **Funding Request**:
-A versioned, formal ask to the client for money, covering one stage's material + labour + fee breakdown. Distinct from a Deposit (the money actually received against it) and from a Purchase Order (money committed to a supplier, drawn from funds the Funding Request raised).
+A versioned, formal ask to the client for money, covering one stage's material + labour + fee breakdown. Distinct from a Deposit (the money actually received against it) and from a Purchase Order (money committed to a supplier, drawn from funds the Funding Request raised). A Draft is freely editable; **Issuing it freezes its number, lines and totals permanently**. A later correction does not edit it in place — it creates a new version that Supersedes the old one, carrying a recorded reason. Deposits already received against the superseded version still count toward the stage.
 _Avoid_: Invoice (reserve "invoice" for a supplier's bill to the supervisor, the opposite money direction)
+
+**Additional Funding Request**:
+A separate, new Funding Request raised mid-stage when approved scope growth (typically from Variations) means the client owes more than the original request covered. It is **never a version of the original** — both requests stay live and the stage's funding requirement is their sum. Contrast with a superseding version, which replaces a request because it was wrong.
+_Avoid_: Supplementary deposit, top-up request; and do not conflate with a superseding version
 
 **Deposit**:
 Client money actually received against a Funding Request. Always 100% project funds — never split into a fee portion, since the fee is billed and collected through its own Fee Invoice instead.
 _Avoid_: Payment (reserve "payment" for money the supervisor pays out, to suppliers or subcontractors)
 
 **Fee Invoice**:
-A record of the supervisor's fee for one stage, entirely separate from that stage's Deposits, with its own Issued → Paid lifecycle (no partial-payment states). Raised the moment the stage's Funding Request is issued, independent of whether the client has deposited anything yet; still shown as a line on the client-facing Funding Request for transparency even though it isn't collected through that request's deposit flow. A follow-up Fee Invoice is issued if a later Additional Funding Request raises the stage's fee.
+A record of the supervisor's fee for one stage, entirely separate from that stage's Deposits, with its own Issued → Paid lifecycle (no partial-payment states). Raised the moment the stage's Funding Request is issued, independent of whether the client has deposited anything yet; still shown as a line on the client-facing Funding Request for transparency even though it isn't collected through that request's deposit flow. A follow-up Fee Invoice is issued if a later Additional Funding Request raises the stage's fee, or if a superseding Funding Request version raises it after the original Fee Invoice was already Paid (an unpaid Fee Invoice is instead reissued with the new version). A Paid Fee Invoice is never reduced or clawed back.
 _Avoid_: Fee invoice line, supplier invoice (reserve "invoice" alone for a supplier's bill to the supervisor, the opposite money direction — always say "Fee Invoice" in full for this one)
 
 **Commitment State**:
-The lifecycle a Purchase Order (and, informally, a Labour Agreement) moves through so its exposure is counted exactly once: Planned → Ordered → Partially Delivered → Delivered → Paid → Closed.
+The lifecycle a Purchase Order (and, informally, a Labour Agreement) moves through so its exposure is counted exactly once: Planned → Ordered → Partially Delivered → Delivered → Partially Paid → Paid → Closed, with Cancelled as the terminal off-ramp. "Issuing" a Purchase Order is the Planned → Ordered transition; the Partially Delivered / Partially Paid states are read off the delivery and payment records rather than set by hand. A supplier's acknowledgement of an order is recorded as a note, not a distinct state.
+_Avoid_: Draft (say Planned), Issued as a state name (say Ordered), Confirmed as a state
 
 **Purchase Order**:
-A formal commitment to a Supplier for material lines, tracked separately from the Delivery that fulfils it and the Supplier Payment that settles it — so "ordered," "delivered," and "paid" quantities/amounts can each differ.
+A formal commitment to a Supplier for material lines, tracked separately from the Delivery that fulfils it and the Supplier Payment that settles it — so "ordered," "delivered," and "paid" quantities/amounts can each differ. A Planned order is freely editable; **Ordering it freezes the supplier, lines, quantities and unit prices**. After that the order is only appended to (deliveries, payments) or Cancelled; a genuine change is a fresh replacement order, not an edit. Its exposure to Available Float is the ordered total minus payments while open, regardless of how much has been delivered — an over- or under-delivery is a Material Variance reconciled at closeout, not a change to the commitment.
+_Avoid_: revising or versioning an Ordered Purchase Order (Funding Requests version; Purchase Orders are cancelled and reissued)
 
 **Retention**:
 A percentage of a Subcontractor's labour agreement withheld until a release condition is met. Whether retention is used at all, and its release conditions, is a still-open decision.

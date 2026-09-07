@@ -129,19 +129,103 @@ guessing. This map **produces decisions, not code**.
   **The specific Postgres product is a fast-follow**, decided with Deployment
   shape.
 
+- [Mock-data cutover and the tenant-scoped data-access layer](./issues/08-mock-data-cutover.md):
+  The model **inverts** — store atomic records (Deposit, Funding Request + lines,
+  Fee Invoice, PO + lines/deliveries/payments, Labour Agreement + payments, Petty
+  Cash, Variation) and **compute every `StageFinancials` per request** in one
+  `server-only` projection function inside the RLS transaction; **no denormalised
+  totals**. `finance.ts` is untouched (still takes a plain `StageFinancials`);
+  `fundingRequestPending` and `Project.alerts` become derived. The `remaining*`
+  figures net actuals against the stage's **Funding Request lines** (entered
+  directly on the request in v1; take-off module deferred); no Funding Request →
+  stage reads *unscoped*. The **DAL** is one intent-named `server-only` module at
+  `web/src/lib/data/` (`getProjectOverview`, `listProjects`, `listPurchaseOrders`,
+  …) with **no `accountId` in any signature** (injected by ticket 06's tx
+  wrapper); it returns the existing nested `Project`/`Stage` view-model, so
+  `src/components` is untouched — only the import path changes. This also settles
+  the picker fog: `listProjects()` is RLS-scoped, "current project" is the route
+  id, AppChrome unchanged. The three **mock files are deleted** from `src/` (real
+  types + pure helpers promoted first; generators thrown away); **no seed**.
+  Recommends **opaque UUIDv7 route ids** to ticket 06. Scope: table list +
+  relationships + stored/computed split here; column DDL, every mutation, and the
+  edit screens go to the build. Issue-action lifecycles graduated to ticket 09.
+- [Auth implementation approach](./issues/07-auth-implementation-approach.md):
+  **better-auth, self-hosted in the app's Postgres** — not hand-rolled (rebuilds
+  too much of ticket 02's session model), not delegated (WorkOS/Clerk conflict
+  with the portability rule and add a US processor). Its tables are plain, move
+  with `pg_dump`, and are **prefixed `auth_`** so `account` always means the
+  domain concept; **`drizzle-kit` owns all migrations**. **Sessions: opaque
+  DB-backed session id** in an `HttpOnly` cookie (7-day sliding) with a **60 s
+  signed cookie cache**; `proxy.ts` does an optimistic cookie check only, a
+  `server-only` DAL helper does the authoritative check and is the single funnel
+  ticket 06 builds on — **not a JWT**. **Account id: a minted `account_id`
+  (UUIDv7)**, 1:1 with `auth_user`, created in the signup transaction, never
+  changes; every domain row keys off it, nothing references `auth_user.id`.
+  **Hashing: argon2id** via `@node-rs/argon2` (better-auth does it). **Email:
+  Resend** free tier from a domain-authed subdomain, **Postmark** the named
+  fallback — disclose the processor per ticket 03. **Abuse counters:**
+  better-auth's rate limiter, DB-backed (`auth_rate_limit`), no Redis.
+
+- [Tenant-scoping enforcement: making cross-account access impossible](./issues/06-tenant-scoping-enforcement.md):
+  The RLS mechanism, the id rules, and the isolation test. **Tenant key**: a
+  dedicated `accounts` table (own UUIDv7, 1:1 with `auth_user` via
+  `accounts.user_id`); every domain row carries `account_id`, nothing references
+  `auth_user.id`. **Coverage**: a `NOT NULL account_id` on *every* domain table,
+  denormalised all the way down — RLS doesn't re-check through FKs.
+  **Mechanism**: transaction-local `SET LOCAL app.current_account_id`, not
+  per-tenant roles; app connects as a non-owner `app_runtime` role, migrations as
+  owner; every domain table `ENABLE` + `FORCE ROW LEVEL SECURITY` with one
+  identical `USING` + `WITH CHECK` policy; unset var → NULL → zero rows (**fails
+  closed**). **Binding**: a `server-only` `getCurrentAccountId()` wrapped in
+  React `cache()` (composed on ticket 07's session check) feeds a
+  `withAccount(fn)` Drizzle transaction wrapper that issues the `SET LOCAL` as
+  statement 1; the account id is **never a DAL parameter** and never comes from
+  the URL/body. `proxy.ts` stays optimistic-only. **Session-less jobs**: a
+  `BYPASSRLS` `maintenance` role queries `accounts` for candidates, then the
+  deletion sweep loops per account setting the GUC so RLS scopes every `DELETE`.
+  **Ids**: opaque non-enumerable ids in URLs (routing slugs dropped); a
+  cross-account reference is **always 404**, never 403. **Honesty**: composite
+  FKs `(parent_id, account_id) REFERENCES parent (id, account_id)`; `account_id`
+  never writable in the DAL. **Test**: a CI suite against a real Postgres —
+  two-account integration proof, raw-connection RLS test, role-capability test, a
+  schema-conformance lint that fails the build when a new table lacks the full
+  treatment, a composite-FK test, and a route-level 404 test.
+- [The persisted lifecycle of the "issue" actions](./issues/09-issue-action-lifecycles.md):
+  The three "Issue" state machines, fixed here rather than left to the build.
+  **One principle**: "Issue" is the line between editable and immutable — before
+  it a numberless Draft with no financial effect, at it a single atomic
+  transaction that freezes content, assigns the permanent per-project number
+  (`FR-{project}-004`, `PO-{project}-001`, minted at Issue, never reused,
+  versions share the base with a `v2` suffix), and starts the financial effect;
+  after it only appends or a controlled supersede/cancel.
+  **Funding Request**: seven states (`Draft / Issued / Superseded / Cancelled /
+  Closed` stored, `Partially Deposited / Deposited` derived from Deposit
+  records); Issue freezes the request and raises the Fee Invoice; a change
+  **forks a version** (`v2 supersedes v1`, v1's deposits carry forward, unpaid
+  Fee Invoice reissues, paid one is never touched — a fee increase raises a
+  follow-up for the delta); an **Additional Funding Request is a separate new
+  request, never a version**. **Purchase Order**: `CONTEXT.md`'s Commitment State
+  is canonical (`Planned → Ordered → Partially Delivered → Delivered → Partially
+  Paid → Paid → Closed` + `Cancelled`); "Issue" = `Planned → Ordered`;
+  **"Confirmed" dropped** to an optional note; Issue freezes supplier/lines/
+  prices; a real change is **cancel + reissue**, no version chain; Cancel only
+  before non-voided deliveries/payments, Close is manual at fully-delivered-and-
+  paid, Reopen until Stage Closeout. **Delivery/Payment records are append-only
+  with reversal** (`voided_at` + `void_reason`, then re-enter — no negatives);
+  **over-delivery allowed with a stored acknowledgement reason**, **over-payment
+  soft-blocked with a reason**; `derivePOStatus` stays the only status source.
+  **A PO's float exposure tracks the order** (`ordered − paid` while open, `paid`
+  once Closed), never deliveries — over/under-delivery is a Material Variance
+  reconciled at closeout. **Shareable documents**: Funding Request, Fee Invoice
+  and Purchase Order each render — only once Issued, from the frozen snapshot,
+  **on demand and never stored** — as PDF (authoritative) + JPG (same content,
+  for WhatsApp sharing), **download-only in v1** (tokenised public links are a
+  later separate decision). The build owns the DDL, `derivePOStatus`'s new body,
+  the mutation endpoints and every screen. Rendering *mechanism* graduated to
+  ticket 10.
+
 ## Not yet specified
 
-- **The project picker and "current project" under tenancy** — the picker shows
-  only the Engineer's own projects; where "current project" lives (client route
-  vs. server session); whether the AppChrome "Switch project" flow changes. The
-  brand-new-Account empty state is now settled (see the account-lifecycle
-  decision: empty picker + "Create your first project" + a one-line explainer,
-  nothing seeded); the rest still waits on the data-access layer (ticket 08).
-- **The existing mock "issue" actions becoming real** — the funding-request
-  wizard's "Issue to client", the purchase-order builder's "Issue", "Record
-  delivery / payment", the "Marked as issued" states. Decide whether this map
-  specifies their persisted lifecycle or hands it to the build, once the
-  data-access model (ticket 08) is set.
 - **Deployment shape** — the data store (ticket 05) fixed the *shape*: one
   long-running container + volume, standard co-located Postgres, no serverless.
   What remains is the **specific Postgres host and PaaS** (Fly.io / Railway /
@@ -151,7 +235,10 @@ guessing. This map **produces decisions, not code**.
   separate implementation-planning effort. Still carries the **data-protection
   thread** from ticket 03: when an Account is hard-deleted, how that propagates
   to database backups holding its rows — a bounded retention window vs. active
-  scrubbing — which depends on the chosen backup mechanism.
+  scrubbing — which depends on the chosen backup mechanism. Ticket 10 (document
+  rendering approach) also has an operational-placement thread that interacts
+  with this — whether the PDF/JPG renderer is in the app container or a
+  companion process.
 
 ## Out of scope
 
