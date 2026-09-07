@@ -195,8 +195,9 @@ guessing. This map **produces decisions, not code**.
   **One principle**: "Issue" is the line between editable and immutable — before
   it a numberless Draft with no financial effect, at it a single atomic
   transaction that freezes content, assigns the permanent per-project number
-  (`FR-{project}-004`, `PO-{project}-001`, minted at Issue, never reused,
-  versions share the base with a `v2` suffix), and starts the financial effect;
+  (`FR-{project}-001`, `PO-{project}-001` — a new Account starts at 001 on its
+  first project, minted at Issue, never reused, versions share the base with a
+  `v2` suffix), and starts the financial effect;
   after it only appends or a controlled supersede/cancel.
   **Funding Request**: seven states (`Draft / Issued / Superseded / Cancelled /
   Closed` stored, `Partially Deposited / Deposited` derived from Deposit
