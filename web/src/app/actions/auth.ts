@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { APIError } from "better-auth/api";
 import { sql } from "drizzle-orm";
 
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { signupSchema } from "@/lib/auth/password-schema";
 import { db } from "@/lib/data/db";
 import { ACCEPTED_LEGAL_VERSION } from "@/lib/legal";
@@ -47,7 +47,7 @@ export async function signup(
   const { fullName, email, phone, password } = parsed.data;
 
   try {
-    const result = await auth.api.signUpEmail({
+    const result = await getAuth().api.signUpEmail({
       body: { name: fullName, email, password, phone },
       headers: await headers(),
     });

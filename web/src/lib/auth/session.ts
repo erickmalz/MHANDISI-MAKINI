@@ -4,7 +4,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "./index";
+import { getAuth } from "./index";
 
 /**
  * The authoritative session check — the single funnel every Server Component,
@@ -16,7 +16,10 @@ import { auth } from "./index";
  * database entirely.
  */
 export const verifySession = cache(async () => {
-  const result = await auth.api.getSession({ headers: await headers() });
+  // Read the request headers first: this marks the caller dynamic (so it is
+  // never prerendered at build time) before better-auth is constructed.
+  const requestHeaders = await headers();
+  const result = await getAuth().api.getSession({ headers: requestHeaders });
   return result ?? null;
 });
 

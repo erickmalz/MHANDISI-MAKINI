@@ -25,73 +25,88 @@ const MINUTES = 60 * SECONDS;
 const HOURS = 60 * MINUTES;
 const DAYS = 24 * HOURS;
 
-if (!process.env.BETTER_AUTH_SECRET) {
-  // Fail loudly at boot rather than mint unsigned cookies.
-  throw new Error("BETTER_AUTH_SECRET is not set.");
+function build() {
+  if (!process.env.BETTER_AUTH_SECRET) {
+    // Fail loudly on first use rather than mint unsigned cookies. Deferred to
+    // here (not module load) so `next build` succeeds in a pipeline that only
+    // injects runtime secrets at deploy time.
+    throw new Error("BETTER_AUTH_SECRET is not set.");
+  }
+
+  return betterAuth({
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+
+    database: drizzleAdapter(db, {
+      provider: "pg",
+      schema,
+      transaction: true,
+    }),
+
+    // better-auth's tables are all `auth_`-prefixed so `account` elsewhere
+    // means the domain Account (ADR 0002).
+    user: {
+      modelName: "auth_user",
+      additionalFields: {
+        phone: { type: "string", required: true, input: true },
+      },
+    },
+    session: {
+      modelName: "auth_session",
+      expiresIn: 7 * DAYS, // 7-day sliding session (ticket 02)
+      updateAge: 1 * DAYS,
+      cookieCache: { enabled: true, maxAge: 60 * SECONDS }, // 60s cookie cache
+    },
+    account: { modelName: "auth_account" },
+    verification: { modelName: "auth_verification" },
+
+    emailAndPassword: {
+      enabled: true,
+      minPasswordLength: 10, // full rule set is in ./password-schema.ts
+      maxPasswordLength: 128,
+      requireEmailVerification: false, // soft gate — see ./session.ts
+      autoSignIn: true,
+      revokeSessionsOnPasswordReset: true,
+      resetPasswordTokenExpiresIn: 1 * HOURS,
+      password: {
+        hash: (password) => argon2Hash(password, ARGON2_OPTS),
+        verify: ({ hash, password }) =>
+          argon2Verify(hash, password, ARGON2_OPTS),
+      },
+      sendResetPassword: async ({ user, url }) => {
+        await sendResetPasswordEmail(user.email, url);
+      },
+    },
+
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      expiresIn: 1 * DAYS, // 24h verify link (ticket 02)
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendVerificationEmail(user.email, url);
+      },
+    },
+
+    // Abuse controls (ticket 02) — DB-backed so they survive restarts, no Redis.
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+      modelName: "auth_rate_limit",
+    },
+
+    // nextCookies() must be last — it writes Set-Cookie from Server Actions.
+    plugins: [nextCookies()],
+  });
 }
 
-export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+let instance: ReturnType<typeof build> | null = null;
 
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema,
-    transaction: true,
-  }),
+/**
+ * The better-auth instance, built on first use. Every server entry point goes
+ * through this (via `verifySession()` / the route handler / the signup action).
+ */
+export function getAuth() {
+  return (instance ??= build());
+}
 
-  // better-auth's tables are all `auth_`-prefixed so `account` elsewhere means
-  // the domain Account (ADR 0002).
-  user: {
-    modelName: "auth_user",
-    additionalFields: {
-      phone: { type: "string", required: true, input: true },
-    },
-  },
-  session: {
-    modelName: "auth_session",
-    expiresIn: 7 * DAYS, // 7-day sliding session (ticket 02)
-    updateAge: 1 * DAYS,
-    cookieCache: { enabled: true, maxAge: 60 * SECONDS }, // 60s cookie cache
-  },
-  account: { modelName: "auth_account" },
-  verification: { modelName: "auth_verification" },
-
-  emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 10, // full rule set is in ../auth/password-schema.ts
-    maxPasswordLength: 128,
-    requireEmailVerification: false, // soft gate — see the 7-day check in ../auth/session.ts
-    autoSignIn: true,
-    revokeSessionsOnPasswordReset: true,
-    resetPasswordTokenExpiresIn: 1 * HOURS,
-    password: {
-      hash: (password) => argon2Hash(password, ARGON2_OPTS),
-      verify: ({ hash, password }) => argon2Verify(hash, password, ARGON2_OPTS),
-    },
-    sendResetPassword: async ({ user, url }) => {
-      await sendResetPasswordEmail(user.email, url);
-    },
-  },
-
-  emailVerification: {
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    expiresIn: 1 * DAYS, // 24h verify link (ticket 02)
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendVerificationEmail(user.email, url);
-    },
-  },
-
-  // Abuse controls (ticket 02) — DB-backed so they survive restarts, no Redis.
-  rateLimit: {
-    enabled: true,
-    storage: "database",
-    modelName: "auth_rate_limit",
-  },
-
-  // nextCookies() must be last — it writes Set-Cookie from Server Actions.
-  plugins: [nextCookies()],
-});
-
-export type Session = typeof auth.$Infer.Session;
+export type Session = ReturnType<typeof build>["$Infer"]["Session"];

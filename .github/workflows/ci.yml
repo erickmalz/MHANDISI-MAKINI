@@ -43,7 +43,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22+ — Testcontainers' bundled undici needs worker_threads
+          # markAsUncloneable (Node 22.0.0). Next 16 wants >= 20.9.
+          node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
 
