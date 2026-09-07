@@ -131,7 +131,7 @@ _Avoid_: Boilerplate, preset
 
 ### Identity and tenancy
 
-_The app was single-user through Phase 1. The move to many independent engineers is being worked as a decision map at `.scratch/multi-tenancy/map.md`; only the terms settled so far are recorded here._
+_The app was single-user through Phase 1. The move to many independent engineers is decided (`.scratch/multi-tenancy/map.md`, ADRs 0001–0004) and being built in phases. Phase 1 — persistence, better-auth email/password, and the `accounts` tenant key with Postgres row-level security — is in `web/`; the domain schema, the data-access-layer cutover from the mock files, the issue-action state machines, and the account-lifecycle flows follow. The terms settled by the map are recorded here._
 
 **Engineer**:
 A person who uses the app — a working site engineer. The app is operated directly by the Engineer; clients and subcontractors never log in. Each Engineer signs themselves up.
