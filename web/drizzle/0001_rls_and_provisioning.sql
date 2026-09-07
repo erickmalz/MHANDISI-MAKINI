@@ -13,9 +13,24 @@ GRANT USAGE ON SCHEMA app TO app_runtime, maintenance;
 -- ---------------------------------------------------------------------------
 -- app.enable_standard_rls(table) — the one RLS treatment every account-scoped
 -- domain table gets in Phase 2. ENABLE + FORCE + one identical policy keyed on
--- `account_id = current_setting('app.current_account_id')`. Unset GUC -> NULL
--- -> matches nothing -> fails closed.
+-- `account_id = app.current_account_id()`.
 -- ---------------------------------------------------------------------------
+
+-- The current request's tenant key, read from the transaction-local GUC.
+-- NULLIF(..., '') matters: once a custom GUC has been SET in a session, a
+-- pooled connection reports it as '' (not NULL) after the transaction ends —
+-- so an unset context must be normalised to NULL, or `''::uuid` throws instead
+-- of the policy quietly matching nothing. Unset -> NULL -> zero rows -> fails
+-- closed.
+CREATE OR REPLACE FUNCTION app.current_account_id()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $$
+	SELECT NULLIF(current_setting('app.current_account_id', true), '')::uuid;
+$$;
+--> statement-breakpoint
+
 CREATE OR REPLACE FUNCTION app.enable_standard_rls(target regclass)
 RETURNS void
 LANGUAGE plpgsql
@@ -28,8 +43,8 @@ BEGIN
 	EXECUTE format('DROP POLICY IF EXISTS account_isolation ON %s', tbl);
 	EXECUTE format(
 		'CREATE POLICY account_isolation ON %s
-		 USING (account_id = current_setting(''app.current_account_id'', true)::uuid)
-		 WITH CHECK (account_id = current_setting(''app.current_account_id'', true)::uuid)',
+		 USING (account_id = app.current_account_id())
+		 WITH CHECK (account_id = app.current_account_id())',
 		tbl
 	);
 END;
@@ -45,8 +60,8 @@ $$;
 ALTER TABLE "accounts" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 CREATE POLICY account_self ON "accounts"
-	USING (id = current_setting('app.current_account_id', true)::uuid)
-	WITH CHECK (id = current_setting('app.current_account_id', true)::uuid);
+	USING (id = app.current_account_id())
+	WITH CHECK (id = app.current_account_id());
 --> statement-breakpoint
 
 -- ---------------------------------------------------------------------------
@@ -125,9 +140,13 @@ GRANT SELECT ON "accounts" TO maintenance;
 --> statement-breakpoint
 GRANT EXECUTE ON FUNCTION
 	app.uuid_generate_v7(),
+	app.current_account_id(),
 	app.account_id_for_user(text),
 	app.record_terms_acceptance(text, text)
 	TO app_runtime;
+--> statement-breakpoint
+-- The RLS policies call app.current_account_id() as the querying role.
+GRANT EXECUTE ON FUNCTION app.current_account_id() TO maintenance;
 --> statement-breakpoint
 -- Future domain tables are owned by the owner; grant DML to app_runtime by
 -- default so Phase 2 migrations don't each repeat it.

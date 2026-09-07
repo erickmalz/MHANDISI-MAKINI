@@ -37,13 +37,13 @@ describe("schema conformance", () => {
     expect(rows[0]!.relforcerowsecurity).toBe(false);
   });
 
-  it("accounts has exactly one policy, keyed on app.current_account_id", async () => {
+  it("accounts has exactly one policy, keyed on the current account id", async () => {
     const { rows } = await owner.query<{ polname: string; qual: string }>(
       `SELECT polname, pg_get_expr(polqual, polrelid) AS qual
        FROM pg_policy WHERE polrelid = 'public.accounts'::regclass`,
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.qual).toContain("app.current_account_id");
+    expect(rows[0]!.qual).toContain("current_account_id()");
     expect(rows[0]!.qual).toContain("id =");
   });
 
