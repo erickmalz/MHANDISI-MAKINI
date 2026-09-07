@@ -1,7 +1,7 @@
 # Data store: category and the constraints it must meet
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 04
 
 ## Question
