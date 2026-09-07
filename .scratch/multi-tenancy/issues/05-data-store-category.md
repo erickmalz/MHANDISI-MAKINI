@@ -98,3 +98,6 @@ Practical region: Frankfurt (`eu-central-1`) or the closest low-latency option.
 **Specific product: fast-follow.** The category + constraint list above is
 enough to unblock tickets 06, 07, and 08. The concrete Postgres host is decided
 with the map's *Deployment shape* work.
+
+Recorded as [ADR 0001](../../../docs/adr/0001-postgres-rls-on-a-long-running-container.md)
+for the build effort.
