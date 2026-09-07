@@ -89,6 +89,10 @@ v1 still renders v1. Supersede is permitted any time before **Closed**.
   Fee Recognition Timing). If v2's fee is higher, v2 raises a **follow-up Fee
   Invoice for the delta only**; if lower, no clawback.
 
+The asymmetry with Purchase Orders below (POs cancel-and-reissue, they do not
+version) is recorded in
+[ADR 0003](../../../docs/adr/0003-two-amendment-models-for-issued-documents.md).
+
 **Additional Funding Request ≠ version.** A mid-stage scope increase (approved
 Variations) is a **separate new Funding Request** — its own next base number, its
 own Draft→Issued lifecycle, linked to the stage and optionally to the
