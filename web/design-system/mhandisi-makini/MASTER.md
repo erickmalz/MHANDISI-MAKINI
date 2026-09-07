@@ -140,8 +140,9 @@ needed" / "Attention" / "Note") with the message in normal text.
 ### Navigation and chrome
 
 - The shared charcoal app header (`src/components/AppChrome.tsx`) carries the
-  logo on a white holding panel on every working screen; it hides itself on
-  `/welcome` and `/sign-in`.
+  reversed horizontal lockup, no tagline (`logo-horizontal-reversed-notag.png`),
+  directly on the charcoal on every working screen — no white holding panel; it
+  hides itself on `/welcome` and `/sign-in`.
 - Active state is shown by **more than colour** — bold weight plus a yellow
   indicator bar / chip (see `StepIndicator`).
 
@@ -186,19 +187,35 @@ prose. Never translated, abbreviated or hyphenated.
 
 ## Logo
 
-- Treat the supplied artwork as a **single image asset** — never retype the
-  wordmark in a font. Files in `public/brand/`: `logo-horizontal.png`,
-  `logo-stacked.png`, `logo-app-tile.png` (favicon source).
+- Treat each file as a finished **image asset** — never retype the wordmark in a
+  font. Files in `public/brand/`:
+  - `logo-stacked.png` / `.svg` — primary signature, full colour, white/pale
+    backgrounds (sign-in, welcome).
+  - `logo-stacked-reversed.png` — primary signature on charcoal / dark.
+  - `logo-horizontal.png` / `logo-horizontal-reversed.png` — horizontal lockup
+    (with tagline), full colour / reversed.
+  - `logo-horizontal-notag.png` / `logo-horizontal-reversed-notag.png` — same
+    without the tagline, for small placements (the app header uses the reversed
+    one).
+  - `logo-symbol.png` / `.svg` — symbol only, full colour.
+  - `logo-app-tile.png` — reversed symbol on a charcoal rounded field; source
+    for `src/app/icon.png`, `apple-icon.png`, `favicon.ico`.
+
+  The four-artboard vector master (`logo-master.svg`) lives in the skill
+  (`.claude/skills/mhandisi-makini-design-system/assets/`), not in `public/` —
+  it is an editor source, and its default view frames the reversed artboard.
+- Colours: hard hat `#FFBE00`, full-colour gear/wordmark `#292D30`, reversed
+  gear/wordmark `#EFEFEF`. The `#EFEFEF` is artwork only — not a UI token.
 - Clear space ≥ 2X the yellow hard-hat brim height on every side.
 - Minimum size: stacked 160 px on screen; symbol-only 32 px.
-- On the charcoal header, the logo sits on a white holding panel until a
-  reversed master exists.
-- The supplied art is a **raster concept**. A production vector master with
-  outlined lettering, a reversed master, and a true horizontal lockup are still
-  deliverables.
-- Never stretch, rotate, recolour, shadow or rearrange the mark. Never put a
-  slogan inside it. Tagline sits outside the clear space, smaller than the name,
-  or is omitted when it would be unreadable.
+- On the charcoal header the reversed lockup sits directly on the charcoal — no
+  white holding panel.
+- Still outstanding: a one-colour (mono) master for single-colour print, and a
+  horizontal lockup inside the SVG master.
+- Never stretch, rotate, shadow, rearrange or recolour the mark — use the
+  supplied full-colour or reversed file. Never put a slogan inside it. Tagline
+  sits outside the clear space, smaller than the name, or is omitted when it
+  would be unreadable.
 
 ---
 

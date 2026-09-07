@@ -15,8 +15,8 @@ export default function WelcomePage() {
       <Image
         src="/brand/logo-stacked.png"
         alt="Mhandisi Makini"
-        width={927}
-        height={1044}
+        width={905}
+        height={1000}
         priority
         className="h-auto w-[220px]"
       />

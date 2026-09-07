@@ -13,9 +13,11 @@ const BARE_ROUTES = ["/welcome", "/sign-in"];
  *
  * The engineer works one project at a time. When a project is open the header
  * names it and offers a way back to the picker; everywhere else it is just the
- * brand mark. The logo is the supplied artwork on a white holding panel, per
- * the brand rule for dark backgrounds until a reversed master exists — never
- * retyped as text.
+ * brand mark. The header is charcoal, so it carries the reversed horizontal
+ * lockup directly (yellow hard hat, near-white gear and wordmark) — the
+ * supplied artwork, never retyped as text. The tagline is dropped at this size
+ * (the "-notag" asset), per the brand rule to omit it rather than let it become
+ * unreadable.
  */
 export function AppChrome() {
   const pathname = usePathname();
@@ -29,14 +31,14 @@ export function AppChrome() {
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center rounded-lg bg-white px-4 py-3"
+          className="inline-flex shrink-0 items-center rounded-lg py-1"
           aria-label="Mhandisi Makini — choose a project"
         >
           <Image
-            src="/brand/logo-horizontal.png"
+            src="/brand/logo-horizontal-reversed-notag.png"
             alt=""
-            width={1398}
-            height={456}
+            width={1600}
+            height={561}
             priority
             className="h-9 w-auto"
           />

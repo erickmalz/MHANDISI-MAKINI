@@ -58,9 +58,11 @@ module.exports = {
 
 ## Notes
 
-The logo in `assets/` is a **raster concept**, not a production vector master.
-Horizontal, reversed, mono and app-tile variants are still deliverables — the
-skill tells Claude to flag this rather than improvise a variant.
+`assets/` now holds a vector master (`logo-master.svg`, four artboards),
+single-artboard SVGs, and PNG exports of the stacked, horizontal and symbol
+lockups in both full-colour and reversed treatments. Still outstanding: a
+one-colour (mono) master for single-colour print, and a horizontal lockup in
+the SVG master.
 
-Open items from v1.1: confirm the typeface, appoint a brand owner, complete the
-production logo masters, validate bilingual copy with site engineers.
+Open items from v1.1: confirm the typeface, appoint a brand owner, finish the
+mono master, validate bilingual copy with site engineers.

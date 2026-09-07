@@ -24,8 +24,10 @@ situation and the next action.
 4. For any user-facing text, read `references/voice-and-copy.md`.
 5. Before you call the work done, run `references/review-checklist.md`.
 
-Logo artwork lives in `assets/`. See "Logo" below — it is a raster concept, not
-a vector master; treat it as a single image asset.
+Logo artwork lives in `assets/` — a vector master (`logo-master.svg`),
+single-artboard SVGs, and PNG exports of every lockup (stacked / horizontal /
+symbol, each full-colour and reversed). See "Logo" below. Treat each file as a
+finished image asset — never retype the wordmark.
 
 ---
 
@@ -225,15 +227,16 @@ wordmark.**
 
 | Placement | Rule |
 |---|---|
-| White or pale background | Primary yellow-and-charcoal signature |
-| Dark background | Primary logo on a white holding panel with full clear space, until a reversed master exists |
-| Photography | Plain white panel, away from busy detail |
+| White or pale background | Primary yellow-and-charcoal signature (`logo-stacked.png` / `.svg`, or `logo-horizontal.png`) |
+| Dark background | Reversed signature — yellow hard hat, near-white (`#EFEFEF`) gear and wordmark (`logo-stacked-reversed.png`, `logo-horizontal-reversed.png`, `logo-symbol-reversed.png`). No white holding panel. |
+| Photography | Reversed signature on a plain darkened area, or the primary signature on a plain white panel, away from busy detail |
 | Single-colour print | Approved one-colour master; never rely on automatic grayscale conversion |
-| App icon / favicon | Dedicated symbol-only export. Never squeeze the full name into a tiny square |
+| App icon / favicon | Reversed symbol on a charcoal field, symbol filling ~65–70% of the canvas (`logo-symbol-reversed.png`). Never squeeze the full name into a tiny square. |
 
-**Never** stretch, rotate, recolour, add shadows to, change the wordmark of,
-move the checkmark within, or separate the hat from the gear. Never place a
-slogan inside the mark. **Never use the checkmark to imply that a safety
+**Never** stretch, rotate, add shadows to, change the wordmark of, move the
+checkmark within, or separate the hat from the gear. The only approved colour
+treatments are the full-colour and reversed masters in `assets/` — never
+recolour the mark yourself. Never place a slogan inside the mark. **Never use the checkmark to imply that a safety
 inspection or technical approval occurred.**
 
 **Tagline placement:** "Let's build together" sits *outside* the logo's clear
@@ -242,23 +245,36 @@ rather than let it become unreadable.
 
 ### Asset status — read before shipping
 
-The supplied logo is a **raster concept**, not a production vector master. A
-faithful vector reconstruction with outlined lettering is still a deliverable.
-When you need a variant that does not exist (horizontal, reversed, mono, app
-tile), say so rather than improvising one:
+A **vector master with outlined lettering** now exists: `logo-master.svg`. It
+holds four artboards — stacked and symbol-only, each in full colour and
+reversed. Its default `viewBox` frames the reversed stacked artboard, so a naive
+`<img src="logo-master.svg">` on a white page looks nearly invisible; use the
+single-artboard files below instead, or open the master in a vector editor.
 
-- Future horizontal lockup: symbol left, name right, optically centred, 2X gap.
-- Future app tile: charcoal square, simplified yellow/white symbol, central safe
-  area ~70% of the canvas.
+Colours in every file: hard hat `#FFBE00` (Site Yellow), full-colour gear and
+wordmark `#292D30` (Charcoal), reversed gear and wordmark `#EFEFEF`. The `#EFEFEF`
+is logo artwork only — it is not a UI token and must not appear as a surface or
+text colour elsewhere.
+
+Still outstanding: a true one-colour (mono) master for single-colour print, and
+a horizontal lockup in the SVG master (it exists only as PNG so far).
 
 Files in `assets/`:
 
 | File | Use |
 |---|---|
-| `logo-stacked-dark-bg.png` | Reference only — dark-background concept |
-| `logo-stacked-light-bg.png` | Primary signature on white/pale surfaces |
-| `logo-app-tile.png` | App icon / favicon concept |
-| `logo-horizontal.png` | Horizontal lockup concept |
+| `logo-master.svg` | Vector master — 4 artboards. Editor source, not for direct embedding. |
+| `logo-stacked.svg` | Primary signature, full colour, single artboard. Scalable use on white/pale. |
+| `logo-symbol.svg` | Symbol only, full colour, single artboard. |
+| `logo-stacked.png` | Primary signature, full colour — white/pale backgrounds |
+| `logo-stacked-reversed.png` | Primary signature, reversed — charcoal / dark backgrounds |
+| `logo-horizontal.png` | Horizontal lockup (symbol left, name right), full colour — white/pale |
+| `logo-horizontal-reversed.png` | Horizontal lockup, reversed — charcoal / dark backgrounds |
+| `logo-horizontal-notag.png` | Horizontal lockup, full colour, **no tagline** — small placements where the tagline would be unreadable |
+| `logo-horizontal-reversed-notag.png` | Horizontal lockup, reversed, no tagline — e.g. an app header bar |
+| `logo-symbol.png` | Symbol only, full colour |
+| `logo-symbol-reversed.png` | Symbol only, reversed — source for the app icon / favicon tile |
+| `MHANDISI-MAKINI-brand-guidelines-v1.1.pdf` | Source brand guidelines |
 
 ---
 
