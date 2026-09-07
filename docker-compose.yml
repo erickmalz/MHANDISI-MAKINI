@@ -1,0 +1,35 @@
+# Local development database for Mhandisi Makini.
+#
+# One standard PostgreSQL instance, co-located with the app in production
+# (ADR 0001). The app connects as the non-owner role `app_runtime`; migrations
+# run as the owner `mhandisi_owner`; session-less jobs use `maintenance`
+# (BYPASSRLS). Roles and the `mhandisi` database are created by
+# docker/postgres/init/00-roles.sql on first boot.
+#
+#   docker compose up -d
+#   cd web && cp .env.example .env && npm run db:migrate && npm run dev
+#
+# The passwords below are local-development-only. Production provisions the
+# three roles with real secrets out of band (see web/README.md).
+
+services:
+  db:
+    image: postgres:16
+    container_name: mhandisi-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - mhandisi-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mhandisi-pgdata:

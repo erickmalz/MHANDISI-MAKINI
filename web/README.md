@@ -1,43 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mhandisi Makini — web
 
-## Getting Started
+Next.js 16 (App Router). Construction project management for the site engineer.
 
-First, run the development server:
+## Running locally
+
+You need Docker (for the database) and Node 20.9+.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Start Postgres (creates the mhandisi database + the three roles on first boot)
+docker compose up -d            # from the repo root
+
+# 2. Configure and install
+cd web
+cp .env.example .env            # then set BETTER_AUTH_SECRET — `openssl rand -base64 32`
+npm install
+
+# 3. Apply migrations, then run
+npm run db:migrate
+npm run dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+First run: open `/sign-up`, create an account. With `RESEND_API_KEY` unset (the
+default) the **verification link is printed to the server console** instead of
+emailed — open it there. The rest of the app works before verifying; the link
+only unlocks password reset and email change. After 7 days unverified, the app
+is gated behind a full-screen "verify to continue".
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Scripts
+
+| script | what |
+| --- | --- |
+| `npm run dev` / `build` / `start` | Next.js |
+| `npm run lint` / `typecheck` | eslint / `next typegen && tsc --noEmit` |
+| `npm test` | the tenant-isolation suite (Testcontainers — needs Docker) |
+| `npm run db:generate` | new Drizzle migration from a schema change |
+| `npm run db:migrate` | apply `drizzle/` migrations (as the schema owner) |
+| `npm run db:studio` | Drizzle Studio |
+
+## Architecture (Phase 1 of the multi-tenancy build)
+
+- **Database** — one standard PostgreSQL (ADR 0001). The app connects as the
+  non-owner `app_runtime` role; migrations run as `mhandisi_owner`;
+  session-less jobs (Phase 4) use `maintenance` (BYPASSRLS). Roles are
+  infrastructure — `docker/postgres/init/00-roles.sql` locally,
+  `scripts/bootstrap-db.ts` in CI / tests — never created by a migration.
+- **Auth** — better-auth, self-hosted, tables prefixed `auth_` (ADR 0002).
+  Opaque DB-backed session cookie, 7-day sliding, 60s cookie cache; argon2id;
+  DB-backed rate limiter. `src/proxy.ts` does an optimistic cookie check only;
+  `requireUsableSession()` / `verifySession()` (`src/lib/auth/session.ts`) is
+  the authoritative check every server entry point goes through.
+- **Tenancy** — a dedicated `accounts` table, 1:1 with `auth_user`, created by
+  an `AFTER INSERT` trigger (ADR 0004). Every account-scoped read/write (Phase
+  2 onward) goes through `withAccount()` (`src/lib/data/with-account.ts`), which
+  sets `app.current_account_id` as statement 1 of a transaction; Postgres
+  row-level security is the backstop. `getCurrentAccountId()` is never a
+  function parameter.
+- **The prototype screens** (`src/app/(app)/**`) still read the mock data in
+  `src/lib/{mock-data,funding-mock,procurement-mock}.ts`. Phase 2 replaces
+  those with the data-access layer and deletes the mock files.
+
+The decisions being built are in `.scratch/multi-tenancy/map.md` and
+`docs/adr/`.
 
 ## Design system
 
-This app follows the **MHANDISI MAKINI** design system. The working summary is
-in `design-system/mhandisi-makini/MASTER.md`; the source of truth is the
-`mhandisi-makini-design-system` skill under `.claude/skills/`. Runtime tokens
-live in `src/app/globals.css` — read the CSS variables, never hardcode a brand
-hex. The type family is DejaVu Sans with a platform fallback stack (no web
-font); the tagline is "Let's build together".
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Follows **MHANDISI MAKINI** — `design-system/mhandisi-makini/MASTER.md`, source
+of truth the `mhandisi-makini-design-system` skill. Runtime tokens in
+`src/app/globals.css`; never hardcode a brand hex. Tagline: "Let's build
+together".
