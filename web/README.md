@@ -62,6 +62,18 @@ is gated behind a full-screen "verify to continue".
 The decisions being built are in `.scratch/multi-tenancy/map.md` and
 `docs/adr/`.
 
+## Deployment
+
+This app does **not** deploy on Vercel. ADR 0001 fixes the target as one
+long-running Node/Docker container co-located with Postgres, and
+`next.config.ts` sets `output: 'standalone'`, which Vercel's build output step
+does not support. `web/vercel.json` sets `ignoreCommand: "exit 0"` so that if
+the Git integration is still connected, every push registers as a skipped
+(not failed) deployment. Remove `vercel.json` and reconnect the integration
+only if the deployment target is ever reconsidered. The `"//"` comment key that
+used to hold this note was removed — Vercel's schema rejects unknown
+properties.
+
 ## Design system
 
 Follows **MHANDISI MAKINI** — `design-system/mhandisi-makini/MASTER.md`, source

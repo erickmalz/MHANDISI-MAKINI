@@ -1,5 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": "This app does NOT deploy on Vercel. ADR 0001 fixes the target as one long-running Node/Docker container co-located with Postgres (next.config.ts sets output: 'standalone', which Vercel's build output step does not support). `ignoreCommand: exit 0` tells Vercel every push is a no-op so its deployments show as skipped rather than failed. Remove this file (and reconnect the Git integration) only if the deployment target is ever reconsidered.",
   "ignoreCommand": "exit 0"
 }
