@@ -76,6 +76,10 @@ _Avoid_: Draft (say Planned), Issued as a state name (say Ordered), Confirmed as
 A formal commitment to a Supplier for material lines, tracked separately from the Delivery that fulfils it and the Supplier Payment that settles it — so "ordered," "delivered," and "paid" quantities/amounts can each differ. A Planned order is freely editable; **Ordering it freezes the supplier, lines, quantities and unit prices**. After that the order is only appended to (deliveries, payments) or Cancelled; a genuine change is a fresh replacement order, not an edit. Its exposure to Available Float is the ordered total minus payments while open, regardless of how much has been delivered — an over- or under-delivery is a Material Variance reconciled at closeout, not a change to the commitment.
 _Avoid_: revising or versioning an Ordered Purchase Order (Funding Requests version; Purchase Orders are cancelled and reissued)
 
+**Issued Document**:
+The client- or supplier-facing document an Issued Funding Request, Fee Invoice or Purchase Order renders to — a PDF (authoritative) plus a JPG of the same content for inline sharing. It renders on demand and is never stored; its transactional content is the exact frozen snapshot taken at Issue, so a superseded Funding Request v1 still renders v1 forever. Only the letterhead (the Engineer's own business name, contact and logo) is drawn from the current Account profile rather than the snapshot. A Deposit, Delivery or Payment produces no Issued Document — there the Engineer is only logging the counterparty's own paperwork. The Fee Invoice carries its own per-project number, `FI-{project}-NNN`, minted when the Funding Request is issued.
+_Avoid_: calling it a "generated PDF" or "export" (it is the document of record, not a convenience copy); "stored document" (it is never persisted)
+
 **Retention**:
 A percentage of a Subcontractor's labour agreement withheld until a release condition is met. Whether retention is used at all, and its release conditions, is a still-open decision.
 
