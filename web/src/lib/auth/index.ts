@@ -37,6 +37,13 @@ function build() {
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
 
+    // baseURL is always trusted; this adds any extra origins (comma-separated)
+    // that may call the auth API — e.g. a phone on the LAN hitting the dev
+    // server by IP for a mobile preview. Unset in production.
+    trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+
     database: drizzleAdapter(db, {
       provider: "pg",
       schema,

@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useTransition } from "react";
 
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/Button";
+import { BrandLogo } from "./BrandLogo";
 import { SignOutButton } from "./SignOutButton";
 
 /**
@@ -32,14 +32,7 @@ export function EmailVerificationGate({ email }: { email: string }) {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 text-center sm:px-6">
       <div className="flex w-full max-w-md flex-col items-center">
-        <Image
-          src="/brand/logo-stacked.png"
-          alt="Mhandisi Makini"
-          width={905}
-          height={1000}
-          priority
-          className="h-auto w-[140px]"
-        />
+        <BrandLogo width={160} priority />
         <h1 className="mt-8 text-[1.75rem] font-bold text-foreground">
           Verify your email to continue
         </h1>

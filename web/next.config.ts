@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Native / Node-only packages the server bundle must not try to bundle.
   serverExternalPackages: ["@node-rs/argon2", "pg"],
+  // Dev only: let a phone on the LAN reach the dev server by IP for a mobile
+  // preview. Next otherwise blocks cross-origin requests to dev assets.
+  allowedDevOrigins: ["192.168.100.207"],
 };
 
 export default nextConfig;
