@@ -22,6 +22,13 @@
       "when": 1788857076965,
       "tag": "0002_domain_structure",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788901593213,
+      "tag": "0003_money_tables",
+      "breakpoints": true
     }
   ]
 }
