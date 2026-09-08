@@ -5,7 +5,12 @@ import { sql } from "drizzle-orm";
 import { getCurrentAccountId } from "./account-context";
 import { db } from "./db";
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/**
+ * The transaction handle passed to a `withAccount` callback — already scoped to
+ * the caller's Account via `SET LOCAL`. Every projection / DAL helper takes this
+ * rather than importing `db` directly.
+ */
+export type AccountTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
  * Runs `fn` inside one transaction with `app.current_account_id` set to the
@@ -17,7 +22,9 @@ type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * on commit. Every account-scoped DAL function in `@/lib/data` (Phase 2) is a
  * thin wrapper over this.
  */
-export async function withAccount<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+export async function withAccount<T>(
+  fn: (tx: AccountTx) => Promise<T>,
+): Promise<T> {
   const accountId = await getCurrentAccountId();
   return db.transaction(async (tx) => {
     await tx.execute(

@@ -9,7 +9,7 @@ export function StageList({
   currentStageId,
 }: {
   stages: Stage[];
-  currentStageId: string;
+  currentStageId: string | null;
 }) {
   return (
     <Card>

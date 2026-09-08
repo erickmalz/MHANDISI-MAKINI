@@ -62,7 +62,12 @@ export interface Project {
   clientName: string;
   site: string;
   currency: "TZS";
-  currentStageId: string;
+  /**
+   * The one open stage the engineer is working. Stored and editable; `null`
+   * until the project has its first stage (a new Account starts empty, so a
+   * freshly-created project has `stages: []` and no current stage).
+   */
+  currentStageId: string | null;
   stages: Stage[];
   alerts: ProjectAlert[];
 }

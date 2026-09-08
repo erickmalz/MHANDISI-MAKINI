@@ -33,7 +33,9 @@ function emptyLine(): DraftLine {
 
 export function PurchaseOrderBuilder({ project }: { project: Project }) {
   const stages = project.stages.slice().sort((a, b) => a.seq - b.seq);
-  const [stageId, setStageId] = useState(project.currentStageId);
+  const [stageId, setStageId] = useState(
+    project.currentStageId ?? stages[0]?.id ?? "",
+  );
   const stage = stages.find((s) => s.id === stageId) ?? stages[0];
 
   const [supplier, setSupplier] = useState("");

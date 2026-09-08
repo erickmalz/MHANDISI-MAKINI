@@ -90,6 +90,54 @@ Expected:
 Paste me the generated `web/drizzle/0003_money_tables.sql` (so I can confirm it
 matches intent) and any failure output from `npm test` / `npm run build`.
 
+---
+
+# Slice 2.2 Part B — read DAL + projection + read-screen cutover
+
+Pure TypeScript on top of the verified `0003` schema. Passes `tsc` in WSL;
+run the rest on Windows / CI.
+
+## What changed
+
+- `src/lib/data/projection.ts` — `computeStageFinancials(tx, stageId)`: builds
+  `StageFinancials` by summing the atomic records inside the RLS transaction
+  (ticket 08 §1). `finance.ts` untouched.
+- `src/lib/data/projects.ts` — `listProjects()`, `getProjectOverview(id)`.
+- `src/lib/data/alerts.ts` — `deriveProjectAlerts()` (computed, not stored).
+- `src/lib/data/index.ts` — barrel; `src/lib/project-view.ts` — pure
+  `getCurrentStage` (now `Stage | undefined`).
+- `src/lib/types.ts` — `Project.currentStageId` is `string | null`.
+- `src/app/(app)/page.tsx` + `projects/[id]/page.tsx` — read from `@/lib/data`,
+  with "no projects" / "no stages" empty states.
+- `mock-data.ts` / `funding-mock.ts` / `procurement-mock.ts` — **retained**, now
+  only feeding the Funding Request Builder and Purchase Order screens (rebuilt
+  in Slices 2.5 / 2.6, deleted then).
+
+## Verify
+
+```powershell
+cd web
+npm run lint
+npm run typecheck
+npm run build          # exercises the read screens against the DAL types
+npm test               # unchanged suite still green
+```
+
+Then, to see it end to end against a real database:
+
+```powershell
+# with `docker compose up -d` and 0003 applied
+npm run dev
+```
+
+Sign up a fresh engineer → the picker shows the **"No projects yet"** empty
+state (a new Account starts empty — nothing is seeded). There is no
+create-project UI yet (Slice 2.4), so that is the expected end state for now.
+
+## Report back
+
+Paste any `lint` / `typecheck` / `build` failures.
+
 ## Notes / deferred
 
 - **`variations`** (guidelines Phase 3 — Change & Forecast Control) is **not** in
