@@ -51,15 +51,30 @@ describe("schema conformance", () => {
     await db.stop();
   });
 
-  it("finds the Slice 2.1 domain tables (sanity — the sweep is not empty)", () => {
+  it("finds the domain tables (sanity — the sweep is not empty)", () => {
     expect(domainTables).toEqual(
       expect.arrayContaining([
+        // Slice 2.1 — structure
         "projects",
         "stages",
         "tasks",
         "suppliers",
         "subcontractors",
         "material_lines",
+        // Slice 2.2 — money
+        "document_number_sequences",
+        "funding_requests",
+        "funding_request_lines",
+        "fee_invoices",
+        "deposits",
+        "purchase_orders",
+        "purchase_order_lines",
+        "delivery_records",
+        "delivery_record_lines",
+        "payment_records",
+        "labour_payments",
+        "petty_cash_expenses",
+        "other_commitments",
       ]),
     );
   });
