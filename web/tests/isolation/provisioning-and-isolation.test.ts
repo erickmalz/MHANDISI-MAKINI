@@ -167,12 +167,20 @@ describe("account provisioning and cross-account isolation", () => {
       ]);
       expect(del.rowCount).toBe(0);
     });
-    // B's rows are untouched.
-    const { rows } = await owner.query<{ name: string }>(
-      "SELECT name FROM projects WHERE id = $1",
-      [graphB.projectId],
-    );
-    expect(rows[0]!.name).toBe("B Residence");
+    // B's rows are untouched — read them back as B (FORCE ROW LEVEL SECURITY
+    // applies to the table owner too, so `owner` cannot see across accounts).
+    const bView = await asAccount(b.accountId, async () => {
+      const project = await app.query<{ name: string }>(
+        "SELECT name FROM projects WHERE id = $1",
+        [graphB.projectId],
+      );
+      const stage = await app.query("SELECT 1 FROM stages WHERE id = $1", [
+        graphB.stageId,
+      ]);
+      return { name: project.rows[0]?.name, stageRows: stage.rowCount };
+    });
+    expect(bView.name).toBe("B Residence");
+    expect(bView.stageRows).toBe(1);
   });
 
   it("WITH CHECK blocks writing another account's account_id", async () => {
