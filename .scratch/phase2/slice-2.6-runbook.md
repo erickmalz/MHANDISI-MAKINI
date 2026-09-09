@@ -1,10 +1,8 @@
 # Slice 2.6 — Purchase Order write lifecycle — runbook
 
-> **Status: built in WSL, awaiting Windows / CI verification.** `npm run lint`
-> and `npm run typecheck` (`next typegen && tsc --noEmit`) are green in WSL.
-> `npm run build` and `npm test` cannot run in WSL (`node_modules` is
-> Windows-built — `lightningcss` / Testcontainers native modules do not load);
-> run them Windows-side or let CI on PR #2 do it.
+> **Verified 2026-09-09** — `lint` + `typecheck` green in WSL; `build` + the
+> full test suite reported green Windows-side by the user. Committed `34824f3`
+> and pushed to `phase2-domain-structure` (PR #2) for CI.
 >
 > **No migration in this slice** — every table + column landed in
 > `0003_money_tables` (Slice 2.2). The 2.2 projection already reads
