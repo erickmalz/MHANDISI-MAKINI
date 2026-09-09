@@ -77,11 +77,17 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-Slices 2.3 and 2.4a are committed and fully verified Windows-side (`build` ✓,
-`test` 30/30 ✓). The same run cleared the outstanding 2.2 Part B `build`
-question. Start **Slice 2.4b** — Tasks (under a stage), the Supplier and
-Subcontractor registers, and Material Take-Off lines. No migration (tables
-landed in `0002`). Follow the pattern 2.4a set: write DAL in
-`src/lib/data/structure.ts` (or a sibling), isomorphic Zod in
+Slices 2.3 and 2.4a are committed, pushed, and fully verified (Windows `build`
+✓ / `test` 30/30 ✓, and CI green on **PR #2** — the WIP preview PR). The same
+run cleared the outstanding 2.2 Part B `build` question.
+
+**Next scope: Slices 2.5 + 2.6 — the Funding Request and Purchase Order write
+lifecycles** (deliberately picked ahead of 2.4b). Detailed handoff, current
+state of the mock builders, and the open scope decision are in
+`.scratch/phase2/slice-2.5-2.6-scope-notes.md` — read that first.
+
+2.4b (Tasks, Supplier / Subcontractor registers, Material Take-Off lines)
+remains queued after that; it follows the pattern 2.4a set (write DAL in
+`src/lib/data/structure.ts` or a sibling, isomorphic Zod in
 `src/lib/validation/`, Server Actions returning `ActionState`, client forms on
-`useActionState`, opaque-UUID routes.
+`useActionState`, opaque-UUID routes).
