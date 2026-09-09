@@ -1,5 +1,10 @@
 # Slice 2.4b — Tasks, reference registers & Material Take-Off — runbook
 
+> **Verified 2026-09-09** — CI run `34395773042` on PR #2 green: `lint`,
+> `typecheck`, the Testcontainers isolation suite (incl. `conformance.test.ts`)
+> and `npm run build` all ✓. No migration in this slice. This runbook is kept
+> for the record; no Windows re-run needed.
+
 > **Pulled ahead of 2.6.** A Purchase Order names a Supplier from the per-Account
 > register (CONTEXT.md), and `purchase_orders` has only a nullable `supplier_id`
 > loose FK and no free-text supplier column — so 2.6 cannot capture a supplier
