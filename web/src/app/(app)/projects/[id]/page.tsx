@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   MapPin,
+  PencilSimple,
   Plus,
   ShoppingCartSimple,
 } from "@phosphor-icons/react/dist/ssr";
@@ -52,6 +53,13 @@ export default async function ProjectOverviewPage({
         <div className="flex flex-col items-end gap-3">
           {health && <HealthBadge health={health} />}
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <Link
+              href={`/projects/${project.id}/edit`}
+              className="inline-flex min-h-12 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              <PencilSimple size={16} aria-hidden="true" />
+              Edit project
+            </Link>
             <Button
               variant="secondary"
               href={`/projects/${project.id}/procurement`}
@@ -86,6 +94,7 @@ export default async function ProjectOverviewPage({
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <StageList
+              projectId={project.id}
               stages={project.stages}
               currentStageId={project.currentStageId}
             />
@@ -98,9 +107,15 @@ export default async function ProjectOverviewPage({
             No stages yet
           </h2>
           <p className="mx-auto mt-2 max-w-prose text-sm text-muted-foreground">
-            This project has no stages, so there are no figures to show. Adding
-            stages and tasks is coming in the next build slice.
+            This project has no stages, so there are no figures to show yet. Add
+            the first stage to start tracking its funding and costs.
           </p>
+          <div className="mt-4 flex justify-center">
+            <Button variant="primary" href={`/projects/${project.id}/stages/new`}>
+              <Plus size={20} aria-hidden="true" />
+              Add the first stage
+            </Button>
+          </div>
         </div>
       )}
     </main>
