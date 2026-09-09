@@ -4,11 +4,11 @@ import type { Project } from "./types";
  * Prototype sample data — modeled loosely on the worked examples in
  * construction-supervision-app-expanded-guidelines.md (§7, §43, §49).
  *
- * The project picker, overview and Purchase Order screens now read real
- * per-Account records through `@/lib/data` (multi-tenancy ticket 08, Slices
- * 2.2–2.3). This file is **retained only** to hand a `Project` to the Funding
- * Request Builder and the still-mocked create screens; it is deleted with
- * `funding-mock.ts` when Slice 2.5/2.6 rebuild those on the DAL (ticket 08 §5).
+ * The project picker, overview, Purchase Order and Funding Request screens now
+ * read real per-Account records through `@/lib/data` (multi-tenancy ticket 08,
+ * Slices 2.2–2.5). This file is **retained only** to hand a `Project` to the
+ * still-mocked Purchase Order create screen; it is deleted when Slice 2.6
+ * rebuilds that on the DAL (ticket 08 §5).
  */
 export const projects: Project[] = [
   {

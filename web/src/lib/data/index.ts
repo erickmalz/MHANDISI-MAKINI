@@ -8,8 +8,8 @@ import "server-only";
  *
  * Slice 2.2 (read side): the project picker and overview. Slice 2.3 adds the
  * Purchase Order read side. Slice 2.4a adds the structure write side (Projects
- * and Stages); the remaining structure writes (2.4b) and the funding /
- * procurement write functions land with Slices 2.4b–2.6.
+ * and Stages). Slice 2.5 adds the Funding Request write lifecycle; the
+ * remaining structure writes (2.4b) and the Purchase Order writes (2.6) follow.
  */
 export { listProjects, getProjectOverview } from "./projects";
 export { listPurchaseOrders, getPurchaseOrder } from "./procurement";
@@ -22,3 +22,17 @@ export {
   updateStage,
   setCurrentStage,
 } from "./structure";
+export {
+  listFundingRequests,
+  getFundingRequest,
+  getFundingRequestDraftInput,
+  createFundingRequestDraft,
+  updateFundingRequestDraft,
+  deleteFundingRequestDraft,
+  issueFundingRequest,
+  supersedeFundingRequest,
+  recordDeposit,
+  voidDeposit,
+  markFeeInvoicePaid,
+  type IssueResult,
+} from "./funding";

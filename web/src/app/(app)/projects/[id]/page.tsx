@@ -5,6 +5,7 @@ import {
   MapPin,
   PencilSimple,
   Plus,
+  Receipt,
   ShoppingCartSimple,
 } from "@phosphor-icons/react/dist/ssr";
 import { getProjectOverview } from "@/lib/data";
@@ -66,6 +67,13 @@ export default async function ProjectOverviewPage({
             >
               <ShoppingCartSimple size={20} aria-hidden="true" />
               Purchase orders
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/funding`}
+            >
+              <Receipt size={20} aria-hidden="true" />
+              Funding requests
             </Button>
             <Button
               variant="primary"
