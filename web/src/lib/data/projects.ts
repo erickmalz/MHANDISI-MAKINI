@@ -19,7 +19,8 @@ import { withAccount, type AccountTx } from "./with-account";
  * `null` (→ the screen calls `notFound()`, ticket 06's "always 404" rule).
  *
  * Reads return the nested `Project` view-model the screens already expect;
- * only the import source changed from `@/lib/mock-data` to `@/lib/data`.
+ * the prototype's `@/lib/mock-data` (deleted in Slice 2.6) has been fully
+ * replaced by per-Account records read through this layer.
  */
 
 async function buildStages(tx: AccountTx, projectId: string): Promise<Stage[]> {

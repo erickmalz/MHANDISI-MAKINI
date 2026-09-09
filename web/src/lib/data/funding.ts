@@ -17,6 +17,7 @@ import type {
 } from "@/lib/validation/funding";
 
 import { getCurrentAccountId } from "./account-context";
+import { claimDocumentNumber, pad3 } from "./document-numbers";
 import {
   deposits,
   feeInvoices,
@@ -54,34 +55,10 @@ const PAYMENT_METHOD_LABELS: Record<string, PaymentMethod> = {
 const iso = (v: Date | string | null): string | null =>
   v == null ? null : v instanceof Date ? v.toISOString() : v;
 
-const pad3 = (n: number) => String(n).padStart(3, "0");
-
 /** `FR-PRJ-2026-001-004`, plus ` v2` from version 2 on. */
 function frDisplayNumber(projectCode: string, base: number, version: number): string {
   const stem = `FR-${projectCode}-${pad3(base)}`;
   return version > 1 ? `${stem} v${version}` : stem;
-}
-
-// --- Number sequences -----------------------------------------------------
-
-/**
- * Claim the next per-project number for `type` (ticket 09 §5). Gap-free and
- * never reused: the row is created at 1 on first use, then bumped in place.
- */
-async function claimDocumentNumber(
-  tx: AccountTx,
-  accountId: string,
-  projectId: string,
-  type: "funding_request" | "fee_invoice" | "purchase_order",
-): Promise<number> {
-  const { rows } = await tx.execute<{ value: number }>(sql`
-    INSERT INTO document_number_sequences (account_id, project_id, type, next_value)
-    VALUES (${accountId}, ${projectId}, ${type}, 2)
-    ON CONFLICT (project_id, type)
-    DO UPDATE SET next_value = document_number_sequences.next_value + 1
-    RETURNING next_value - 1 AS value
-  `);
-  return rows[0].value;
 }
 
 // --- View-model assembly (shared by list + get) --------------------------

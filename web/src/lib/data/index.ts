@@ -10,11 +10,30 @@ import "server-only";
  * Purchase Order read side. Slice 2.4a adds the structure write side (Projects
  * and Stages). Slice 2.5 adds the Funding Request write lifecycle. Slice 2.4b
  * adds the reference registers (Suppliers, Subcontractors) and the remaining
- * structure writes (Tasks, Material Take-Off); the Purchase Order writes (2.6)
- * follow.
+ * structure writes (Tasks, Material Take-Off). Slice 2.6 adds the Purchase
+ * Order write lifecycle.
  */
 export { listProjects, getProjectOverview } from "./projects";
-export { listPurchaseOrders, getPurchaseOrder } from "./procurement";
+export {
+  listPurchaseOrders,
+  getPurchaseOrder,
+  getPurchaseOrderDraftInput,
+  createPurchaseOrderDraft,
+  updatePurchaseOrderDraft,
+  deletePurchaseOrderDraft,
+  issuePurchaseOrder,
+  recordDelivery,
+  voidDelivery,
+  recordPayment,
+  voidPayment,
+  cancelPurchaseOrder,
+  closePurchaseOrder,
+  reopenPurchaseOrder,
+  recordSupplierAck,
+  type POIssueResult,
+  type DeliveryResult,
+  type PaymentResult,
+} from "./procurement";
 export {
   getProjectInput,
   createProject,

@@ -1,12 +1,11 @@
 # Phase 2 — build status
 
-_Last updated: session 01DrZufVZoXMCJSYPHBNqtGZ (2026-09-09) — **Slice 2.4b
-(reference registers + Tasks + Material Take-Off) committed (`85f778b`), pushed,
-and CI-green on PR #2** (run `34395773042`). It was pulled ahead of 2.6 because
-a Purchase Order names a Supplier from the per-Account register (CONTEXT.md) and
-`purchase_orders` has only a nullable loose `supplier_id` — 2.6 could not
-capture a supplier without it. No migration in 2.4b. **Next is Slice 2.6**
-(Purchase Order write lifecycle). Read this first when picking Phase 2 back up
+_Last updated: session 01X8V6MU1w84mGhb766Lou5V (2026-09-09) — **Slice 2.6
+(Purchase Order write lifecycle) built on `phase2-domain-structure`**: `lint` +
+`typecheck` green in WSL, `build` / `test` pending Windows / CI (PR #2). No
+migration. `src/lib/mock-data.ts` is now **deleted** — the prototype sample data
+is entirely gone. Runbook: `.scratch/phase2/slice-2.6-runbook.md`. **Next is
+Slice 2.7** (document rendering). Read this first when picking Phase 2 back up
 in a new session._
 
 ## What Phase 2 is
@@ -37,7 +36,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.4a | **Projects + Stages CRUD** — write DAL (`src/lib/data/structure.ts`: `getProjectInput`/`createProject`/`updateProject`, `getStageInput`/`createStage`/`updateStage`/`setCurrentStage`), isomorphic Zod (`src/lib/validation/structure.ts`), Server Actions (`src/app/actions/{projects,stages}.ts`), forms (`projects/_components/{ProjectForm,StageForm}.tsx`) and routes (`projects/new`, `projects/[id]/edit`, `projects/[id]/stages/new`, `projects/[id]/stages/[stageId]/edit`). Empty states on the picker and overview now link to the create flows. `project_code` (`PRJ-{year}-{NNN}`) minted per-Account in-txn; first stage becomes `current_stage_id`. Routes already carry opaque UUIDs (came with the 2.2 read cutover). | **Done + verified** (commit `893ba28`). `tsc` / `eslint` / `build` / `test` all green. Runbook: `.scratch/phase2/slice-2.4a-runbook.md`. |
 | 2.4b | **Remaining structure CRUD** — write DAL + Server Actions + forms + routes for the Supplier and Subcontractor registers, Tasks (under a stage), and Material Take-Off lines. No migration (tables landed in `0002`). Follows the 2.4a DAL / validation / action-helper pattern. Pulled ahead of 2.6 (2.6 needs the Supplier Register). | **Done + verified** (commit `85f778b`; CI run `34395773042` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.4b-runbook.md`. |
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
-| 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit rules. Supplier picked from the 2.4b register. Rebuild `PurchaseOrderBuilder` + `PurchaseOrderDetail` on the DAL. **Delete** `mock-data.ts` (ticket 08 §5 — `procurement-mock.ts` gone in 2.3, `funding-mock.ts` gone in 2.5). | Not started — **after 2.4b** |
+| 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Built** (`lint` + `typecheck` green in WSL; `build` / `test` pending Windows / CI). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
 | 2.7 | Document rendering (ticket 10) — `puppeteer` + warm Chromium in the app container, 3 React templates + print CSS, PDF + JPG route handlers, app `Dockerfile` (Chromium + `fonts-dejavu-core`). | Not started |
 | 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | Not started |
 
@@ -128,19 +127,40 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
   `/projects/[id]/tasks/[taskId]/edit`. `next typegen` must run before `tsc`
   for the new `PageProps` literals (`npm run typecheck` chains it).
 
+## Key facts for the Purchase Order write DAL (built, 2.6)
+
+- `src/lib/data/procurement.ts` — read (2.3) + write (2.6, appended). Same
+  `withAccount` + RLS rule, no `accountId` in any signature.
+  `supplier_id` is a **loose column** — `supplierIsValid` asserts it points at a
+  live supplier in the Account before every draft write and at Issue.
+- **Numbering** goes through `claimDocumentNumber` / `pad3` in the new
+  `src/lib/data/document-numbers.ts` (extracted from `funding.ts`, which now
+  imports it). `PO-{project_code}-{NNN}`.
+- **Issue** (`issuePurchaseOrder` → `POIssueResult`): `planned → ordered`,
+  freezes `document_snapshot`, sets `ordered_at`. No fee, no version chain — a
+  real change is cancel-and-reissue (ADR 0003).
+- **Delivery / Payment** are append-only with reversal (`voidDelivery` /
+  `voidPayment` set `voided_at` + `void_reason`). Over-limit is a soft block:
+  `recordDelivery` needs `over_delivery_reason` past a line's ordered qty
+  (§42.12); `recordPayment` needs `over_payment_reason` past the ordered total
+  (§42.6). Both only act on an `ordered` PO.
+- **`cancelPurchaseOrder`** (`ordered → cancelled`), **`closePurchaseOrder`**
+  (`ordered → closed`), **`reopenPurchaseOrder`** (`closed → ordered`, §42.14),
+  **`recordSupplierAck`** (a dated note on `ordered`/`closed`).
+- **No `computeStageFinancials` change** in 2.6 — the 2.2 projection already
+  reads `purchase_orders` in `('ordered','closed')` with the ticket-09 §4
+  exposure rule.
+
 ## Immediate next action
 
-Slice 2.4b (registers + Tasks + Material Take-Off) is committed (`85f778b`),
-pushed, and **CI-green on PR #2** (run `34395773042` — `lint` / `typecheck` /
-isolation suite / `build` all ✓). Nothing outstanding.
+**Verify Slice 2.6 on Windows / CI** — `npm run build` + `npm test` in `web/`
+(WSL can only do `lint` + `typecheck`, both green). Runbook:
+`.scratch/phase2/slice-2.6-runbook.md`. If green, record the CI run in the
+runbook like the earlier slices.
 
-**Then: Slice 2.6 — the Purchase Order write lifecycle.** Planned→Ordered Issue
-transaction (freeze snapshot + supplier from the **2.4b Supplier Register**,
-mint `PO-{project}-NNN` via the `claimDocumentNumber` helper in
-`src/lib/data/funding.ts` — it already takes `"purchase_order"`), append-only
-Delivery / Payment records with reversal, over-limit soft-blocks
-(`over_delivery_reason` §42.12, `over_payment_reason` §42.6). Rebuild
-`PurchaseOrderBuilder` + `PurchaseOrderDetail` on the DAL, then **delete
-`mock-data.ts`** (ticket 08 §5 — its only remaining importer is the procurement
-`new` page 2.6 rebuilds). Schema is fully in place (migration `0003`) — no
-migration. The 2.5 funding DAL is the closest pattern to copy.
+**Then: Slice 2.7 — document rendering (ticket 10).** `puppeteer` + warm
+Chromium in the app container, 3 React templates + print CSS, PDF + JPG route
+handlers for the Issued Funding Request, Fee Invoice and Issued Purchase Order
+(each already freezes a `document_snapshot` the renderer reads — never the live
+tables). App `Dockerfile` gains Chromium + `fonts-dejavu-core`. See the memory
+`mhandisi-makini-issued-documents-need-pdf-and-jpg-export`.
