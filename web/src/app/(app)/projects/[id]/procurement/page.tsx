@@ -1,24 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Plus, CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { getProject } from "@/lib/mock-data";
-import { Money } from "@/components/ui/Money";
-import { Button } from "@/components/ui/Button";
+import { getProjectOverview, listPurchaseOrders } from "@/lib/data";
 import {
-  allPurchaseOrders,
   derivePOStatus,
   orderedTotal,
   acceptedValue,
   paidTotal,
-} from "@/lib/procurement-mock";
+} from "@/lib/procurement";
+import { Money } from "@/components/ui/Money";
+import { Button } from "@/components/ui/Button";
 import { POStatusBadge } from "./_components/POStatusBadge";
 
 export default async function ProcurementPage({ params }: PageProps<"/projects/[id]/procurement">) {
   const { id } = await params;
-  const project = getProject(id);
+  const project = await getProjectOverview(id);
   if (!project) notFound();
 
-  const orders = allPurchaseOrders(project);
+  const orders = await listPurchaseOrders(project.id);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -63,11 +62,13 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-card-foreground">{po.number}</span>
+                    <span className="font-bold text-card-foreground">
+                      {po.displayNumber ?? "Draft"}
+                    </span>
                     <POStatusBadge status={status} size="sm" />
                   </div>
                   <p className="mt-1 truncate text-sm text-muted-foreground">
-                    {po.stageName} &middot; {po.supplier}
+                    {po.stageName} &middot; {po.supplierName}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-1 sm:grid sm:grid-cols-3 sm:gap-6 sm:text-right">

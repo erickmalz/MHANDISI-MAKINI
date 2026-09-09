@@ -1,5 +1,6 @@
 import {
   FileText,
+  PencilSimpleLine,
   HandCoins,
   Truck,
   CheckCircle,
@@ -7,11 +8,11 @@ import {
   Prohibit,
   Archive,
 } from "@phosphor-icons/react/dist/ssr";
-import type { POStatus } from "@/lib/procurement-mock";
+import type { POStatus } from "@/lib/procurement";
 
 const STATUS_CONFIG: Record<POStatus, { text: string; bg: string; Icon: typeof FileText }> = {
-  Issued: { text: "text-muted-foreground", bg: "bg-muted", Icon: FileText },
-  Confirmed: { text: "text-health-blue", bg: "bg-health-blue-bg", Icon: FileText },
+  Planned: { text: "text-muted-foreground", bg: "bg-muted", Icon: PencilSimpleLine },
+  Ordered: { text: "text-health-blue", bg: "bg-health-blue-bg", Icon: FileText },
   "Partially Delivered": { text: "text-health-amber", bg: "bg-health-amber-bg", Icon: Truck },
   Delivered: { text: "text-health-blue", bg: "bg-health-blue-bg", Icon: Package },
   "Partially Paid": { text: "text-health-amber", bg: "bg-health-amber-bg", Icon: HandCoins },

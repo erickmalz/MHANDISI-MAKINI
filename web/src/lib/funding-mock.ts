@@ -1,29 +1,16 @@
+import type { TaskLine } from "./funding";
 import type { Stage } from "./types";
 
 /**
- * Illustrative task/material/labour breakdown for the Funding Request
- * Builder prototype. Not real data — derived deterministically from a
- * stage's remaining requirement so the wizard works for any stage without
- * a full take-off/labour-agreement backend yet.
+ * The deterministic sample generator for the Funding Request Builder prototype
+ * — derives an illustrative task / material / labour breakdown from a stage's
+ * remaining requirement so the wizard works without a real take-off backend.
+ *
+ * Not real data. The domain types (`TaskLine`, `MaterialLine`, `LabourLine`)
+ * and the pure helpers (`materialTotal`, `labourTotal`) were promoted to
+ * `@/lib/funding` in Slice 2.3; this file keeps only the throwaway generator
+ * and is deleted when Slice 2.5 rebuilds the builder on the DAL (ticket 08 §5).
  */
-export interface MaterialLine {
-  item: string;
-  qty: number;
-  unit: string;
-  unitCost: number;
-}
-
-export interface LabourLine {
-  subcontractor: string;
-  amount: number;
-}
-
-export interface TaskLine {
-  id: string;
-  name: string;
-  material: MaterialLine[];
-  labour: LabourLine[];
-}
 
 const TASK_NAMES_BY_STAGE: Record<string, [string, string]> = {
   Roofing: ["Roof Trusses & Purlins", "Roofing Sheets & Fixing"],
@@ -32,14 +19,6 @@ const TASK_NAMES_BY_STAGE: Record<string, [string, string]> = {
   "First Floor": ["Blockwork", "Reinforcement & Slab"],
   Finishes: ["Plastering", "Tiling & Painting"],
 };
-
-export function materialTotal(t: TaskLine): number {
-  return t.material.reduce((sum, m) => sum + m.qty * m.unitCost, 0);
-}
-
-export function labourTotal(t: TaskLine): number {
-  return t.labour.reduce((sum, l) => sum + l.amount, 0);
-}
 
 export function tasksForStage(stage: Stage): TaskLine[] {
   const [nameA, nameB] = TASK_NAMES_BY_STAGE[stage.name] ?? [

@@ -8,7 +8,8 @@ import { Money } from "@/components/ui/Money";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StepIndicator } from "@/components/ui/StepIndicator";
-import { tasksForStage, materialTotal, labourTotal, type TaskLine } from "@/lib/funding-mock";
+import { materialTotal, labourTotal, type TaskLine } from "@/lib/funding";
+import { tasksForStage } from "@/lib/funding-mock";
 import { today } from "@/lib/format";
 
 const STEP_LABELS = ["Stage", "Tasks", "Materials", "Labour", "Review", "Issue"] as const;
