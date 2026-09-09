@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { MapPin, Bell, CaretRight, Plus } from "@phosphor-icons/react/dist/ssr";
+import {
+  MapPin,
+  Bell,
+  CaretRight,
+  Plus,
+  Truck,
+  Users,
+} from "@phosphor-icons/react/dist/ssr";
 import { listProjects } from "@/lib/data";
 import { financialHealth } from "@/lib/finance";
 import { getCurrentStage } from "@/lib/project-view";
@@ -98,6 +105,33 @@ export default async function ChooseProjectPage() {
           })}
         </ul>
       )}
+
+      <section className="mt-10 border-t border-border pt-6">
+        <h2 className="text-sm font-bold text-muted-foreground">
+          Reference registers
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Shared across every project.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            href="/suppliers"
+            className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
+          >
+            <Truck size={20} aria-hidden="true" className="shrink-0 text-muted-foreground" />
+            <span className="font-bold text-card-foreground">Supplier register</span>
+            <CaretRight size={16} aria-hidden="true" className="ml-auto text-muted-foreground" />
+          </Link>
+          <Link
+            href="/subcontractors"
+            className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
+          >
+            <Users size={20} aria-hidden="true" className="shrink-0 text-muted-foreground" />
+            <span className="font-bold text-card-foreground">Subcontractor register</span>
+            <CaretRight size={16} aria-hidden="true" className="ml-auto text-muted-foreground" />
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

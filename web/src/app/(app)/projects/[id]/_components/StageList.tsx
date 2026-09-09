@@ -66,6 +66,12 @@ export function StageList({
                 </div>
                 <div className="mt-3 flex items-center gap-4">
                   <Link
+                    href={`/projects/${projectId}/stages/${stage.id}`}
+                    className="text-sm font-bold text-muted-foreground hover:text-foreground"
+                  >
+                    Tasks
+                  </Link>
+                  <Link
                     href={`/projects/${projectId}/stages/${stage.id}/edit`}
                     className="text-sm font-bold text-muted-foreground hover:text-foreground"
                   >
