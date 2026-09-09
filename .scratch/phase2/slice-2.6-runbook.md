@@ -1,8 +1,9 @@
 # Slice 2.6 — Purchase Order write lifecycle — runbook
 
 > **Verified 2026-09-09** — `lint` + `typecheck` green in WSL; `build` + the
-> full test suite reported green Windows-side by the user. Committed `34824f3`
-> and pushed to `phase2-domain-structure` (PR #2) for CI.
+> full test suite reported green Windows-side by the user. Committed `34824f3`,
+> pushed, and **CI-green on PR #2** (run `34403407649` — `lint` / `typecheck` /
+> isolation suite / `build` all ✓).
 >
 > **No migration in this slice** — every table + column landed in
 > `0003_money_tables` (Slice 2.2). The 2.2 projection already reads

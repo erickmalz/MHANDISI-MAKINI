@@ -1,13 +1,13 @@
 # Phase 2 — build status
 
 _Last updated: session 01X8V6MU1w84mGhb766Lou5V (2026-09-09) — **Slice 2.6
-(Purchase Order write lifecycle) committed (`34824f3`) and pushed** to
-`phase2-domain-structure` (PR #2). `lint` + `typecheck` green in WSL; `build` +
-tests green Windows-side (user-confirmed); CI pending. No migration.
-`src/lib/mock-data.ts` is now **deleted** — the prototype sample data is
-entirely gone. Runbook: `.scratch/phase2/slice-2.6-runbook.md`. **Next is
-Slice 2.7** (document rendering). Read this first when picking Phase 2 back up
-in a new session._
+(Purchase Order write lifecycle) committed (`34824f3`), pushed, and CI-green on
+PR #2** (run `34403407649`). No migration. `src/lib/mock-data.ts` is now
+**deleted** — the prototype sample data is entirely gone. Runbook:
+`.scratch/phase2/slice-2.6-runbook.md`. **Next is Slice 2.7** (document
+rendering) — scope + open questions in
+`.scratch/phase2/slice-2.7-scope-notes.md`. Read this first when picking
+Phase 2 back up in a new session._
 
 ## What Phase 2 is
 
@@ -37,7 +37,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.4a | **Projects + Stages CRUD** — write DAL (`src/lib/data/structure.ts`: `getProjectInput`/`createProject`/`updateProject`, `getStageInput`/`createStage`/`updateStage`/`setCurrentStage`), isomorphic Zod (`src/lib/validation/structure.ts`), Server Actions (`src/app/actions/{projects,stages}.ts`), forms (`projects/_components/{ProjectForm,StageForm}.tsx`) and routes (`projects/new`, `projects/[id]/edit`, `projects/[id]/stages/new`, `projects/[id]/stages/[stageId]/edit`). Empty states on the picker and overview now link to the create flows. `project_code` (`PRJ-{year}-{NNN}`) minted per-Account in-txn; first stage becomes `current_stage_id`. Routes already carry opaque UUIDs (came with the 2.2 read cutover). | **Done + verified** (commit `893ba28`). `tsc` / `eslint` / `build` / `test` all green. Runbook: `.scratch/phase2/slice-2.4a-runbook.md`. |
 | 2.4b | **Remaining structure CRUD** — write DAL + Server Actions + forms + routes for the Supplier and Subcontractor registers, Tasks (under a stage), and Material Take-Off lines. No migration (tables landed in `0002`). Follows the 2.4a DAL / validation / action-helper pattern. Pulled ahead of 2.6 (2.6 needs the Supplier Register). | **Done + verified** (commit `85f778b`; CI run `34395773042` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.4b-runbook.md`. |
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
-| 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done** (commit `34824f3`, pushed). `lint` + `typecheck` green in WSL; `build` + tests green Windows-side (user-confirmed); CI pending. Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
+| 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
 | 2.7 | Document rendering (ticket 10) — `puppeteer` + warm Chromium in the app container, 3 React templates + print CSS, PDF + JPG route handlers, app `Dockerfile` (Chromium + `fonts-dejavu-core`). | Not started |
 | 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | Not started |
 
@@ -154,14 +154,13 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-**Verify Slice 2.6 on Windows / CI** — `npm run build` + `npm test` in `web/`
-(WSL can only do `lint` + `typecheck`, both green). Runbook:
-`.scratch/phase2/slice-2.6-runbook.md`. If green, record the CI run in the
-runbook like the earlier slices.
-
-**Then: Slice 2.7 — document rendering (ticket 10).** `puppeteer` + warm
-Chromium in the app container, 3 React templates + print CSS, PDF + JPG route
-handlers for the Issued Funding Request, Fee Invoice and Issued Purchase Order
-(each already freezes a `document_snapshot` the renderer reads — never the live
-tables). App `Dockerfile` gains Chromium + `fonts-dejavu-core`. See the memory
+**Slice 2.7 — document rendering (ticket 10 / ADR 0005).** Full scope, the
+files it touches, and the open questions to settle with the user first are in
+**`.scratch/phase2/slice-2.7-scope-notes.md`** — read that before starting.
+Headline: `puppeteer` + warm in-container Chromium, three React templates +
+print CSS, PDF + JPG route handlers for the Issued Funding Request, Fee Invoice
+and Issued Purchase Order (each already freezes a `document_snapshot` the
+renderer reads — never the live tables). The blocker to raise first is that
+this dev box (WSL, Windows-built `node_modules`, no Docker) cannot run headless
+Chromium — 2.7 needs a verification story before code. See the memory
 `mhandisi-makini-issued-documents-need-pdf-and-jpg-export`.
