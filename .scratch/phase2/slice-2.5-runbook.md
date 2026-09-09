@@ -1,9 +1,10 @@
 # Slice 2.5 — Funding Request write lifecycle — runbook
 
-> WSL-side `tsc --noEmit` + `eslint` are **green**. `npm run build` and
-> `npm test` are Windows / CI (env constraint in `status.md`). **No migration
-> in this slice** — every table + column landed in `0003_money_tables`
-> (Slice 2.2). CI + Windows `build`/`test` is the full check.
+> **Verified 2026-09-09** — CI run `34360555087` on PR #2 green: `lint`,
+> `typecheck`, the Testcontainers isolation suite (incl. `conformance.test.ts`)
+> and `npm run build` all ✓. **No migration in this slice** — every table +
+> column landed in `0003_money_tables` (Slice 2.2). This runbook is kept for
+> the record; no Windows re-run needed.
 
 ## What changed
 

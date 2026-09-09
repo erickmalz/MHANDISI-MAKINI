@@ -1,11 +1,10 @@
 # Phase 2 — build status
 
 _Last updated: session 01PcDRCQ4pQA266ekv4CAqTc (2026-09-09) — Slice 2.5
-(Funding Request write lifecycle) committed. WSL `tsc` + `eslint` green;
-`build` / `test` are **pending Windows / CI** (runbook
-`.scratch/phase2/slice-2.5-runbook.md`). No migration in 2.5. Next is
-**Slice 2.6** (Purchase Order write lifecycle). Read this first when picking
-Phase 2 back up in a new session._
+(Funding Request write lifecycle) committed, pushed, and **CI-green on PR #2**
+(run `34360555087`: `lint` / `typecheck` / isolation suite / `build` all ✓).
+No migration in 2.5. Next is **Slice 2.6** (Purchase Order write lifecycle).
+Read this first when picking Phase 2 back up in a new session._
 
 ## What Phase 2 is
 
@@ -34,7 +33,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.3 | Promote PO / Delivery / Payment / TaskLine types + pure helpers out of `procurement-mock.ts` / `funding-mock.ts` into permanent homes (`src/lib/procurement.ts`, `src/lib/funding.ts`), on **ticket-09 vocabulary** — `POStatus` becomes `Planned \| Ordered \| Partially Delivered \| Delivered \| Partially Paid \| Paid \| Cancelled \| Closed` (drop `Confirmed`/`Issued`), new `derivePOStatus` body operating on stored `status` + non-voided child records. Read DAL: `listPurchaseOrders(projectId)`, `getPurchaseOrder(poId)`. Cut the procurement **list** + **detail** screens to read-only from the DAL. `POStatusBadge` config updated. | **Done + verified** (commit `56b8b3c`). `tsc` / `eslint` / `build` / `test` all green. Runbook: `.scratch/phase2/slice-2.3-runbook.md`. `procurement-mock.ts` **deleted** here (fully dead post-cutover), so 2.6 below no longer deletes it. |
 | 2.4a | **Projects + Stages CRUD** — write DAL (`src/lib/data/structure.ts`: `getProjectInput`/`createProject`/`updateProject`, `getStageInput`/`createStage`/`updateStage`/`setCurrentStage`), isomorphic Zod (`src/lib/validation/structure.ts`), Server Actions (`src/app/actions/{projects,stages}.ts`), forms (`projects/_components/{ProjectForm,StageForm}.tsx`) and routes (`projects/new`, `projects/[id]/edit`, `projects/[id]/stages/new`, `projects/[id]/stages/[stageId]/edit`). Empty states on the picker and overview now link to the create flows. `project_code` (`PRJ-{year}-{NNN}`) minted per-Account in-txn; first stage becomes `current_stage_id`. Routes already carry opaque UUIDs (came with the 2.2 read cutover). | **Done + verified** (commit `893ba28`). `tsc` / `eslint` / `build` / `test` all green. Runbook: `.scratch/phase2/slice-2.4a-runbook.md`. |
 | 2.4b | **Remaining structure CRUD** — write DAL + Server Actions + forms + routes for Tasks (under a stage), the Supplier and Subcontractor registers, and Material Take-Off lines. No migration (tables landed in `0002`). Follows the same DAL / validation / action-helper pattern 2.4a set. | Not started |
-| 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done** (WSL `tsc`/`eslint` green; `build`/`test` pending Windows/CI). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
+| 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit rules. Rebuild `PurchaseOrderBuilder` + `PurchaseOrderDetail` on the DAL. **Delete** `mock-data.ts` (ticket 08 §5 — `procurement-mock.ts` gone in 2.3, `funding-mock.ts` gone in 2.5). | Not started — **next** |
 | 2.7 | Document rendering (ticket 10) — `puppeteer` + warm Chromium in the app container, 3 React templates + print CSS, PDF + JPG route handlers, app `Dockerfile` (Chromium + `fonts-dejavu-core`). | Not started |
 | 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | Not started |
@@ -104,9 +103,8 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-Slice 2.5 is committed on `phase2-domain-structure`. WSL `tsc` + `eslint` green;
-`npm run build` + `npm test` are **pending Windows / CI** — drive them from
-`.scratch/phase2/slice-2.5-runbook.md` and paste any failure.
+Slice 2.5 is committed, pushed, and CI-green on `phase2-domain-structure` / PR
+#2 (run `34360555087` — `build` + isolation suite included). Nothing outstanding.
 
 **Next scope: Slice 2.6 — the Purchase Order write lifecycle.** Planned→Ordered
 Issue transaction (freeze snapshot + supplier, mint `PO-{project}-NNN` via the
