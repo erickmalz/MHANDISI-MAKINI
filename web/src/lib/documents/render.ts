@@ -95,7 +95,7 @@ const FOOTER_TEMPLATE = `
 /** Render an HTML string to an A4 PDF. */
 export async function renderPdf(html: string): Promise<Uint8Array> {
   return withPage(async (page) => {
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "load" });
     return page.pdf({
       format: "A4",
       printBackground: true,
@@ -119,7 +119,7 @@ export async function renderJpg(html: string): Promise<Uint8Array> {
       height: A4_HEIGHT_PX,
       deviceScaleFactor: 2,
     });
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "load" });
     return page.screenshot({ type: "jpeg", quality: 90, fullPage: true });
   });
 }
