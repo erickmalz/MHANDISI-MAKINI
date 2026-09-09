@@ -538,6 +538,7 @@ export async function issuePurchaseOrder(poId: string): Promise<POIssueResult> {
         stageName: stages.name,
         supplierId: purchaseOrders.supplierId,
         supplierName: suppliers.name,
+        supplierPhone: suppliers.phone,
         expectedDeliveryOn: purchaseOrders.expectedDeliveryOn,
         paymentTerms: purchaseOrders.paymentTerms,
         notes: purchaseOrders.notes,
@@ -558,6 +559,7 @@ export async function issuePurchaseOrder(poId: string): Promise<POIssueResult> {
       stageName: string;
       supplierId: string | null;
       supplierName: string | null;
+      supplierPhone: string | null;
       expectedDeliveryOn: string | null;
       paymentTerms: string | null;
       notes: string | null;
@@ -613,6 +615,8 @@ export async function issuePurchaseOrder(poId: string): Promise<POIssueResult> {
       projectName: po.projectName,
       projectCode: po.projectCode,
       counterpartyName: po.supplierName,
+      supplierContact: po.supplierPhone ?? undefined,
+      expectedDeliveryOn: po.expectedDeliveryOn ?? undefined,
       site: po.site,
       stageName: po.stageName,
       sections: [section],

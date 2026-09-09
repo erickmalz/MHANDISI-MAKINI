@@ -11,6 +11,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
 import { formatDate } from "@/lib/format";
@@ -201,6 +202,20 @@ export function PurchaseOrderDetail({
           </p>
         )}
       </Card>
+
+      {!isDraft && po.displayNumber && (
+        <div className="mb-6">
+          <DocumentDownloads
+            links={[
+              {
+                label: `Purchase order ${po.displayNumber}`,
+                pdfHref: `/projects/${projectId}/procurement/${po.id}/document.pdf`,
+                jpgHref: `/projects/${projectId}/procurement/${po.id}/document.jpg`,
+              },
+            ]}
+          />
+        </div>
+      )}
 
       {isDraft ? (
         <DraftActions

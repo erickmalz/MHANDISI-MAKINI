@@ -490,6 +490,9 @@ function buildFundingRequestSnapshot(args: {
   const labour = args.lines.filter((l) => l.category === "labour");
   const other = args.lines.filter((l) => l.category === "other");
 
+  // The scope sections only. The supervision fee is carried as its own field
+  // (`feeAmount`) and rendered as a stand-alone "billed separately" line by the
+  // template — it is never part of the deposit target.
   const sections: DocumentSnapshotSection[] = [];
   const push = (s: DocumentSnapshotSection | null) => {
     if (s) sections.push(s);
@@ -497,11 +500,6 @@ function buildFundingRequestSnapshot(args: {
   push(linesToSection("Materials", material));
   push(linesToSection("Labour", labour));
   push(linesToSection("Other", other));
-  sections.push({
-    title: "Supervision fee (billed separately via Fee Invoice)",
-    lines: [{ label: "Supervision fee for this stage", amount: args.feeAmount }],
-    subtotal: args.feeAmount,
-  });
 
   const target =
     material.reduce((s, l) => s + l.amount, 0) +
@@ -519,6 +517,7 @@ function buildFundingRequestSnapshot(args: {
     stageName: args.stageName,
     sections,
     total: target,
+    feeAmount: args.feeAmount,
     notes: args.notes ?? undefined,
     paymentInstructions: args.paymentInstructions ?? undefined,
     supersedes: args.supersedes ?? undefined,
@@ -527,6 +526,8 @@ function buildFundingRequestSnapshot(args: {
 
 function buildFeeInvoiceSnapshot(args: {
   displayNumber: string;
+  /** The Funding Request version this fee is for. */
+  fundingRequestNumber: string;
   issuedOn: string;
   projectName: string;
   projectCode: string;
@@ -537,31 +538,33 @@ function buildFeeInvoiceSnapshot(args: {
   feePercent: number | null;
   basisValue: number | null;
   feeAmount: number;
+  isDelta: boolean;
+  parentNumber: string | null;
   paymentInstructions: string | null;
 }): DocumentSnapshot {
-  const how =
-    args.feeBasis === "percent" && args.feePercent != null
-      ? `${args.feePercent}% of the stage material + labour scope`
-      : "Fixed supervision fee for this stage";
   return {
     kind: "fee_invoice",
     displayNumber: args.displayNumber,
+    fundingRequestNumber: args.fundingRequestNumber,
     issuedOn: args.issuedOn,
     projectName: args.projectName,
     projectCode: args.projectCode,
     counterpartyName: args.clientName,
     site: args.site,
     stageName: args.stageName,
+    feeBasis: args.feeBasis,
+    feePercent: args.feePercent ?? undefined,
+    basisValue: args.basisValue ?? undefined,
+    isDelta: args.isDelta,
+    parentNumber: args.parentNumber ?? undefined,
     sections: [
       {
         title: "Supervision fee",
         lines: [
           {
-            label: how,
-            description:
-              args.basisValue != null
-                ? `Basis value ${args.basisValue.toLocaleString("en-US")}`
-                : undefined,
+            label: args.isDelta
+              ? "Supervision fee — revision increase"
+              : "Supervision fee for this stage",
             amount: args.feeAmount,
           },
         ],
@@ -768,9 +771,13 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
       .where(eq(fundingRequests.id, frId));
 
     // --- Fee Invoice --------------------------------------------------
-    const feeInvoiceSnapshot = (fiNumber: string) =>
+    const feeInvoiceSnapshot = (
+      fiNumber: string,
+      opts: { isDelta: boolean; parentNumber?: string; feeAmount?: number },
+    ) =>
       buildFeeInvoiceSnapshot({
         displayNumber: fiNumber,
+        fundingRequestNumber: displayNumber,
         issuedOn,
         projectName: fr.projectName,
         projectCode: fr.projectCode,
@@ -780,7 +787,9 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
         feeBasis,
         feePercent: fr.feePercent != null ? Number(fr.feePercent) : null,
         basisValue,
-        feeAmount: fee,
+        feeAmount: opts.feeAmount ?? fee,
+        isDelta: opts.isDelta,
+        parentNumber: opts.parentNumber ?? null,
         paymentInstructions: fr.paymentInstructions,
       });
 
@@ -829,7 +838,9 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           basisValue,
           feeAmount: fee,
           paymentInstructions: fr.paymentInstructions ?? null,
-          documentSnapshot: feeInvoiceSnapshot(priorFee.displayNumber),
+          documentSnapshot: feeInvoiceSnapshot(priorFee.displayNumber, {
+            isDelta: false,
+          }),
           issuedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -859,7 +870,11 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           basisValue,
           feeAmount: delta,
           paymentInstructions: fr.paymentInstructions ?? null,
-          documentSnapshot: feeInvoiceSnapshot(fiNumber),
+          documentSnapshot: feeInvoiceSnapshot(fiNumber, {
+            isDelta: true,
+            parentNumber: priorFee.displayNumber,
+            feeAmount: delta,
+          }),
         });
       }
     } else {
@@ -883,7 +898,7 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
         basisValue,
         feeAmount: fee,
         paymentInstructions: fr.paymentInstructions ?? null,
-        documentSnapshot: feeInvoiceSnapshot(fiNumber),
+        documentSnapshot: feeInvoiceSnapshot(fiNumber, { isDelta: false }),
       });
     }
 

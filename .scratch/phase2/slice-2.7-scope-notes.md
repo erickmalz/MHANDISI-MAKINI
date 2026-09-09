@@ -1,5 +1,12 @@
 # Slice 2.7 — Document rendering (PDF + JPG) — handoff / scope
 
+> **RESOLVED (2026-09-10).** All four open questions below were settled with the
+> user: (1) verification = local dev only, (2) `web/Dockerfile` lands now
+> (provisional), (3) letterhead = name + phone only, (4) no migration. The build
+> is done in WSL and the ordered Windows/CI steps now live in
+> **`.scratch/phase2/slice-2.7-runbook.md`** — use that, not this file, to finish
+> the slice. This file is kept for the design rationale only.
+
 _Written session 01X8V6MU1w84mGhb766Lou5V (2026-09-09), picking up in a new
 context window. Slices 2.1–2.6 are done, verified, pushed, on PR #2
 (`phase2-domain-structure`, last commit `34824f3` + verification commits). No

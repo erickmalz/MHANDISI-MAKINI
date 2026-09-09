@@ -62,6 +62,17 @@ export {
   deleteTask,
 } from "./tasks";
 export {
+  getDocumentProfile,
+  getFundingRequestDocument,
+  getFeeInvoiceDocument,
+  getPurchaseOrderDocument,
+  type DocumentProfile,
+  type DocumentInput,
+  type FundingRequestDocument,
+  type FeeInvoiceDocument,
+  type PurchaseOrderDocument,
+} from "./documents";
+export {
   listFundingRequests,
   getFundingRequest,
   getFundingRequestDraftInput,

@@ -11,6 +11,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
 import { formatDate } from "@/lib/format";
@@ -150,6 +151,29 @@ export function FundingRequestDetail({
           </p>
         )}
       </Card>
+
+      {!isDraft && fr.displayNumber && (
+        <div className="mb-6">
+          <DocumentDownloads
+            links={[
+              {
+                label: `Funding request ${fr.displayNumber}`,
+                pdfHref: `/projects/${projectId}/funding/${fr.id}/document.pdf`,
+                jpgHref: `/projects/${projectId}/funding/${fr.id}/document.jpg`,
+              },
+              ...(fr.feeInvoice
+                ? [
+                    {
+                      label: `Fee Invoice ${fr.feeInvoice.displayNumber}`,
+                      pdfHref: `/projects/${projectId}/funding/${fr.id}/fee-invoice.pdf`,
+                      jpgHref: `/projects/${projectId}/funding/${fr.id}/fee-invoice.jpg`,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </div>
+      )}
 
       {isDraft ? (
         <DraftActions

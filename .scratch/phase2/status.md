@@ -1,13 +1,12 @@
 # Phase 2 — build status
 
-_Last updated: session 01X8V6MU1w84mGhb766Lou5V (2026-09-09) — **Slice 2.6
-(Purchase Order write lifecycle) committed (`34824f3`), pushed, and CI-green on
-PR #2** (run `34403407649`). No migration. `src/lib/mock-data.ts` is now
-**deleted** — the prototype sample data is entirely gone. Runbook:
-`.scratch/phase2/slice-2.6-runbook.md`. **Next is Slice 2.7** (document
-rendering) — scope + open questions in
-`.scratch/phase2/slice-2.7-scope-notes.md`. Read this first when picking
-Phase 2 back up in a new session._
+_Last updated: session 01X8V6MU1w84mGhb766Lou5V (2026-09-10) — **Slice 2.7
+(document rendering) built in WSL, awaiting Windows/CI verification.** Code-only
+(no migration). `tsc` clean except `Cannot find module 'puppeteer'` (installs
+Windows/CI-side); `eslint` clean. Runbook:
+`.scratch/phase2/slice-2.7-runbook.md` — has the ordered Windows-side steps.
+**Not yet committed.** Slice 2.6 remains committed (`34824f3`), pushed, CI-green
+on PR #2. **Next after 2.7 verifies is Slice 2.8** (Account lifecycle)._
 
 ## What Phase 2 is
 
@@ -38,7 +37,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.4b | **Remaining structure CRUD** — write DAL + Server Actions + forms + routes for the Supplier and Subcontractor registers, Tasks (under a stage), and Material Take-Off lines. No migration (tables landed in `0002`). Follows the 2.4a DAL / validation / action-helper pattern. Pulled ahead of 2.6 (2.6 needs the Supplier Register). | **Done + verified** (commit `85f778b`; CI run `34395773042` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.4b-runbook.md`. |
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
-| 2.7 | Document rendering (ticket 10) — `puppeteer` + warm Chromium in the app container, 3 React templates + print CSS, PDF + JPG route handlers, app `Dockerfile` (Chromium + `fonts-dejavu-core`). | Not started |
+| 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **Built (WSL), awaiting Windows/CI verify** — not committed. Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
 | 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | Not started |
 
 ## Key facts for the projection / DAL (already built, 2.2)
@@ -152,15 +151,39 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
   reads `purchase_orders` in `('ordered','closed')` with the ticket-09 §4
   exposure rule.
 
+## Key facts for document rendering (built, 2.7)
+
+- `src/lib/data/schema/snapshot.ts` — `DocumentSnapshot` is a `kind`-union
+  (`FundingRequestSnapshot` / `FeeInvoiceSnapshot` / `PurchaseOrderSnapshot`).
+  The three Issue writers in `funding.ts` / `procurement.ts` were updated in
+  lockstep — this is the only change that rides the 2.5 / 2.6 Issue-transaction
+  tests, so `npm test` on Windows/CI is the real check on it.
+- `src/lib/documents/` — the render module. `renderDocument(doc, "pdf"|"jpg")`
+  is the entry point; `serveDocument(...)` in `response.ts` is what the route
+  handlers call. `puppeteer` is a **dynamic** `import()` and is in
+  `serverExternalPackages` — the server bundle never tries to bundle Chromium.
+- `src/lib/data/documents.ts` — read side. The **stamp** (`SUPERSEDED` /
+  `CANCELLED` / `PAID — {date}`) is derived from the *live* row here, never
+  frozen. The **letterhead** (`getDocumentProfile`) is the live Account
+  `full_name` + `phone` — logo + email come with 2.8.
+- Route Handlers do **not** run the `(app)` layout, so the auth gate is the
+  DAL's `verifySession` (a thrown `NotAuthenticatedError` → 404 in
+  `serveDocument`). Draft / cross-account / missing → 404; render overload →
+  503.
+- `web/Dockerfile` is **provisional** — it exists to pin the Chromium deps +
+  `fonts-dejavu-core` + ~1 GB RAM floor. The deployment-shape slice owns the
+  real image.
+
 ## Immediate next action
 
-**Slice 2.7 — document rendering (ticket 10 / ADR 0005).** Full scope, the
-files it touches, and the open questions to settle with the user first are in
-**`.scratch/phase2/slice-2.7-scope-notes.md`** — read that before starting.
-Headline: `puppeteer` + warm in-container Chromium, three React templates +
-print CSS, PDF + JPG route handlers for the Issued Funding Request, Fee Invoice
-and Issued Purchase Order (each already freezes a `document_snapshot` the
-renderer reads — never the live tables). The blocker to raise first is that
-this dev box (WSL, Windows-built `node_modules`, no Docker) cannot run headless
-Chromium — 2.7 needs a verification story before code. See the memory
-`mhandisi-makini-issued-documents-need-pdf-and-jpg-export`.
+**Verify Slice 2.7 Windows-side, then commit.** Follow the ordered steps in
+**`.scratch/phase2/slice-2.7-runbook.md`** ("Windows-side / CI steps"):
+`npm install` (pulls `puppeteer` + its Chromium), `typecheck` / `lint` / `test`
+/ `build`, then `npm run dev` and download all six documents for a project that
+has an issued FR + Fee Invoice + issued PO. Commit as
+`Phase 2 Slice 2.7: issued-document rendering (PDF + JPG)`, then the
+verification commit once CI is green (2.5 / 2.6 pattern).
+
+**After 2.7:** Slice 2.8 — Account lifecycle (ticket 02): hard-delete +
+maintenance-role sweep, JSON data export, profile edit (name / phone / **logo**
+for the letterhead — which 2.7 deliberately left to this slice).
