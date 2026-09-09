@@ -1,5 +1,8 @@
 # Slice 2.4a — Projects + Stages CRUD — runbook
 
+> **Verified 2026-09-09** (commit `893ba28`): `lint` / `typecheck` / `build` /
+> `test` (30/30) all green Windows-side. This runbook is kept for the record.
+
 **No migration in this slice.** The `projects` and `stages` tables (and every
 column this slice writes) landed in `0002_domain_structure` with Slice 2.1.
 Slice 2.4a is pure TypeScript on top of it — `tsc --noEmit` and `eslint`

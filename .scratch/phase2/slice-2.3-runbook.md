@@ -1,5 +1,8 @@
 # Slice 2.3 — procurement types + read DAL + read-screen cutover — runbook
 
+> **Verified 2026-09-09** (commit `56b8b3c`): `lint` / `typecheck` / `build` /
+> `test` (30/30) all green Windows-side. This runbook is kept for the record.
+
 **No migration in this slice.** The money schema (incl. every `purchase_orders`
 / `*_lines` / `delivery_records` / `payment_records` column this slice reads)
 landed in `0003_money_tables` with Slice 2.2. Slice 2.3 is pure TypeScript on
