@@ -54,6 +54,12 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
           <span className="hidden max-w-[16ch] truncate text-sm text-white/70 sm:block">
             {userEmail}
           </span>
+          <Link
+            href="/settings"
+            className="shrink-0 rounded-lg px-3 py-2 text-sm font-bold text-on-inverse hover:bg-white/10"
+          >
+            Settings
+          </Link>
           <SignOutButton />
         </div>
       </div>

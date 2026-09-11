@@ -88,6 +88,17 @@ html, body {
   padding-bottom: var(--mm-space-3);
   border-bottom: 3px solid var(--mm-yellow);
 }
+.letterhead__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--mm-space-3);
+}
+.letterhead__logo {
+  height: 40px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+}
 .letterhead__name {
   font-size: var(--mm-size-page-title);
   font-weight: var(--mm-weight-bold);
@@ -100,6 +111,8 @@ html, body {
   text-align: right;
   white-space: nowrap;
 }
+.letterhead__contact p { margin: 0; }
+.letterhead__contact p + p { margin-top: 2px; }
 .letterhead__tagline {
   font-size: var(--mm-size-label);
   color: var(--mm-text-secondary);

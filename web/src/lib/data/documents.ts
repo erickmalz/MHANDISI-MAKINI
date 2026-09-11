@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 
 import {
   accounts,
+  auth_user,
   feeInvoices,
   fundingRequests,
   purchaseOrders,
@@ -25,11 +26,10 @@ import { withAccount, type AccountTx } from "./with-account";
  * Each getter returns the frozen `document_snapshot` plus two things the
  * snapshot deliberately does not carry:
  *
- *  - **`profile`** — the Engineer's current business name and phone for the
- *    letterhead. A corrected phone is the Engineer representing themselves, not
- *    a term of a past deal, so it renders live (ticket 10 §3). Logo and email
- *    arrive with the Slice 2.8 profile-edit work; until then the letterhead is
- *    name + phone, and the template falls back to the name alone.
+ *  - **`profile`** — the Engineer's current business name, phone, email and
+ *    letterhead logo. A corrected phone/logo is the Engineer representing
+ *    themselves, not a term of a past deal, so it renders live (ticket 10
+ *    §3), sourced from the Slice 2.8 profile edit at `/settings`.
  *  - **`stamp`** — the diagonal lifecycle stamp (`SUPERSEDED` / `CANCELLED` /
  *    `PAID — {date}`). It reflects the record's state *now*, which changes after
  *    Issue, so it is derived here from the live row, never frozen.
@@ -43,6 +43,15 @@ export interface DocumentProfile {
   businessName: string;
   /** Their contact phone — always present (`accounts.phone`). */
   phone: string;
+  /** The Account's sign-in email (`auth_user.email`) — read-only on the letterhead. */
+  email: string;
+  /**
+   * The letterhead logo as an inline `data:` URI, or `null` when none is set.
+   * Documents render via Puppeteer from a static HTML string with no asset
+   * server (ticket 10's "rendered on demand, never stored" principle), so the
+   * bytes are inlined here rather than a URL Chromium would have to fetch.
+   */
+  logoDataUrl: string | null;
 }
 
 export interface FundingRequestDocument {
@@ -77,10 +86,26 @@ export type DocumentInput =
 
 async function readProfile(tx: AccountTx): Promise<DocumentProfile | null> {
   const [row] = await tx
-    .select({ businessName: accounts.fullName, phone: accounts.phone })
+    .select({
+      businessName: accounts.fullName,
+      phone: accounts.phone,
+      email: auth_user.email,
+      logo: accounts.logo,
+      logoContentType: accounts.logoContentType,
+    })
     .from(accounts)
+    .innerJoin(auth_user, eq(auth_user.id, accounts.userId))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  return {
+    businessName: row.businessName,
+    phone: row.phone,
+    email: row.email,
+    logoDataUrl:
+      row.logo && row.logoContentType
+        ? `data:${row.logoContentType};base64,${row.logo.toString("base64")}`
+        : null,
+  };
 }
 
 /** The Engineer's letterhead identity, or `null` when unauthenticated. */

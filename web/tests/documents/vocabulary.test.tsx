@@ -15,7 +15,12 @@ import { renderDocumentHtml } from "@/lib/documents/templates/render-html";
  * cannot silently reword the fee-separation sentence.
  */
 
-const profile = { businessName: "Juma Site Works", phone: "+255 712 000 000" };
+const profile = {
+  businessName: "Juma Site Works",
+  phone: "+255 712 000 000",
+  email: "juma@example.com",
+  logoDataUrl: null,
+};
 
 const fundingRequest: FundingRequestDocument = {
   kind: "funding_request",

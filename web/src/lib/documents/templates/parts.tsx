@@ -47,11 +47,23 @@ export function Shell({
       ) : null}
 
       <header className="letterhead">
-        <div>
-          <p className="letterhead__name">{profile.businessName}</p>
-          <p className="letterhead__tagline">Let&rsquo;s build together</p>
+        <div className="letterhead__brand">
+          {profile.logoDataUrl ? (
+            // Puppeteer renders this from a static HTML string, outside Next's
+            // image pipeline; a data: URI is the whole point here (no asset
+            // server to fetch).
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="letterhead__logo" src={profile.logoDataUrl} alt="" />
+          ) : null}
+          <div>
+            <p className="letterhead__name">{profile.businessName}</p>
+            <p className="letterhead__tagline">Let&rsquo;s build together</p>
+          </div>
         </div>
-        <div className="letterhead__contact">{profile.phone}</div>
+        <div className="letterhead__contact">
+          <p>{profile.phone}</p>
+          <p>{profile.email}</p>
+        </div>
       </header>
 
       <div className="dochead">

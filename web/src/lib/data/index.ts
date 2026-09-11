@@ -73,6 +73,14 @@ export {
   type PurchaseOrderDocument,
 } from "./documents";
 export {
+  getAccountProfile,
+  updateAccountProfile,
+  setAccountLogo,
+  getAccountLogo,
+  type AccountProfile,
+  type AccountLogo,
+} from "./account-profile";
+export {
   listFundingRequests,
   getFundingRequest,
   getFundingRequestDraftInput,
