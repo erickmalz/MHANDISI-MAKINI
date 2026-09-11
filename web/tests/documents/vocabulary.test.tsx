@@ -104,8 +104,8 @@ const purchaseOrder: PurchaseOrderDocument = {
 };
 
 describe("document templates — vocabulary + number formats", () => {
-  it("Funding Request keeps its number format and fee-separation wording", () => {
-    const html = renderDocumentHtml(fundingRequest);
+  it("Funding Request keeps its number format and fee-separation wording", async () => {
+    const html = await renderDocumentHtml(fundingRequest);
     expect(html).toContain("FR-PRJ-2026-001-004 v2");
     expect(html).toContain("Funding request");
     expect(html).toContain("TZS 12,000,000");
@@ -115,8 +115,8 @@ describe("document templates — vocabulary + number formats", () => {
     expect(html).toContain("06 Sep 2026");
   });
 
-  it("Fee Invoice states it is billed separately from project funds", () => {
-    const html = renderDocumentHtml(feeInvoice);
+  it("Fee Invoice states it is billed separately from project funds", async () => {
+    const html = await renderDocumentHtml(feeInvoice);
     expect(html).toContain("FI-PRJ-2026-001-002");
     expect(html).toContain("Fee Invoice");
     expect(html).toContain(
@@ -129,8 +129,8 @@ describe("document templates — vocabulary + number formats", () => {
     expect(html).toContain("stamp--paid");
   });
 
-  it("Purchase Order shows the order as issued, with a CANCELLED stamp", () => {
-    const html = renderDocumentHtml(purchaseOrder);
+  it("Purchase Order shows the order as issued, with a CANCELLED stamp", async () => {
+    const html = await renderDocumentHtml(purchaseOrder);
     expect(html).toContain("PO-PRJ-2026-001-007");
     expect(html).toContain("Purchase Order");
     expect(html).toContain("Deliver to");
@@ -141,9 +141,9 @@ describe("document templates — vocabulary + number formats", () => {
     expect(html).not.toContain("Delivered (accepted)");
   });
 
-  it("screenshot variant swaps in the in-flow footer", () => {
-    const pdfHtml = renderDocumentHtml(fundingRequest);
-    const jpgHtml = renderDocumentHtml(fundingRequest, { screenshot: true });
+  it("screenshot variant swaps in the in-flow footer", async () => {
+    const pdfHtml = await renderDocumentHtml(fundingRequest);
+    const jpgHtml = await renderDocumentHtml(fundingRequest, { screenshot: true });
     expect(pdfHtml).toContain('<body class="">');
     expect(jpgHtml).toContain('<body class="screenshot">');
   });

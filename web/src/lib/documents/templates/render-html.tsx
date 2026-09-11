@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 
 import type { DocumentInput } from "@/lib/data/documents";
 
@@ -24,11 +23,16 @@ function pickTemplate(doc: DocumentInput): ReactElement {
  * HTML string for Chromium. `screenshot: true` adds the body class the print
  * stylesheet uses to swap page furniture for the single continuous-image layout
  * (ticket 10 §4).
+ *
+ * `react-dom/server` is imported dynamically so Next's build does not mistake
+ * this render helper for a component tree — it runs only inside the document
+ * Route Handlers, never in a page render.
  */
-export function renderDocumentHtml(
+export async function renderDocumentHtml(
   doc: DocumentInput,
   opts: { screenshot?: boolean } = {},
-): string {
+): Promise<string> {
+  const { renderToStaticMarkup } = await import("react-dom/server");
   const inner = renderToStaticMarkup(pickTemplate(doc));
 
   return (

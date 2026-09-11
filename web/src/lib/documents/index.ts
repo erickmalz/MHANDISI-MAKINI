@@ -32,14 +32,14 @@ export async function renderDocument(
 
   if (format === "pdf") {
     return {
-      bytes: await renderPdf(renderDocumentHtml(doc)),
+      bytes: await renderPdf(await renderDocumentHtml(doc)),
       contentType: "application/pdf",
       filename: `${base}.pdf`,
     };
   }
 
   return {
-    bytes: await renderJpg(renderDocumentHtml(doc, { screenshot: true })),
+    bytes: await renderJpg(await renderDocumentHtml(doc, { screenshot: true })),
     contentType: "image/jpeg",
     filename: `${base}.jpg`,
   };
