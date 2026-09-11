@@ -1,24 +1,23 @@
 # Phase 2 — build status
 
-_Last updated: session 019NitCcfKmLXMbTJXqxe87s (2026-09-11) — **Slice 2.7
-(document rendering) has 4 commits on `phase2-domain-structure`** (`8f84f0a`
-issued-document rendering, `fada09a` package-lock sync, `2b73256` puppeteer
-`waitUntil` fix, `fa890ad` make `renderDocumentHtml` async + dynamic-import
-`react-dom/server`). The first 3 are pushed; **CI (`web` job, PR #2) failed on
-the pushed head** (`2b73256`) with a Turbopack build error — a Route Handler's
-import chain pulled in `react-dom/server`, which Next 16 refuses to bundle
-outside a Server Component
-(`./src/lib/documents/templates/render-html.tsx:2:1`, full trace in run
-`34408652044`). The unpushed 4th commit (`fa890ad`) fixes exactly that: the
-import is now dynamic (`await import("react-dom/server")`) inside an async
-`renderDocumentHtml`, scoped to the Route Handlers that actually call it.
-**Not yet pushed, so not yet CI-verified.** `tsc` / `eslint` are clean on the
-working tree in WSL; `vitest` cannot run in WSL (native `rolldown` binding is
-Windows-built) and `npm run build` needs the real `next build` — both are
-Windows/CI-side per the runbook. Slice 2.6 remains committed (`34824f3`),
-pushed, CI-green on PR #2. **Next: push `fa890ad`, confirm the `web` CI job
-goes green, then run the Windows-side manual document-download check before
-calling 2.7 done. After that, Slice 2.8** (Account lifecycle)._
+_Last updated: session 019NitCcfKmLXMbTJXqxe87s (2026-09-11) — **Slice 2.7 is
+CI-green.** All 4 commits (`8f84f0a`, `fada09a`, `2b73256`, `fa890ad`) are
+pushed; PR #2's `web` CI job passed clean on run `34639373574` (lint /
+typecheck / isolation suite / build all ✓), confirming the `react-dom/server`
+dynamic-import fix worked. Still outstanding before calling 2.7 fully done:
+the Windows-side manual document-download smoke check + a verification
+commit (2.5/2.6 pattern) — not yet done.
+
+**Slice 2.8 (Account lifecycle) is started.** Part 1 (schema only — see
+`.scratch/phase2/slice-2.8-runbook.md`) is written: three new nullable
+columns on `accounts` (`logo` bytea + `logo_content_type`,
+`deletion_scheduled_at`), no new tables — every domain table already cascades
+from `accounts.id`, so the eventual maintenance-role sweep is one
+`DELETE FROM auth_user` per expired account. `tsc` / `eslint` clean in WSL.
+**Not yet migrated** — needs `npm run db:generate` Windows-side (the runbook
+has the exact command + the grant to hand-append) before Part 2 (profile
+edit / logo upload DAL + UI), Part 3 (JSON export) or Part 4 (deletion
+request + sweep script) start, per the verify-migration-before-building rule._
 
 ## What Phase 2 is
 
@@ -50,7 +49,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
 | 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **4 commits, 3 pushed + CI-red, 1 local fix unpushed** — `8f84f0a`/`fada09a`/`2b73256` pushed, PR #2 `web` CI job failed (Turbopack: `react-dom/server` imported outside a Server Component); `fa890ad` (local) fixes it via dynamic import, not yet pushed/verified. Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
-| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | Not started |
+| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Started — Part 1 (schema) written, unmigrated.** `logo`/`logo_content_type`/`deletion_scheduled_at` added to `accounts`. Parts 2–4 (DAL/actions/UI/sweep) not started. Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
 
 ## Key facts for the projection / DAL (already built, 2.2)
 
@@ -188,16 +187,16 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-**Push `fa890ad`, then verify Slice 2.7 Windows-side.** The commit is already
-made locally (fixes the PR #2 `web` CI failure — `react-dom/server` imported
-outside a Server Component). Push it, confirm the `web` CI job goes green on
-PR #2, then follow the remaining ordered steps in
-**`.scratch/phase2/slice-2.7-runbook.md`** ("Windows-side / CI steps"):
-`npm install` (pulls `puppeteer` + its Chromium), `typecheck` / `lint` / `test`
-/ `build`, then `npm run dev` and download all six documents for a project that
-has an issued FR + Fee Invoice + issued PO. Once that passes, record the
-verification commit (2.5 / 2.6 pattern).
+Two independent threads are open:
 
-**After 2.7:** Slice 2.8 — Account lifecycle (ticket 02): hard-delete +
-maintenance-role sweep, JSON data export, profile edit (name / phone / **logo**
-for the letterhead — which 2.7 deliberately left to this slice).
+1. **Close out Slice 2.7**: CI is green on PR #2, but the runbook's Windows-side
+   manual smoke check is still outstanding — `npm run dev`, download all six
+   documents for a project with an issued FR + Fee Invoice + issued PO, then
+   record the verification commit (2.5 / 2.6 pattern).
+2. **Slice 2.8, Part 1 → Part 2**: run `npm run db:generate -- --name
+   account_lifecycle` Windows-side (exact steps + the grant to hand-append in
+   **`.scratch/phase2/slice-2.8-runbook.md`**), apply + verify it (`db:migrate`,
+   `test`, `lint`, `typecheck`, `build`), report the output back, then Part 2
+   (profile edit + logo upload DAL/UI) can start. Two open product calls flagged
+   in the runbook before Part 2: the settings route's URL path, and logo upload
+   size/MIME limits.
