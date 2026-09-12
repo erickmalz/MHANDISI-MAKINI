@@ -50,7 +50,12 @@ export default async function SuppliersPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-card-foreground">{s.name}</span>
+                  <Link
+                    href={`/suppliers/${s.id}`}
+                    className="font-bold text-card-foreground hover:underline"
+                  >
+                    {s.name}
+                  </Link>
                   {s.status === "inactive" && (
                     <span className="rounded bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
                       Inactive

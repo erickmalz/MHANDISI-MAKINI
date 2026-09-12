@@ -51,7 +51,12 @@ export default async function SubcontractorsPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-card-foreground">{s.name}</span>
+                  <Link
+                    href={`/subcontractors/${s.id}`}
+                    className="font-bold text-card-foreground hover:underline"
+                  >
+                    {s.name}
+                  </Link>
                   {s.trade && (
                     <span className="rounded bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
                       {s.trade}
