@@ -22,6 +22,18 @@ timeline **stays out of scope**, per ticket 01's existing ruling
 narrower, different feature (one proof file per financial record, not a
 photo log), not a reopening of that decision.
 
+**Implementation scoping note (Slice 4)**: the `attachments` table + DAL
+(`setAttachment`/`getAttachmentMeta`/`getAttachmentFile`) support all three
+targets equally. The **UI this slice only wires the Purchase Order target** —
+`PurchaseOrderDetail.tsx` is a large (~800-line), already-working client
+component, and threading a per-row upload widget into its Payments list
+would mean restructuring several `useActionState` forms inside it. Rather
+than risk that file for this pass, the attachment card is a small,
+self-contained addition at the *page* level. Payment / Labour Payment upload
+widgets are a fast-follow — same DAL, just their own small card wherever
+those records are shown. ≤5MB, PDF/PNG/JPEG (the ticket doesn't specify a
+limit; a receipt scan is realistically bigger than the 1MB logo cap).
+
 ### 2. Stage templates
 
 A per-Account register (starts empty, like Suppliers/Subcontractors) of

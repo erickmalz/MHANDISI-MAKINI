@@ -14,7 +14,8 @@ import {
   voidDeliveryAction,
   voidPaymentAction,
 } from "@/app/actions/procurement";
-import { getPurchaseOrder } from "@/lib/data";
+import { getAttachmentMeta, getPurchaseOrder } from "@/lib/data";
+import { AttachmentCard } from "./_components/AttachmentCard";
 import { PurchaseOrderDetail } from "./_components/PurchaseOrderDetail";
 
 export default async function PurchaseOrderPage({
@@ -24,7 +25,10 @@ export default async function PurchaseOrderPage({
   const { id, poId } = await params;
   const { issue_error } = await searchParams;
 
-  const po = await getPurchaseOrder(poId);
+  const [po, attachment] = await Promise.all([
+    getPurchaseOrder(poId),
+    getAttachmentMeta("purchaseOrder", poId),
+  ]);
   if (!po || po.projectId !== id) notFound();
 
   const voidDeliveryActions = Object.fromEntries(
@@ -66,6 +70,10 @@ export default async function PurchaseOrderPage({
         voidDeliveryActions={voidDeliveryActions}
         voidPaymentActions={voidPaymentActions}
       />
+
+      <div className="mt-6">
+        <AttachmentCard projectId={id} poId={po.id} attachment={attachment} />
+      </div>
     </main>
   );
 }

@@ -25,11 +25,16 @@ import type { AccountTx } from "./with-account";
  *   doesn't carry. Runs its own targeted queries inside the caller's
  *   `withAccount` transaction, same pattern as `./projection.ts`.
  *
+ * "Missing receipt" / "missing delivery note" (§33) both key off whether a
+ * Purchase Order has an attachment (Operational Control decision 1) — with
+ * one attachment slot per PO rather than per delivery/payment, the two
+ * collapse to the same underlying signal, worded by whichever milestone
+ * (delivered vs delivered-and-paid) was actually reached.
+ *
  * Deferred to Phase 3 (`.scratch/operational-control/map.md`): every Control
- * Alert (variations, closeout, reconciliation don't exist yet), "cost
+ * Alert (variations, closeout, reconciliation don't exist yet) and "cost
  * variance above threshold" (needs Budget Revisions' "revised" values to be
- * meaningful), and "missing receipt" / "missing delivery note" (need
- * Document Attachments, a later slice in this same phase).
+ * meaningful).
  */
 
 /** The purely arithmetic alerts — no query, just the already-projected figures. */
@@ -151,6 +156,7 @@ export async function computeStageAlerts(
       qty_ordered_total: string;
       qty_delivered_total: string;
       paid_total: string;
+      has_attachment: boolean;
     }>(sql`
       SELECT
         po.id,
@@ -166,7 +172,8 @@ export async function computeStageAlerts(
                     JOIN purchase_order_lines pol ON pol.id = drl.purchase_order_line_id
                    WHERE pol.purchase_order_id = po.id AND dr.voided_at IS NULL), 0) AS qty_delivered_total,
         COALESCE((SELECT SUM(p.amount) FROM payment_records p
-                   WHERE p.purchase_order_id = po.id AND p.voided_at IS NULL), 0) AS paid_total
+                   WHERE p.purchase_order_id = po.id AND p.voided_at IS NULL), 0) AS paid_total,
+        EXISTS(SELECT 1 FROM attachments a WHERE a.purchase_order_id = po.id) AS has_attachment
       FROM purchase_orders po
       WHERE po.stage_id = ${stageId} AND po.status = 'ordered'
     `)
@@ -205,6 +212,28 @@ export async function computeStageAlerts(
         message: `${label} is fully delivered but not fully paid.`,
         href,
       });
+    }
+
+    // "Missing delivery note" / "missing receipt" (§33) — one attachment
+    // slot per PO (decision 1), not one per delivery/payment, so both
+    // collapse to the same underlying signal: nothing has been attached yet,
+    // worded by whichever milestone was actually reached.
+    if (!po.has_attachment) {
+      if (fullyDelivered && paidTotal >= orderedTotal) {
+        alerts.push({
+          id: `po-missing-receipt-${po.id}`,
+          severity: "info",
+          message: `${label} is fully delivered and paid but has no receipt or invoice attached.`,
+          href,
+        });
+      } else if (fullyDelivered) {
+        alerts.push({
+          id: `po-missing-delivery-note-${po.id}`,
+          severity: "info",
+          message: `${label} is fully delivered but has no delivery note attached.`,
+          href,
+        });
+      }
     }
   }
 

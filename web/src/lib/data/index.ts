@@ -107,3 +107,11 @@ export {
   type SupplierStatement,
   type SubcontractorStatement,
 } from "./statements";
+export {
+  getAttachmentMeta,
+  getAttachmentFile,
+  setAttachment,
+  type AttachmentTarget,
+  type AttachmentMeta,
+  type AttachmentFile,
+} from "./attachments";

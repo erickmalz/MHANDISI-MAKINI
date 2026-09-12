@@ -43,6 +43,13 @@
       "when": 1789198819619,
       "tag": "0005_account_deletion_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789215028773,
+      "tag": "0006_attachments",
+      "breakpoints": true
     }
   ]
 }

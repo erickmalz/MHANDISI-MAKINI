@@ -34,3 +34,6 @@ export * from "./payment-records";
 export * from "./labour-payments";
 export * from "./petty-cash-expenses";
 export * from "./other-commitments";
+
+// Operational Control Slice 4 — migration `0006_attachments`.
+export * from "./attachments";
