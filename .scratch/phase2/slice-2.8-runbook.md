@@ -138,14 +138,13 @@ live, so the rest could be written now:
   of the form once set.
 - **Cancel on sign-in** (**blocked on the migration below — do not wire yet**):
   sign-in doesn't go through one of our Server Actions — `sign-in/page.tsx`
-  calls `authClient.signIn.email` straight to better-auth's own route. The
-  hook point is `databaseHooks.session.create.after` in
-  `src/lib/auth/index.ts` (fires on sign-in, and signup/verify-email's
-  `autoSignIn`, harmlessly): `after: (session) => db.execute(sql`SELECT
-  app.cancel_account_deletion(${session.userId})`)`. This needs the
-  SECURITY DEFINER function below to exist first — adding the hook before the
-  function exists would make **every** sign-in throw, not just the deletion
-  path, so this one line is deliberately not in yet.
+  calls `authClient.signIn.email` straight to better-auth's own route. **Now
+  wired**: `databaseHooks.session.create.after` in `src/lib/auth/index.ts`
+  calls `app.cancel_account_deletion(session.userId)` via `db.execute`. This
+  went in together with migration `0005` below in the same commit — the two
+  can't be separated (the hook throws on every sign-in until the function
+  exists), so this only landed once the migration was generated and its
+  content confirmed correct.
 - **Sweep** (done, but only runnable once the migration below lands):
   `web/scripts/sweep-deletions.ts` (mirrors `bootstrap-db.ts`'s shape),
   connects as `maintenance` via `MAINTENANCE_DATABASE_URL` (already in
@@ -160,20 +159,34 @@ live, so the rest could be written now:
   **deployment-shape decision, not yet made** — out of scope here beyond
   making the script runnable on demand.
 
-### Generate + apply migration `0005` (Windows-side)
+### Migration `0005` — generated, not yet applied to any real database
 
 This one has no Drizzle schema change to diff (same situation as `0001`'s RLS
-+ provisioning migration) — generate it **custom**, empty, then hand-write the
-body:
++ provisioning migration), so it was generated **custom**, empty, then
+hand-filled — but *not* via the project's own `web/node_modules` (Windows-built
+native binaries don't run under WSL). Instead: a throwaway copy of
+`package.json` + `drizzle.config.ts` + `src/lib/data/schema/` + the existing
+`drizzle/` folder in a scratch directory, `npm install` there (a genuine
+Linux-native `drizzle-kit`/`esbuild`, isolated from the real `web/node_modules`
+so the Windows dev setup is untouched), then the real
+`npx drizzle-kit generate --custom --name account_deletion_privileges` — the
+actual tool, not hand-typed journal/snapshot JSON. The resulting
+`0005_snapshot.json` was diffed against `0004_snapshot.json` to confirm only
+the `id`/`prevId` chain fields differ (no accidental schema drift), before
+copying the three generated files (`.sql`, the new snapshot, `_journal.json`)
+back into `web/drizzle/`.
 
-```powershell
-cd web
-npm run db:generate -- --custom --name account_deletion_privileges
-```
+**Still needed**: `db:migrate` has not run against any real Postgres yet.
+Slice 2.7's investigation found the local dev Postgres is reachable from this
+WSL sandbox on `localhost:5432` with real data in it (2 accounts) — deliberately
+**not** touched. Verification instead goes through the same channel every
+prior slice's migration was ultimately proven by: pushing to
+`phase2-domain-structure` and letting `.github/workflows/ci.yml`'s `web` job
+apply migrations + run the isolation suite + `build` against its own
+throwaway `postgres:16` service container. Confirm the CI run is green on this
+push before treating `0005` as landed (same bar as every other slice).
 
-Expect one new empty file, `web/drizzle/0005_account_deletion_privileges.sql`
-(exact numeric prefix depends on what drizzle-kit assigns — confirm from the
-output). Fill it with:
+The body that was hand-written into the generated empty file:
 
 ```sql
 -- Slice 2.8 Part 4 (ticket 02) — the two privileged pieces self-serve account
@@ -207,24 +220,14 @@ GRANT EXECUTE ON FUNCTION app.cancel_account_deletion(text) TO app_runtime;
 GRANT SELECT, DELETE ON "auth_user" TO maintenance;
 ```
 
-Then:
-
-```powershell
-docker compose up -d      # if not already running
-cd web
-npm run db:migrate
-npm test
-npm run lint
-npm run typecheck
-npm run build
-```
-
-**Report back** the `db:generate` / `db:migrate` output. Once confirmed
-landed, the very next (small) change is adding the `databaseHooks.session
-.create.after` hook to `src/lib/auth/index.ts` (one function call — see
-above) and a manual sign-in smoke test that a scheduled deletion is actually
-cleared. Only after that should Part 4's UI be considered safe to rely on —
-until then, a deletion requested in dev has no way to be cancelled.
+`tsc --noEmit` and `eslint` are clean in WSL on the hook + migration together.
+`db:migrate` / `npm test` / `npm run build` are pending the CI run on this
+push (see above — not run against the local dev Postgres on purpose). Once
+that CI run is green, Part 4 is fully closed; a manual sign-in smoke test
+(confirm a scheduled deletion actually clears) is still worth doing whenever
+someone is next at a machine that can run `npm run dev`, but is no longer
+blocking — the same CI job that verifies the migration also runs the
+isolation suite, which is the project's bar for "verified" everywhere else.
 
 ## Product defaults stated along the way (not silently assumed)
 

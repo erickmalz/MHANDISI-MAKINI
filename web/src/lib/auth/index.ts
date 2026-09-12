@@ -3,6 +3,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { sql } from "drizzle-orm";
 
 import { db } from "@/lib/data/db";
 import * as schema from "@/lib/data/schema";
@@ -88,6 +89,24 @@ function build() {
       enabled: true,
       storage: "database",
       modelName: "auth_rate_limit",
+    },
+
+    databaseHooks: {
+      session: {
+        create: {
+          // "Any sign-in during the [30-day deletion] window cancels it"
+          // (ticket 02, Slice 2.8 Part 4). Fires on every new session — sign-in,
+          // and signup/verify-email's `autoSignIn` above, harmlessly, since
+          // there's nothing scheduled yet at either of those points. Goes
+          // through `app.cancel_account_deletion` (migration 0005), a
+          // SECURITY DEFINER function: no account context exists yet at this
+          // point (same chicken-and-egg as `app.record_terms_acceptance`,
+          // migration 0001), so this can't go through `withAccount`.
+          after: async (session) => {
+            await db.execute(sql`SELECT app.cancel_account_deletion(${session.userId})`);
+          },
+        },
+      },
     },
 
     // nextCookies() must be last — it writes Set-Cookie from Server Actions.

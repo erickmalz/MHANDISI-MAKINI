@@ -58,7 +58,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
 | 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **4 commits, 3 pushed + CI-red, 1 local fix unpushed** — `8f84f0a`/`fada09a`/`2b73256` pushed, PR #2 `web` CI job failed (Turbopack: `react-dom/server` imported outside a Server Component); `fa890ad` (local) fixes it via dynamic import, not yet pushed/verified. Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
-| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Parts 1–3 done + verified; Part 4 code written, blocked on migration `0005` for the sign-in-cancels hook + sweep grants.** Commits `c7bafde`/`8721210` (Parts 1–2). Part 3 (export) + Part 4 (deletion request/UI/sweep script) not yet committed — pending Windows-side `db:migrate` + `test`/`lint`/`typecheck`/`build` verification of `0005`, then the `databaseHooks` hook wiring. Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
+| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Code-complete, all 4 parts, including the sign-in-cancels-deletion hook.** Commits `c7bafde`/`8721210` (Parts 1–2), `3040cf5` (Parts 3–4 minus the hook). Migration `0005` (generated via an isolated Linux `drizzle-kit` run, not hand-typed) + the `databaseHooks` hook land together in the next commit. `tsc`/`eslint` clean; `db:migrate`/`test`/`build` verification is CI's job (see "Immediate next action") — confirm that run is green before calling this slice fully landed. Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
 
 ## Key facts for the projection / DAL (already built, 2.2)
 
@@ -196,18 +196,32 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-Two independent threads are open:
+**Slice 2.8 is now code-complete, including the sign-in-cancels-deletion
+hook.** Migration `0005_account_deletion_privileges` (the SECURITY DEFINER
+`app.cancel_account_deletion` function + the two grants to `maintenance`) was
+generated with the real `drizzle-kit` tool run against a throwaway,
+Linux-native copy of the schema in a scratch directory (WSL's `web/node_modules`
+is Windows-built and can't run it directly) — not hand-typed — and its
+snapshot was diffed against `0004`'s to confirm zero schema drift before being
+copied into `web/drizzle/`. `databaseHooks.session.create.after` in
+`src/lib/auth/index.ts` now calls it. `tsc` / `eslint` are clean in WSL.
 
-1. **Close out Slice 2.7**: CI is green on PR #2, but the runbook's Windows-side
-   manual smoke check is still outstanding — `npm run dev`, download all six
-   documents for a project with an issued FR + Fee Invoice + issued PO, then
-   record the verification commit (2.5 / 2.6 pattern).
-2. **Slice 2.8, Part 4's migration**: run `npm run db:generate -- --custom
-   --name account_deletion_privileges` Windows-side, hand-write the body
-   (the SECURITY DEFINER `app.cancel_account_deletion` function + the two
-   grants to `maintenance`) — exact SQL + steps in
-   **`.scratch/phase2/slice-2.8-runbook.md`**'s Part 4 section — then apply +
-   verify (`db:migrate`, `test`, `lint`, `typecheck`, `build`) and report the
-   output back. Once confirmed, wire the one-line `databaseHooks.session
-   .create.after` hook into `src/lib/auth/index.ts`, smoke-test that signing
-   in clears a scheduled deletion, then commit Slice 2.8 Parts 3–4 together.
+**Not run locally**: `db:migrate` / `test` / `build` need a real Postgres.
+The local dev Postgres turned out to be reachable from this WSL sandbox on
+`localhost:5432` with live data in it — deliberately not touched. Verification
+goes through `.github/workflows/ci.yml`'s `web` job instead (its own
+throwaway `postgres:16` service), the same channel every prior slice's
+migration was ultimately proven by. **Check that CI run is green on the push
+that carries this commit before treating Slice 2.8 as fully landed.**
+
+**Slice 2.7's close-out is still blocked**, and not by anything fixable from
+here: its outstanding item is a human-eyeball "download all six documents and
+check they render correctly" check, which needs a working `npm run dev` or a
+container run of the provisional `web/Dockerfile`. Neither works in this WSL
+sandbox — `npm run dev` boots but hangs indefinitely compiling the proxy
+(never serves a page), and Docker isn't reachable from WSL (`docker` resolves
+to the Windows binary, which errors that WSL integration isn't enabled). The
+isolation suite's one "document" reference is unrelated (a table name in the
+RLS-conformance list) — it exercises none of `src/lib/documents/` or the six
+PDF/JPG routes, so a green CI run is not evidence for this checklist item.
+This needs the user's Windows machine (where `npm run dev` is known to work).
