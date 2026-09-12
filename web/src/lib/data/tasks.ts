@@ -7,6 +7,7 @@ import type { TakeOffLineInput, TaskInput } from "@/lib/validation/tasks";
 
 import { getCurrentAccountId } from "./account-context";
 import {
+  fundingRequests,
   labourPayments,
   materialLines,
   projects,
@@ -172,6 +173,25 @@ export async function getStageDetail(stageId: string): Promise<
   });
 }
 
+/**
+ * Whether a Stage's budget numbers (a Task's labour agreement, a Material
+ * Line's estimate) are locked — Operational Control decision 3
+ * (`.scratch/operational-control/map.md`): once a Stage's Funding Request is
+ * issued (or closed), a real change goes through **superseding the Funding
+ * Request** instead, so there is exactly one place a client-facing number
+ * changes after the fact.
+ */
+async function stageBudgetLocked(tx: AccountTx, stageId: string): Promise<boolean> {
+  const [row] = await tx
+    .select({ id: fundingRequests.id })
+    .from(fundingRequests)
+    .where(
+      sql`${fundingRequests.stageId} = ${stageId} AND ${fundingRequests.status} IN ('issued', 'closed')`,
+    )
+    .limit(1);
+  return Boolean(row);
+}
+
 /** The editable body of one Task, form-shaped, or `null` (missing / cross-account). */
 export async function getTaskInput(taskId: string): Promise<
   | (TaskInput & {
@@ -180,6 +200,10 @@ export async function getTaskInput(taskId: string): Promise<
       stageName: string;
       /** A task with any labour payment cannot be deleted — the history is kept. */
       hasLabourPayments: boolean;
+      /** The labour agreement as first set — `null` if none has ever been recorded. */
+      labourOriginalAmount: number | null;
+      /** Whether the Stage's Funding Request is issued/closed — see `stageBudgetLocked`. */
+      budgetLocked: boolean;
     })
   | null
 > {
@@ -252,6 +276,8 @@ export async function getTaskInput(taskId: string): Promise<
         estUnitCost: l.estUnitCostOriginal ?? undefined,
       })),
       hasLabourPayments: Boolean(payment),
+      labourOriginalAmount: row.labourOriginal,
+      budgetLocked: await stageBudgetLocked(tx, row.stageId),
     };
   });
 }
@@ -356,19 +382,33 @@ export async function updateTask(
   const accountId = await getCurrentAccountId();
   return withAccount(async (tx) => {
     const [task] = await tx
-      .select({ id: tasks.id })
+      .select({ id: tasks.id, stageId: tasks.stageId, labourOriginal: tasks.labourOriginal })
       .from(tasks)
       .where(eq(tasks.id, taskId))
       .limit(1);
     if (!task) return false;
     if (!(await subcontractorIsValid(tx, input.subcontractorId))) return false;
 
+    // Operational Control decision 3: the labour agreement's *original* value
+    // is set once and never overwritten; every edit after that is a
+    // *revision*, and once the stage's Funding Request is issued/closed
+    // neither can change at all — see `stageBudgetLocked`. The UI keeps the
+    // amount field read-only in that case (so it always resubmits the
+    // current value unchanged); this is the defensive backstop for a
+    // request that bypasses the UI, same posture as `subcontractorIsValid`.
+    const locked = await stageBudgetLocked(tx, task.stageId);
+    const labourAmountFields = locked
+      ? {}
+      : task.labourOriginal == null
+        ? { labourOriginal: input.labourAmount ?? null }
+        : { labourRevised: input.labourAmount ?? null };
+
     const res = await tx
       .update(tasks)
       .set({
         subcontractorId: input.subcontractorId ?? null,
         description: input.description,
-        labourOriginal: input.labourAmount ?? null,
+        ...labourAmountFields,
         progressPercent: input.progressPercent,
         status: input.status,
         startedOn: input.startedOn ?? null,
@@ -380,8 +420,16 @@ export async function updateTask(
       .returning({ id: tasks.id });
     if (res.length === 0) return false;
 
-    await tx.delete(materialLines).where(eq(materialLines.taskId, taskId));
-    await insertTakeOffLines(tx, accountId, taskId, input.lines);
+    // Material Lines don't yet have per-line original/revised tracking
+    // (delete-and-reinsert has no stable per-line identity across edits to
+    // preserve one — see the map's Slice 2 scoping note). Until that lands,
+    // the safe interim behaviour is to lock the whole set once the stage's
+    // Funding Request is issued, rather than let an edit silently overwrite
+    // an estimate that's already gone out to the client.
+    if (!locked) {
+      await tx.delete(materialLines).where(eq(materialLines.taskId, taskId));
+      await insertTakeOffLines(tx, accountId, taskId, input.lines);
+    }
     return true;
   });
 }

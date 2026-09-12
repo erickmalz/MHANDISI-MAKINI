@@ -41,6 +41,8 @@ export function TaskForm({
   seq,
   submitLabel,
   cancelHref,
+  labourOriginalAmount,
+  budgetLocked = false,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subcontractors: { id: string; name: string }[];
@@ -48,6 +50,10 @@ export function TaskForm({
   seq?: number;
   submitLabel: string;
   cancelHref: string;
+  /** The labour agreement's first-ever value — shown once a revision has happened (Operational Control decision 3). */
+  labourOriginalAmount?: number | null;
+  /** The stage's Funding Request is issued/closed — the amount field and material take-off lock. */
+  budgetLocked?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
@@ -117,7 +123,13 @@ export function TaskForm({
           </Field>
           <Field
             label="Labour agreement (TZS)"
-            hint="The agreed price for this subcontractor's work. Reduces Available Float once set."
+            hint={
+              budgetLocked
+                ? "Locked — this stage's Funding Request has been issued. A real change goes through superseding it instead."
+                : labourOriginalAmount != null
+                  ? `The agreed price for this subcontractor's work. Reduces Available Float once set. Original: ${labourOriginalAmount.toLocaleString("en-US")}.`
+                  : "The agreed price for this subcontractor's work. Reduces Available Float once set."
+            }
             error={errors.labourAmount}
           >
             <input
@@ -125,7 +137,8 @@ export function TaskForm({
               type="number"
               min={0}
               defaultValue={initial?.labourAmount ?? ""}
-              className={controlClass}
+              readOnly={budgetLocked}
+              className={`${controlClass} ${budgetLocked ? "cursor-not-allowed opacity-70" : ""}`}
             />
           </Field>
           <Field label="Status" error={errors.status}>
@@ -185,8 +198,9 @@ export function TaskForm({
             Material take-off
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your material estimate for this task. Optional now — it feeds Material
-            Variance at closeout and pre-fills purchase orders.
+            {budgetLocked
+              ? "Locked — this stage's Funding Request has been issued, so the take-off that was estimated from is frozen."
+              : "Your material estimate for this task. Optional now — it feeds Material Variance at closeout and pre-fills purchase orders."}
           </p>
         </div>
 
@@ -200,6 +214,7 @@ export function TaskForm({
                 aria-label={`Material item, line ${i + 1}`}
                 placeholder="Item"
                 value={row.item}
+                readOnly={budgetLocked}
                 onChange={(e) =>
                   setLines(lines.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))
                 }
@@ -212,6 +227,7 @@ export function TaskForm({
                 step="0.001"
                 placeholder="Qty"
                 value={row.qty}
+                readOnly={budgetLocked}
                 onChange={(e) =>
                   setLines(lines.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))
                 }
@@ -221,6 +237,7 @@ export function TaskForm({
                 aria-label={`Unit, line ${i + 1}`}
                 placeholder="Unit"
                 value={row.unit}
+                readOnly={budgetLocked}
                 onChange={(e) =>
                   setLines(lines.map((r, j) => (j === i ? { ...r, unit: e.target.value } : r)))
                 }
@@ -232,6 +249,7 @@ export function TaskForm({
                 min={0}
                 placeholder="Unit cost"
                 value={row.estUnitCost}
+                readOnly={budgetLocked}
                 onChange={(e) =>
                   setLines(
                     lines.map((r, j) => (j === i ? { ...r, estUnitCost: e.target.value } : r)),
@@ -244,14 +262,16 @@ export function TaskForm({
                   amount={lineTotal(row)}
                   className="text-sm font-bold text-card-foreground"
                 />
-                <button
-                  type="button"
-                  aria-label={`Remove material line ${i + 1}`}
-                  onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                  className="cursor-pointer text-muted-foreground hover:text-destructive"
-                >
-                  <Trash size={16} aria-hidden="true" />
-                </button>
+                {!budgetLocked && (
+                  <button
+                    type="button"
+                    aria-label={`Remove material line ${i + 1}`}
+                    onClick={() => setLines(lines.filter((_, j) => j !== i))}
+                    className="cursor-pointer text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash size={16} aria-hidden="true" />
+                  </button>
+                )}
               </div>
             </li>
           ))}
@@ -261,14 +281,18 @@ export function TaskForm({
         </ul>
 
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setLines([...lines, { ...emptyLine }])}
-            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
-          >
-            <Plus size={16} aria-hidden="true" />
-            Add material line
-          </button>
+          {budgetLocked ? (
+            <span />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setLines([...lines, { ...emptyLine }])}
+              className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              <Plus size={16} aria-hidden="true" />
+              Add material line
+            </button>
+          )}
           <span className="text-sm text-muted-foreground">
             Estimated material cost{" "}
             <Money amount={materialEstimate} className="font-bold text-card-foreground" />

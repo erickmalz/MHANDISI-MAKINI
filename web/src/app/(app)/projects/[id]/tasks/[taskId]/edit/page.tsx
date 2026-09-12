@@ -43,6 +43,8 @@ export default async function EditTaskPage({
         initial={task}
         submitLabel="Save changes"
         cancelHref={back}
+        labourOriginalAmount={task.labourOriginalAmount}
+        budgetLocked={task.budgetLocked}
       />
 
       <div className="mt-8 border-t border-border pt-6">

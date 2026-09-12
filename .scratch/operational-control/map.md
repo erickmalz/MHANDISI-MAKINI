@@ -52,11 +52,26 @@ form). **No audit trail** — a revision is a plain edit, not a numbered,
 reasoned, approved chain (rejecting §17's heavier "Revision 1 / Revision 2 /
 Approved / Actual" model for v1).
 
-**New rule**: once a Stage's Funding Request is **issued**, its Material
-Lines' and Tasks' revised values lock — a real post-Issue change goes
-through **superseding the Funding Request** (already built, Slice 2.5)
+**New rule**: once a Stage's Funding Request is **issued** (or closed), its
+Material Lines' and Tasks' revised values lock — a real post-Issue change
+goes through **superseding the Funding Request** (already built, Slice 2.5)
 instead, so there is exactly one place a client-facing number ever changes
 after the fact, not two competing mechanisms.
+
+**Implementation scoping note (Slice 2)**: Task labour got the full
+treatment — `labourOriginal` is set once at creation and never touched
+again; every edit thereafter writes `labourRevised` instead, and the edit
+form shows "Original: {value}" once one exists. **Material Lines did not** —
+they're delete-and-reinsert on every Task edit (2.4b), which has no stable
+per-line identity to hang an original/revised pair off. Rather than half-build
+that, Material Lines stay single-valued (`*Original` only, as before); the
+lock still applies to the *whole set* once the stage's FR is issued (an edit
+is refused outright, never silently written), so "never silently overwrite an
+estimate already gone out to the client" holds even without per-line revision
+tracking. Proper Material Line revisions are left for whenever Material
+Variance reconciliation (already a flagged later slice) needs stable line
+identity anyway. New Task creation is **not** locked — the decision covers
+*revising* an existing figure, not adding new scope.
 
 ### 4. Alerts
 
