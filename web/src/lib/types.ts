@@ -53,6 +53,8 @@ export interface ProjectAlert {
   id: string;
   severity: AlertSeverity;
   message: string;
+  /** The record the alert is about, per guidelines §33 ("Alerts should link directly to the record requiring action"). Omitted for alerts with no single record to jump to. */
+  href?: string;
 }
 
 export interface Project {

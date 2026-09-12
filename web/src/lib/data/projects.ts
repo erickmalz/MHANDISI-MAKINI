@@ -5,7 +5,7 @@ import { asc, eq } from "drizzle-orm";
 import { getCurrentStage, stageStatusLabel } from "@/lib/project-view";
 import type { Project, Stage } from "@/lib/types";
 
-import { deriveProjectAlerts } from "./alerts";
+import { computeStageAlerts, deriveProjectAlerts } from "./alerts";
 import { computeStageFinancials } from "./projection";
 import { projects, stages } from "./schema";
 import { withAccount, type AccountTx } from "./with-account";
@@ -50,7 +50,8 @@ async function buildStages(tx: AccountTx, projectId: string): Promise<Stage[]> {
   return built;
 }
 
-function toProject(
+async function toProject(
+  tx: AccountTx,
   row: {
     id: string;
     projectCode: string;
@@ -60,7 +61,7 @@ function toProject(
     currentStageId: string | null;
   },
   builtStages: Stage[],
-): Project {
+): Promise<Project> {
   const project: Project = {
     id: row.id,
     code: row.projectCode,
@@ -72,7 +73,11 @@ function toProject(
     stages: builtStages,
     alerts: [],
   };
-  project.alerts = deriveProjectAlerts(getCurrentStage(project));
+  const currentStage = getCurrentStage(project);
+  project.alerts = [
+    ...deriveProjectAlerts(currentStage),
+    ...(currentStage ? await computeStageAlerts(tx, row.id, currentStage.id) : []),
+  ];
   return project;
 }
 
@@ -95,7 +100,7 @@ export async function listProjects(): Promise<Project[]> {
 
     const result: Project[] = [];
     for (const row of rows) {
-      result.push(toProject(row, await buildStages(tx, row.id)));
+      result.push(await toProject(tx, row, await buildStages(tx, row.id)));
     }
     return result;
   });
@@ -112,6 +117,6 @@ export async function getProjectOverview(
       .where(eq(projects.id, projectId))
       .limit(1);
     if (!row) return null;
-    return toProject(row, await buildStages(tx, row.id));
+    return toProject(tx, row, await buildStages(tx, row.id));
   });
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Warning, WarningCircle, Info } from "@phosphor-icons/react/dist/ssr";
 import type { ProjectAlert } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
@@ -40,7 +41,17 @@ export function AlertsList({ alerts }: { alerts: ProjectAlert[] }) {
                   <Icon size={14} aria-hidden="true" />
                   {label}
                 </span>
-                <span className="text-card-foreground">{alert.message}</span>
+                <span className="text-card-foreground">
+                  {alert.message}
+                  {alert.href && (
+                    <>
+                      {" "}
+                      <Link href={alert.href} className="font-bold underline">
+                        View
+                      </Link>
+                    </>
+                  )}
+                </span>
               </li>
             );
           })}
