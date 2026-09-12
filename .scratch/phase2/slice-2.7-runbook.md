@@ -113,8 +113,21 @@ _Multi-tenancy ticket 10 / ADR 0005. One commit for the slice, same pattern as
    through it via the 2.5 / 2.6 Issue-transaction tests) **plus** the new
    `tests/documents/vocabulary.test.tsx`. All green.
 5. `npm run build` — standalone build succeeds with `puppeteer` external.
-6. `npm run dev`, then for a project that has an **issued** FR, its Fee Invoice,
-   and an **issued** PO:
+6. `npm run dev`. To skip building the fixture by hand: `npx tsx
+   scripts/seed-document-smoke-test.ts` (or `npm run db:seed:smoke`) creates a
+   throwaway test account with a project/stage plus one draft Funding Request
+   and one draft Purchase Order, each with a line already filled in, and
+   prints the sign-in email/password. It stops at Draft on purpose — it does
+   not fabricate the "Issued" `document_snapshot` itself, since that's the
+   exact code path this check exists to exercise. Sign in, open the Funding
+   Request, click "Issue" (this also raises the Fee Invoice), open the
+   Purchase Order, click "Issue", then continue below. It's a dev-only script
+   (see its own doc comment) — it never runs as part of the app and doesn't
+   touch a real Engineer's account; safe to leave the test account or delete
+   it afterward.
+
+   For a project that has an **issued** FR, its Fee Invoice, and an **issued**
+   PO:
    - open each detail screen, confirm the **Documents** card appears
    - download all six files; confirm:
      - the PDF is A4, branded (Site Yellow rule, charcoal total bar, DejaVu),
@@ -122,7 +135,10 @@ _Multi-tenancy ticket 10 / ADR 0005. One commit for the slice, same pattern as
      - the JPG is one continuous image, no repeated page furniture
      - the letterhead shows the Account name + phone
      - a superseded FR shows the diagonal `SUPERSEDED` stamp; a paid Fee Invoice
-       shows `PAID — {date}`; a cancelled PO shows `CANCELLED`
+       shows `PAID — {date}`; a cancelled PO shows `CANCELLED` — no extra
+       fixture needed for these: from the same seeded, now-issued FR/PO,
+       use the existing "Supersede" / mark-Fee-Invoice-paid / "Cancel"
+       actions (built in 2.5/2.6) to reach each state, then re-download
      - the Fee Invoice says "billed separately from the project funds in
        Funding Request FR-…"
    - a **draft** FR / PO detail screen has **no** Documents card, and hitting a

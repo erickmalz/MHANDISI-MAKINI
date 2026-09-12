@@ -210,3 +210,16 @@ RLS-conformance list) — it exercises none of `src/lib/documents/` or the six
 PDF/JPG routes, so a green CI run is not evidence for this checklist item. It
 needs the user's Windows machine, where `npm run dev` is known to work — the
 last thing standing before Phase 2 as a whole is complete.
+
+To cut the manual setup down to just the two "Issue" clicks + downloads:
+`web/scripts/seed-document-smoke-test.ts` (`npm run db:seed:smoke`) creates a
+throwaway test account with a project/stage and a draft Funding Request +
+draft Purchase Order (each with one line), then prints the sign-in
+credentials. It stops at Draft deliberately — it does not fabricate the
+"Issued" `document_snapshot` itself, since Issue is exactly the code path
+this check exists to exercise. Dev-only script, mirrors
+`tests/isolation/harness.ts`'s seeding pattern; does not touch a real
+Engineer's account. `tsc`/`eslint` clean, but **not run** — `tsx` itself
+can't boot in this WSL sandbox (the Windows-built `esbuild` in
+`web/node_modules` fails immediately), so this is unverified beyond static
+type-checking; review before relying on it.
