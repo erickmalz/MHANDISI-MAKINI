@@ -14,13 +14,15 @@ for the full ticket):
    cancels it, and a **maintenance-role sweep** that hard-deletes accounts
    past the grace period.
 
-This is split like 2.4a/2.4b: **Part 1 (below) is schema-only**, done and
-ready to verify. Parts 2–4 (DAL/actions/UI/sweep script) are **not started**
-— per the standing rule, they get built only after Part 1's migration is
-generated, applied and verified Windows-side, so nothing is layered on an
-unverified column.
+This is split like 2.4a/2.4b. **Parts 1–3 are done** (Part 1's migration
+`0004` generated, applied and verified Windows-side; Part 2 committed
+`8721210`; Part 3 is pure code on top of already-verified schema, no
+migration of its own). **Part 4 is code-complete except the sign-in-cancels
+piece**, which needs its own migration (`0005` — a SECURITY DEFINER function
++ a grant, not a schema change) before it can be safely wired in — see
+Part 4 below for exactly what is and isn't safe yet.
 
-## Part 1 — schema (done in WSL, needs Windows-side migration)
+## Part 1 — schema (done + verified)
 
 `web/src/lib/data/schema/accounts.ts` — three new columns on `accounts`:
 
@@ -96,47 +98,141 @@ Server Action accepting `FormData`, not JSON, since it carries a `File`).
 
 UI: a new `/settings` (or `/account`) route + form, linked from `AppChrome`.
 
-## Part 3 — JSON data export (not started)
+## Part 3 — JSON data export (done)
 
-A Server Action / route handler that, `withAccount`, walks every
-account-scoped table (same set the sweep will touch) and returns a single
-JSON file download. Reuse for both the standalone "Export my data" button and
-as step one of the deletion flow (ticket 02 — export offered first).
+`src/lib/data/export.ts`'s `exportAccountData()` — `withAccount`, selects
+every account-scoped table (the authoritative "what does an Account own"
+list — kept in sync with the sweep's cascade) plus the profile (name/phone/
+email; logo bytes excluded, `hasLogo`/`logoContentType` noted instead).
+`src/app/(app)/settings/export/route.ts` serves it as a
+`Content-Disposition: attachment` download, gated the same way as
+`/settings/logo` (DAL throws `NotAuthenticatedError` → 404, no session
+leak). `DataExportCard` on `/settings` links to it with a plain `<a>`
+(matching `DocumentDownloads`, not `Button href`/`next/link` — the browser
+needs a real navigation to treat the response as a file). No migration
+needed — pure code on top of already-verified schema. Reused as-is for step
+one of the deletion flow (ticket 02 — export offered first; the UI doesn't
+force the click, same as the ticket's wording).
 
-## Part 4 — deletion request + maintenance sweep (not started)
+## Part 4 — deletion request + maintenance sweep
 
-- **Request action**: re-enter password (via `getAuth().api` — same pattern
-  as password change) + a typed confirmation phrase; sets
-  `accounts.deletion_scheduled_at = now()`. Triggers the "deletion scheduled"
-  email (ticket 02's email #4) with cancel instructions (= "sign back in").
-- **Cancel on sign-in**: the sign-in Server Action (`src/app/actions/auth.ts`)
-  clears `deletion_scheduled_at` back to null on any successful sign-in where
-  it was set, before returning.
-- **Sweep**: a standalone script (`web/scripts/sweep-deletions.ts`, mirroring
-  `bootstrap-db.ts`'s shape) connecting as `maintenance` (bypasses RLS, sees
-  every account), running:
+**Code written; needs its own migration (`0005`) before the sign-in-cancels
+piece can be wired in.** Unlike Part 1 → Part 2/3, this isn't "schema, then
+code" — the `deletion_scheduled_at` column already landed and is verified
+(Part 1). What's new here is two *privileged* pieces (a SECURITY DEFINER
+function + a grant), and only one narrow slice of code depends on them being
+live, so the rest could be written now:
 
-  ```sql
-  SELECT au.id FROM auth_user au
-  JOIN accounts a ON a.user_id = au.id
-  WHERE a.deletion_scheduled_at IS NOT NULL
-    AND a.deletion_scheduled_at < now() - interval '30 days';
-  -- then, per row: DELETE FROM auth_user WHERE id = $1;
-  ```
+- **Request action** (done): `requestAccountDeletionAction`
+  (`src/app/actions/account.ts`) re-verifies the password (`auth_account`'s
+  stored hash, via the new `verifyCurrentUserPassword` in
+  `src/lib/auth/verify-password.ts` — there's no better-auth endpoint that
+  checks a password without also changing it or minting a session) and a
+  typed confirmation — **the Account's own email**, not an arbitrary phrase
+  (a product default this brief sets; see `accountDeletionInputSchema`'s doc
+  comment in `src/lib/validation/account.ts` for why). On success it calls
+  `scheduleAccountDeletion()` (`src/lib/data/account-deletion.ts` — a plain
+  RLS-scoped write, no new grant needed) and sends the "deletion scheduled"
+  email (`sendDeletionScheduledEmail`, `src/lib/auth/emails.ts`). UI:
+  `AccountDeletionForm` on `/settings`, showing the scheduled notice instead
+  of the form once set.
+- **Cancel on sign-in** (**blocked on the migration below — do not wire yet**):
+  sign-in doesn't go through one of our Server Actions — `sign-in/page.tsx`
+  calls `authClient.signIn.email` straight to better-auth's own route. The
+  hook point is `databaseHooks.session.create.after` in
+  `src/lib/auth/index.ts` (fires on sign-in, and signup/verify-email's
+  `autoSignIn`, harmlessly): `after: (session) => db.execute(sql`SELECT
+  app.cancel_account_deletion(${session.userId})`)`. This needs the
+  SECURITY DEFINER function below to exist first — adding the hook before the
+  function exists would make **every** sign-in throw, not just the deletion
+  path, so this one line is deliberately not in yet.
+- **Sweep** (done, but only runnable once the migration below lands):
+  `web/scripts/sweep-deletions.ts` (mirrors `bootstrap-db.ts`'s shape),
+  connects as `maintenance` via `MAINTENANCE_DATABASE_URL` (already in
+  `.env.example`, marked "unused until Phase 4"), runs the join from the
+  original plan, sends "deletion completed" (`sendDeletionCompletedEmail`)
+  **before** each delete (the address won't exist to read after), then one
+  `DELETE FROM auth_user` per candidate — cascades through `accounts`,
+  `auth_session`, `auth_account`, and every domain table (see
+  `src/lib/data/export.ts`'s table list for the full set that disappears).
+  `npm run db:sweep` runs it. How it gets scheduled (cron, a CI
+  `workflow_dispatch` on a timer, a container sidecar) is a
+  **deployment-shape decision, not yet made** — out of scope here beyond
+  making the script runnable on demand.
 
-  One `DELETE FROM auth_user` per candidate — cascades through `accounts`,
-  `auth_session`, `auth_account`, and every domain table. Send the "deletion
-  completed" email (ticket 02's email #4b) **before** deleting the row (the
-  email address won't exist to read afterward). How this script gets
-  scheduled (cron, a CI workflow_dispatch on a timer, a container sidecar) is
-  a **deployment-shape decision, not yet made** (`.scratch/multi-tenancy/map.md`
-  lists "Deployment Shape" as not yet specified) — out of scope for this
-  slice beyond making the script itself runnable on demand.
+### Generate + apply migration `0005` (Windows-side)
 
-## Open items to confirm before Part 2 starts
+This one has no Drizzle schema change to diff (same situation as `0001`'s RLS
++ provisioning migration) — generate it **custom**, empty, then hand-write the
+body:
 
-- Exact route path for the settings/profile screen (`/settings` vs
-  `/account`) — no existing convention in this app yet.
-- Logo upload constraints (max size, allowed MIME types) — not specified by
-  ticket 02, needs a small product call or a conservative default (e.g. ≤1MB,
-  PNG/JPEG only) stated plainly rather than assumed silently.
+```powershell
+cd web
+npm run db:generate -- --custom --name account_deletion_privileges
+```
+
+Expect one new empty file, `web/drizzle/0005_account_deletion_privileges.sql`
+(exact numeric prefix depends on what drizzle-kit assigns — confirm from the
+output). Fill it with:
+
+```sql
+-- Slice 2.8 Part 4 (ticket 02) — the two privileged pieces self-serve account
+-- deletion needs beyond the plain RLS-scoped write the request action already
+-- does (src/lib/data/account-deletion.ts):
+--
+--   1. Cancelling on sign-in has no account context yet — same chicken-and-egg
+--      as app.record_terms_acceptance in migration 0001 — so it needs a
+--      SECURITY DEFINER function, called from better-auth's
+--      `databaseHooks.session.create.after` (src/lib/auth/index.ts).
+--   2. The maintenance-role sweep (scripts/sweep-deletions.ts) hard-deletes a
+--      row past its grace period by deleting `auth_user`. `maintenance` had
+--      only SELECT on `accounts` before this (migration 0001); it now also
+--      needs SELECT on `auth_user` (to find + email expired candidates) and
+--      DELETE on `auth_user` (every other table cascades from there).
+
+CREATE OR REPLACE FUNCTION app.cancel_account_deletion(p_user_id text)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+	UPDATE public.accounts
+	SET deletion_scheduled_at = NULL
+	WHERE user_id = p_user_id
+	  AND deletion_scheduled_at IS NOT NULL;
+$$;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION app.cancel_account_deletion(text) TO app_runtime;
+--> statement-breakpoint
+GRANT SELECT, DELETE ON "auth_user" TO maintenance;
+```
+
+Then:
+
+```powershell
+docker compose up -d      # if not already running
+cd web
+npm run db:migrate
+npm test
+npm run lint
+npm run typecheck
+npm run build
+```
+
+**Report back** the `db:generate` / `db:migrate` output. Once confirmed
+landed, the very next (small) change is adding the `databaseHooks.session
+.create.after` hook to `src/lib/auth/index.ts` (one function call — see
+above) and a manual sign-in smoke test that a scheduled deletion is actually
+cleared. Only after that should Part 4's UI be considered safe to rely on —
+until then, a deletion requested in dev has no way to be cancelled.
+
+## Product defaults stated along the way (not silently assumed)
+
+- **Settings route**: `/settings` (Part 2). No existing convention before
+  this slice; nothing else claims the path.
+- **Logo upload constraints**: ≤1MB, PNG/JPEG only (Part 2,
+  `src/app/actions/account.ts`).
+- **Deletion confirmation phrase**: the Account's own sign-in email, not an
+  arbitrary literal (Part 4, `accountDeletionInputSchema`'s doc comment in
+  `src/lib/validation/account.ts`) — ticket 02 names the requirement ("a
+  confirmation phrase") but not the exact text.

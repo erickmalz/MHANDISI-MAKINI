@@ -1,20 +1,31 @@
 import { notFound } from "next/navigation";
 
-import { getAccountProfile } from "@/lib/data";
+import { GRACE_PERIOD_DAYS, getAccountDeletionStatus, getAccountProfile } from "@/lib/data";
 
+import { AccountDeletionForm } from "./_components/AccountDeletionForm";
 import { AccountLogoForm } from "./_components/AccountLogoForm";
 import { AccountProfileForm } from "./_components/AccountProfileForm";
+import { DataExportCard } from "./_components/DataExportCard";
 
 /**
- * Account settings (Slice 2.8 Part 2) — name/phone, letterhead logo, and the
- * (read-only) sign-in email. `getAccountProfile` returns `null` only if the
- * Account row is somehow gone mid-session (it's created atomically with the
- * `auth_user` by the provisioning trigger), in which case there is nothing
- * to show.
+ * Account settings (Slice 2.8) — name/phone, letterhead logo, the (read-only)
+ * sign-in email, data export (Part 3), and self-serve deletion (Part 4).
+ * `getAccountProfile` returns `null` only if the Account row is somehow gone
+ * mid-session (it's created atomically with the `auth_user` by the
+ * provisioning trigger), in which case there is nothing to show.
  */
 export default async function SettingsPage() {
-  const profile = await getAccountProfile();
+  const [profile, deletionStatus] = await Promise.all([
+    getAccountProfile(),
+    getAccountDeletionStatus(),
+  ]);
   if (!profile) notFound();
+
+  let deleteAt: Date | null = null;
+  if (deletionStatus.scheduledAt) {
+    deleteAt = new Date(deletionStatus.scheduledAt);
+    deleteAt.setDate(deleteAt.getDate() + GRACE_PERIOD_DAYS);
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -26,6 +37,8 @@ export default async function SettingsPage() {
           email={profile.email}
         />
         <AccountLogoForm hasLogo={profile.hasLogo} />
+        <DataExportCard />
+        <AccountDeletionForm email={profile.email} deleteAt={deleteAt} />
       </div>
     </main>
   );

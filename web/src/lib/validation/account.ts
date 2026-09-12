@@ -24,3 +24,24 @@ export const accountProfileInputSchema = z.object({
 });
 
 export type AccountProfileInput = z.infer<typeof accountProfileInputSchema>;
+
+/**
+ * Self-serve account deletion request (Slice 2.8 Part 4 / ticket 02):
+ * "re-enter the password and type a confirmation phrase". The confirmation
+ * phrase is the Account's own sign-in email — a default this brief sets (the
+ * ticket names the requirement, not the exact phrase): typing back the email
+ * that is about to lose everything is self-documenting in the UI and, unlike
+ * an arbitrary literal like "DELETE", can't be satisfied by habit or
+ * autofill. The Server Action checks it case-insensitively against the real
+ * session email — this schema only checks shape, same division as the
+ * profile schema above.
+ */
+export const accountDeletionInputSchema = z.object({
+  password: z.string().min(1, { error: "Enter your password." }),
+  confirmEmail: z
+    .string()
+    .trim()
+    .min(1, { error: "Type your email address to confirm." }),
+});
+
+export type AccountDeletionInput = z.infer<typeof accountDeletionInputSchema>;

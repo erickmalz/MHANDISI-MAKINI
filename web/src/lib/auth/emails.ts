@@ -2,10 +2,12 @@ import "server-only";
 
 import { Resend } from "resend";
 
+import { formatDate } from "@/lib/format";
+
 /**
- * Transactional email. Phase 1 sends only the verification / welcome mail;
- * Phase 4 adds reset, email-change, deletion and dormancy (the five total from
- * ticket 02).
+ * Transactional email. Phase 1 sends verification / welcome and reset;
+ * Slice 2.8 adds the two deletion emails. Email-change and dormancy (the
+ * five total from ticket 02) are still outstanding.
  *
  * With no RESEND_API_KEY set (the default in development) the message is logged
  * to the server console instead of sent, so the whole signup flow works
@@ -59,6 +61,42 @@ export async function sendResetPasswordEmail(to: string, url: string) {
       url,
       "",
       "If it was not you, no action is needed — your password is unchanged.",
+    ].join("\n"),
+  );
+}
+
+/**
+ * Sent the moment self-serve deletion is requested (ticket 02 email #4).
+ * `deleteAt` is the end of the 30-day grace period. There is no cancel link —
+ * "sign back in" is the one documented way to cancel, so the instructions
+ * just say that.
+ */
+export async function sendDeletionScheduledEmail(to: string, deleteAt: Date) {
+  await send(
+    to,
+    "Your account is scheduled for deletion — Mhandisi Makini",
+    [
+      "You asked to delete your Mhandisi Makini account.",
+      "",
+      `Unless you sign back in before ${formatDate(deleteAt)}, your account`,
+      "and every Project, financial record and document in it will be",
+      "permanently deleted.",
+      "",
+      "Changed your mind? Just sign in again — that cancels the deletion.",
+    ].join("\n"),
+  );
+}
+
+/** Sent by the maintenance sweep right before the row is hard-deleted (email #4b). */
+export async function sendDeletionCompletedEmail(to: string) {
+  await send(
+    to,
+    "Your account has been deleted — Mhandisi Makini",
+    [
+      "Your Mhandisi Makini account and everything in it have now been",
+      "permanently deleted, as you requested.",
+      "",
+      "You're welcome to create a new account at any time.",
     ].join("\n"),
   );
 }

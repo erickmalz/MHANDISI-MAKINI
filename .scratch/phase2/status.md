@@ -1,23 +1,32 @@
 # Phase 2 — build status
 
-_Last updated: session 019NitCcfKmLXMbTJXqxe87s (2026-09-11) — **Slice 2.7 is
-CI-green.** All 4 commits (`8f84f0a`, `fada09a`, `2b73256`, `fa890ad`) are
-pushed; PR #2's `web` CI job passed clean on run `34639373574` (lint /
-typecheck / isolation suite / build all ✓), confirming the `react-dom/server`
-dynamic-import fix worked. Still outstanding before calling 2.7 fully done:
-the Windows-side manual document-download smoke check + a verification
-commit (2.5/2.6 pattern) — not yet done.
+_Last updated: session (2026-09-12). **Slice 2.7** is CI-green (see prior
+entry below, unchanged) — still outstanding: the Windows-side manual
+document-download smoke check + a verification commit.
 
-**Slice 2.8 (Account lifecycle) is started.** Part 1 (schema only — see
-`.scratch/phase2/slice-2.8-runbook.md`) is written: three new nullable
-columns on `accounts` (`logo` bytea + `logo_content_type`,
-`deletion_scheduled_at`), no new tables — every domain table already cascades
-from `accounts.id`, so the eventual maintenance-role sweep is one
-`DELETE FROM auth_user` per expired account. `tsc` / `eslint` clean in WSL.
-**Not yet migrated** — needs `npm run db:generate` Windows-side (the runbook
-has the exact command + the grant to hand-append) before Part 2 (profile
-edit / logo upload DAL + UI), Part 3 (JSON export) or Part 4 (deletion
-request + sweep script) start, per the verify-migration-before-building rule._
+**Slice 2.8 (Account lifecycle) — Parts 1–3 done, Part 4 code-complete minus
+one migration.** Part 1's migration `0004_account_lifecycle` (three nullable
+`accounts` columns: `logo`, `logo_content_type`, `deletion_scheduled_at`) is
+generated, applied and verified Windows-side. Part 2 (profile edit / logo
+upload) is committed (`c7bafde`, `8721210`). Part 3 (JSON export,
+`src/lib/data/export.ts` + `/settings/export`) is written this session — pure
+code on already-verified schema, no migration needed. Part 4 (deletion
+request action + UI + sweep script) is also written this session, **except**
+the sign-in-cancels-deletion hook, which is deliberately not wired into
+`src/lib/auth/index.ts` yet: it calls a SECURITY DEFINER function that
+doesn't exist until migration `0005` lands (see
+`.scratch/phase2/slice-2.8-runbook.md`'s Part 4 section for the exact SQL +
+Windows steps). Wiring the hook before that migration would break every
+sign-in, not just the deletion path, so it's held back on purpose. `tsc` /
+`eslint` clean in WSL for all of it.
+
+**Note on `0004`**: a stray uncommitted edit had appended the `0005` grant
+directly onto the already-applied `0004_account_lifecycle.sql` in the working
+tree this session. That was reverted (editing an applied migration's file
+changes its hash, which makes `drizzle-orm`'s migrator try to re-run its
+`ALTER TABLE ADD COLUMN` statements and fail with "column already exists") —
+the grant + new SECURITY DEFINER function instead go into their own custom
+migration, `0005`, per the runbook._
 
 ## What Phase 2 is
 
@@ -49,7 +58,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
 | 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **4 commits, 3 pushed + CI-red, 1 local fix unpushed** — `8f84f0a`/`fada09a`/`2b73256` pushed, PR #2 `web` CI job failed (Turbopack: `react-dom/server` imported outside a Server Component); `fa890ad` (local) fixes it via dynamic import, not yet pushed/verified. Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
-| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Started — Part 1 (schema) written, unmigrated.** `logo`/`logo_content_type`/`deletion_scheduled_at` added to `accounts`. Parts 2–4 (DAL/actions/UI/sweep) not started. Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
+| 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Parts 1–3 done + verified; Part 4 code written, blocked on migration `0005` for the sign-in-cancels hook + sweep grants.** Commits `c7bafde`/`8721210` (Parts 1–2). Part 3 (export) + Part 4 (deletion request/UI/sweep script) not yet committed — pending Windows-side `db:migrate` + `test`/`lint`/`typecheck`/`build` verification of `0005`, then the `databaseHooks` hook wiring. Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
 
 ## Key facts for the projection / DAL (already built, 2.2)
 
@@ -193,10 +202,12 @@ Two independent threads are open:
    manual smoke check is still outstanding — `npm run dev`, download all six
    documents for a project with an issued FR + Fee Invoice + issued PO, then
    record the verification commit (2.5 / 2.6 pattern).
-2. **Slice 2.8, Part 1 → Part 2**: run `npm run db:generate -- --name
-   account_lifecycle` Windows-side (exact steps + the grant to hand-append in
-   **`.scratch/phase2/slice-2.8-runbook.md`**), apply + verify it (`db:migrate`,
-   `test`, `lint`, `typecheck`, `build`), report the output back, then Part 2
-   (profile edit + logo upload DAL/UI) can start. Two open product calls flagged
-   in the runbook before Part 2: the settings route's URL path, and logo upload
-   size/MIME limits.
+2. **Slice 2.8, Part 4's migration**: run `npm run db:generate -- --custom
+   --name account_deletion_privileges` Windows-side, hand-write the body
+   (the SECURITY DEFINER `app.cancel_account_deletion` function + the two
+   grants to `maintenance`) — exact SQL + steps in
+   **`.scratch/phase2/slice-2.8-runbook.md`**'s Part 4 section — then apply +
+   verify (`db:migrate`, `test`, `lint`, `typecheck`, `build`) and report the
+   output back. Once confirmed, wire the one-line `databaseHooks.session
+   .create.after` hook into `src/lib/auth/index.ts`, smoke-test that signing
+   in clears a scheduled deletion, then commit Slice 2.8 Parts 3–4 together.

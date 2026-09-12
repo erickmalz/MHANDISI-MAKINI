@@ -1,6 +1,5 @@
 import "server-only";
 
-import { hash as argon2Hash, verify as argon2Verify } from "@node-rs/argon2";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -8,17 +7,8 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/data/db";
 import * as schema from "@/lib/data/schema";
 
+import { hashPassword, verifyPassword } from "./argon2";
 import { sendResetPasswordEmail, sendVerificationEmail } from "./emails";
-
-// OWASP argon2id parameters (m=19 MiB, t=2, p=1). `@node-rs/argon2` uses
-// Argon2id by default, so `algorithm` is left unset (its `Algorithm` is a
-// const enum, unusable under `isolatedModules`). This overrides better-auth's
-// scrypt default (ADR 0002).
-const ARGON2_OPTS = {
-  memoryCost: 19_456,
-  timeCost: 2,
-  parallelism: 1,
-} as const;
 
 const SECONDS = 1;
 const MINUTES = 60 * SECONDS;
@@ -76,9 +66,8 @@ function build() {
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 1 * HOURS,
       password: {
-        hash: (password) => argon2Hash(password, ARGON2_OPTS),
-        verify: ({ hash, password }) =>
-          argon2Verify(hash, password, ARGON2_OPTS),
+        hash: hashPassword,
+        verify: ({ hash, password }) => verifyPassword(hash, password),
       },
       sendResetPassword: async ({ user, url }) => {
         await sendResetPasswordEmail(user.email, url);

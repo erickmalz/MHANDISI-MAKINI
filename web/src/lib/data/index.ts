@@ -94,3 +94,10 @@ export {
   markFeeInvoicePaid,
   type IssueResult,
 } from "./funding";
+export { exportAccountData, type AccountDataExport } from "./export";
+export {
+  getAccountDeletionStatus,
+  scheduleAccountDeletion,
+  GRACE_PERIOD_DAYS,
+  type AccountDeletionStatus,
+} from "./account-deletion";
