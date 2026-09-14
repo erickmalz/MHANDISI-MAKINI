@@ -59,6 +59,12 @@ export default async function StageDetailPage({
             Edit stage
           </Link>
           <Button
+            variant="secondary"
+            href={`/projects/${id}/stages/${stageId}/closeout`}
+          >
+            Stage Closeout
+          </Button>
+          <Button
             variant="primary"
             href={`/projects/${id}/stages/${stageId}/tasks/new`}
           >

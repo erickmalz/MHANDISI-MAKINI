@@ -153,3 +153,9 @@ export {
   type StockBalance,
   type StockMovement,
 } from "./material-stock";
+export {
+  getStageCloseoutGates,
+  closeStage,
+  resolveSurplusMaterials,
+  type CloseStageResult,
+} from "./stage-closeout";

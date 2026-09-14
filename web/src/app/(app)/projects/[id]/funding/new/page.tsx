@@ -11,7 +11,7 @@ export default async function NewFundingRequestPage({
   searchParams,
 }: PageProps<"/projects/[id]/funding/new">) {
   const { id } = await params;
-  const { kind, variationId } = await searchParams;
+  const { kind, variationId, stageId } = await searchParams;
   const project = await getProjectOverview(id);
   if (!project) notFound();
 
@@ -68,7 +68,10 @@ export default async function NewFundingRequestPage({
           status: s.status,
         }))}
         defaultStageId={
-          linkedVariations[0]?.stageId ?? project.currentStageId ?? undefined
+          (typeof stageId === "string" ? stageId : undefined) ??
+          linkedVariations[0]?.stageId ??
+          project.currentStageId ??
+          undefined
         }
         submitLabel="Save draft"
         cancelHref={`/projects/${id}/funding`}

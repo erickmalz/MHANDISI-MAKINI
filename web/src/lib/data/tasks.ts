@@ -10,7 +10,6 @@ import { getCurrentAccountId } from "./account-context";
 import { drawFromStock, type StockLine } from "./material-stock";
 import { computeStageFinancials } from "./projection";
 import {
-  fundingRequests,
   labourPayments,
   materialLines,
   projects,
@@ -169,6 +168,7 @@ export async function getStageDetail(stageId: string): Promise<
       name: string;
       seq: number;
       status: string;
+      completedOn: string | null;
       tasks: Task[];
       financials: StageFinancials;
     }
@@ -183,6 +183,7 @@ export async function getStageDetail(stageId: string): Promise<
         name: stages.name,
         seq: stages.seq,
         status: stages.status,
+        completedOn: stages.completedOn,
       })
       .from(stages)
       .innerJoin(projects, eq(projects.id, stages.projectId))
@@ -213,16 +214,25 @@ export async function getStageDetail(stageId: string): Promise<
  * issued (or closed), a real change goes through **superseding the Funding
  * Request** instead, so there is exactly one place a client-facing number
  * changes after the fact.
+ *
+ * Phase 3 ticket 05 (Stage Closeout) §2 adds a second OR condition: a Stage
+ * can reach `completed` without ever having an Issued Funding Request (e.g. a
+ * trivial stage) — that gap must not leave a "completed" stage's budget still
+ * editable, so `stages.status = 'completed'` locks it too, no new column.
  */
 async function stageBudgetLocked(tx: AccountTx, stageId: string): Promise<boolean> {
-  const [row] = await tx
-    .select({ id: fundingRequests.id })
-    .from(fundingRequests)
-    .where(
-      sql`${fundingRequests.stageId} = ${stageId} AND ${fundingRequests.status} IN ('issued', 'closed')`,
-    )
-    .limit(1);
-  return Boolean(row);
+  const { rows } = await tx.execute<{ locked: boolean }>(sql`
+    SELECT (
+      EXISTS (
+        SELECT 1 FROM funding_requests
+         WHERE stage_id = ${stageId} AND status IN ('issued', 'closed')
+      )
+      OR EXISTS (
+        SELECT 1 FROM stages WHERE id = ${stageId} AND status = 'completed'
+      )
+    ) AS locked
+  `);
+  return Boolean(rows[0]?.locked);
 }
 
 /**
