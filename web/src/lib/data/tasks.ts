@@ -7,6 +7,7 @@ import type { StageFinancials } from "@/lib/types";
 import type { TakeOffLineInput, TaskInput } from "@/lib/validation/tasks";
 
 import { getCurrentAccountId } from "./account-context";
+import { drawFromStock, type StockLine } from "./material-stock";
 import { computeStageFinancials } from "./projection";
 import {
   fundingRequests,
@@ -481,6 +482,17 @@ async function applyLockedTakeOffEdits(
 }
 
 /**
+ * The submitted lines that named a positive "Apply from stock" amount (Phase
+ * 3 ticket 06 §4) — draw candidates for `drawFromStock`. The DAL re-caps each
+ * at the live on-hand balance regardless of what the form already bounded.
+ */
+function stockDrawsFrom(lines: TakeOffLineInput[]): StockLine[] {
+  return lines
+    .filter((l) => l.applyFromStock != null && l.applyFromStock > 0)
+    .map((l) => ({ item: l.item, unit: l.unit, qty: l.applyFromStock! }));
+}
+
+/**
  * Assert `subcontractorId` (when given) points at a live subcontractor in the
  * caller's Account — the loose column's integrity guard. Returns `false` when
  * it does not.
@@ -510,7 +522,7 @@ export async function createTask(
   const accountId = await getCurrentAccountId();
   return withAccount(async (tx) => {
     const [stage] = await tx
-      .select({ id: stages.id })
+      .select({ id: stages.id, projectId: stages.projectId })
       .from(stages)
       .where(eq(stages.id, stageId))
       .limit(1);
@@ -542,6 +554,9 @@ export async function createTask(
       .returning({ id: tasks.id });
 
     await insertTakeOffLines(tx, accountId, row.id, input.lines);
+    // Phase 3 ticket 06 §4: "Apply from stock" decrements the ledger for the
+    // consuming side — a manual, bounded amount per line, never automatic.
+    await drawFromStock(tx, accountId, stage.projectId, row.id, stockDrawsFrom(input.lines));
     return row.id;
   });
 }
@@ -558,8 +573,14 @@ export async function updateTask(
   const accountId = await getCurrentAccountId();
   return withAccount(async (tx) => {
     const [task] = await tx
-      .select({ id: tasks.id, stageId: tasks.stageId, labourOriginal: tasks.labourOriginal })
+      .select({
+        id: tasks.id,
+        stageId: tasks.stageId,
+        labourOriginal: tasks.labourOriginal,
+        projectId: stages.projectId,
+      })
       .from(tasks)
+      .innerJoin(stages, eq(stages.id, tasks.stageId))
       .where(eq(tasks.id, taskId))
       .limit(1);
     if (!task) return false;
@@ -612,6 +633,10 @@ export async function updateTask(
     } else {
       await applyLockedTakeOffEdits(tx, accountId, taskId, input.lines);
     }
+
+    // Phase 3 ticket 06 §4: "Apply from stock" decrements the ledger for the
+    // consuming side — independent of the lock branch above.
+    await drawFromStock(tx, accountId, task.projectId, taskId, stockDrawsFrom(input.lines));
     return true;
   });
 }

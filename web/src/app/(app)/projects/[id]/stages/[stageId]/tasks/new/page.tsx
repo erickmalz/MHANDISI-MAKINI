@@ -3,7 +3,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createTaskAction } from "@/app/actions/tasks";
-import { getStageDetail, listSubcontractors } from "@/lib/data";
+import {
+  getStageDetail,
+  getStockBalances,
+  listKnownMaterialItems,
+  listSubcontractors,
+} from "@/lib/data";
 import { TaskForm } from "../../../../../_components/TaskForm";
 
 export default async function NewTaskPage({
@@ -11,9 +16,11 @@ export default async function NewTaskPage({
 }: PageProps<"/projects/[id]/stages/[stageId]/tasks/new">) {
   const { id, stageId } = await params;
 
-  const [stage, subcontractors] = await Promise.all([
+  const [stage, subcontractors, stockBalances, knownItems] = await Promise.all([
     getStageDetail(stageId),
     listSubcontractors(),
+    getStockBalances(id),
+    listKnownMaterialItems(),
   ]);
   if (!stage || stage.projectId !== id) notFound();
 
@@ -40,6 +47,8 @@ export default async function NewTaskPage({
         seq={stage.tasks.length + 1}
         submitLabel="Add task"
         cancelHref={`/projects/${id}/stages/${stageId}`}
+        stockBalances={stockBalances}
+        knownItems={knownItems}
       />
     </main>
   );

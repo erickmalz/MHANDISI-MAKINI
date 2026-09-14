@@ -44,3 +44,6 @@ export * from "./stage-templates";
 // Phase 3 Slice 3.1 — migration `0008_variation_module`.
 export * from "./variations";
 export * from "./additional-funding-request-variations";
+
+// Phase 3 Slice 3.3 — migration `0009_material_stock_movements`.
+export * from "./material-stock-movements";

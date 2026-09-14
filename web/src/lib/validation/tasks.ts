@@ -55,6 +55,21 @@ const optUuid = z.preprocess(
  */
 const optLineId = z.preprocess(emptyToUndefined, z.uuid().optional());
 
+/**
+ * A bounded, optional "Apply from stock" quantity (Phase 3 ticket 06 §4) — how
+ * much of this line's requirement is drawn from the project's existing
+ * Material Stock instead of being procured fresh. `0`/absent means none
+ * applied. The DAL re-caps this at the live on-hand balance regardless of
+ * what the form already bounded client-side.
+ */
+const optApplyFromStock = z.preprocess(
+  emptyToUndefined,
+  z.coerce
+    .number({ error: "Enter a quantity." })
+    .nonnegative({ error: "This cannot be negative." })
+    .optional(),
+);
+
 /** One Material Take-Off line, as the form posts it (guidelines §16). */
 export const takeOffLineSchema = z.object({
   id: optLineId,
@@ -71,6 +86,7 @@ export const takeOffLineSchema = z.object({
     .min(1, { error: "Enter a unit (bag, ton, piece…)." })
     .max(24, { error: "That unit label is too long." }),
   estUnitCost: optWholeAmount,
+  applyFromStock: optApplyFromStock,
 });
 
 export type TakeOffLineInput = z.infer<typeof takeOffLineSchema>;

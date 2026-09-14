@@ -142,3 +142,14 @@ export {
   linkVariationsToFundingRequest,
   type ApproveVariationResult,
 } from "./variations";
+export {
+  getStockBalances,
+  listStockMovements,
+  listKnownMaterialItems,
+  getStockBalance,
+  carryForwardSurplus,
+  writeOffStock,
+  type StockLine,
+  type StockBalance,
+  type StockMovement,
+} from "./material-stock";

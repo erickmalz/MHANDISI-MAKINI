@@ -23,7 +23,19 @@ type LineRow = {
   /** The frozen Approved Estimate, before any revision — `null`/absent for a line with none yet. */
   qtyOriginal?: number | null;
   estUnitCostOriginal?: number | null;
+  /**
+   * "Apply from stock" (Phase 3 ticket 06 §4) — never persisted on the line
+   * itself, so this always starts blank, even when editing an existing line.
+   */
+  applyFromStock: string;
 };
+
+/** A project's current Material Stock balance, as fed to this form (ticket 06 §6). */
+export type StockBalanceOption = { itemKey: string; unit: string; qty: number };
+
+function stockKey(item: string, unit: string): string {
+  return `${item.trim().toLowerCase()}::${unit.trim().toLowerCase()}`;
+}
 
 const STATUSES: { value: TaskInput["status"]; label: string }[] = [
   { value: "planned", label: "Planned" },
@@ -33,7 +45,14 @@ const STATUSES: { value: TaskInput["status"]; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
-const emptyLine: LineRow = { item: "", description: "", qty: "", unit: "", estUnitCost: "" };
+const emptyLine: LineRow = {
+  item: "",
+  description: "",
+  qty: "",
+  unit: "",
+  estUnitCost: "",
+  applyFromStock: "",
+};
 
 function toNumber(v: string): number {
   const n = Number(v);
@@ -50,6 +69,8 @@ export function TaskForm({
   labourOriginalAmount,
   budgetLocked = false,
   variationMaterialTotal,
+  stockBalances = [],
+  knownItems = [],
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subcontractors: { id: string; name: string }[];
@@ -63,6 +84,10 @@ export function TaskForm({
   budgetLocked?: boolean;
   /** Σ estimate of this Task's Variation-appended material lines — shown separately, since those lines never appear here (ticket 03's cross-reference note). */
   variationMaterialTotal?: number;
+  /** The project's current Material Stock balances (ticket 06 §6) — drives the "On site: {qty} {unit}" hint and the "Apply from stock" cap next to a matching line. */
+  stockBalances?: StockBalanceOption[];
+  /** Distinct known material item names for the item field's `<datalist>` autocomplete (ticket 06 §4/§6) — a typo-drift mitigation, not validation. */
+  knownItems?: string[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
@@ -76,10 +101,21 @@ export function TaskForm({
     estUnitCost: l.estUnitCost != null ? String(l.estUnitCost) : "",
     qtyOriginal: l.qtyOriginal ?? null,
     estUnitCostOriginal: l.estUnitCostOriginal ?? null,
+    // Never persisted on the line (ticket 06 §4) — always starts blank, even
+    // when editing an existing line.
+    applyFromStock: "",
   }));
   const [lines, setLines] = useState<LineRow[]>(
     seededLines.length ? seededLines : [{ ...emptyLine }],
   );
+
+  const stockByKey = new Map(stockBalances.map((b) => [`${b.itemKey}::${b.unit}`, b.qty]));
+  const stockFor = (l: LineRow): number => stockByKey.get(stockKey(l.item, l.unit)) ?? 0;
+  const maxApplyFromStock = (l: LineRow): number => {
+    const balance = stockFor(l);
+    const required = l.qty.trim() ? toNumber(l.qty) : balance;
+    return Math.max(0, Math.min(required, balance));
+  };
 
   const serialized = lines
     .filter((l) => l.item.trim() !== "")
@@ -90,6 +126,9 @@ export function TaskForm({
       qty: l.qty.trim() ? toNumber(l.qty) : undefined,
       unit: l.unit.trim(),
       estUnitCost: l.estUnitCost.trim() ? Math.round(toNumber(l.estUnitCost)) : undefined,
+      applyFromStock: l.applyFromStock.trim()
+        ? Math.min(toNumber(l.applyFromStock), maxApplyFromStock(l))
+        : undefined,
     }));
 
   const lineTotal = (l: LineRow) =>
@@ -101,6 +140,12 @@ export function TaskForm({
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       <input type="hidden" name="lines" value={JSON.stringify(serialized)} />
+      {/* Typo-drift mitigation only (ticket 06 §4/§6) — not validated against. */}
+      <datalist id="material-item-options">
+        {knownItems.map((item) => (
+          <option key={item} value={item} />
+        ))}
+      </datalist>
 
       <Card className="flex flex-col gap-4">
         {seq != null && (
@@ -237,6 +282,7 @@ export function TaskForm({
                   <input
                     aria-label={`Material item, line ${i + 1}`}
                     placeholder="Item"
+                    list="material-item-options"
                     value={row.item}
                     readOnly={identityLocked}
                     onChange={(e) =>
@@ -299,6 +345,41 @@ export function TaskForm({
                     Original: {row.qtyOriginal ?? "—"} {row.unit} @{" "}
                     <Money amount={row.estUnitCostOriginal ?? 0} className="text-xs" />
                   </p>
+                )}
+                {stockFor(row) > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-xs">
+                    <span className="text-muted-foreground">
+                      On site: <span className="font-bold text-card-foreground">{stockFor(row)}</span>{" "}
+                      {row.unit}
+                    </span>
+                    <label className="flex items-center gap-1.5 text-muted-foreground">
+                      Apply from stock
+                      <input
+                        aria-label={`Apply from stock, line ${i + 1}`}
+                        type="number"
+                        min={0}
+                        max={maxApplyFromStock(row)}
+                        step="0.001"
+                        placeholder="0"
+                        value={row.applyFromStock}
+                        onChange={(e) => {
+                          const capped = Math.max(
+                            0,
+                            Math.min(toNumber(e.target.value), maxApplyFromStock(row)),
+                          );
+                          setLines(
+                            lines.map((r, j) =>
+                              j === i
+                                ? { ...r, applyFromStock: e.target.value === "" ? "" : String(capped) }
+                                : r,
+                            ),
+                          );
+                        }}
+                        className="w-20 rounded border border-border bg-card px-1.5 py-0.5 text-card-foreground"
+                      />
+                      {row.unit}
+                    </label>
+                  </div>
                 )}
               </li>
             );
