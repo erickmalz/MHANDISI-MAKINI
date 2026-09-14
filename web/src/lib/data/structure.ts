@@ -2,11 +2,12 @@ import "server-only";
 
 import { and, eq, sql } from "drizzle-orm";
 
+import type { StageTemplateStage } from "@/lib/stage-templates";
 import type { ProjectInput, StageInput } from "@/lib/validation/structure";
 
 import { getCurrentAccountId } from "./account-context";
-import { projects, stages } from "./schema";
-import { withAccount } from "./with-account";
+import { materialLines, projects, stages, tasks } from "./schema";
+import { withAccount, type AccountTx } from "./with-account";
 
 /**
  * The write side of the structure DAL (multi-tenancy ticket 08 §3) — Projects
@@ -65,12 +66,72 @@ export async function getProjectInput(
 }
 
 /**
+ * Copy a (possibly Engineer-trimmed) Stage Template tree into a just-created
+ * project — Operational Control decision 2's "Create Project from template."
+ * Mirrors `createStage` / `createTask`'s own `seq` assignment (1, 2, 3… within
+ * the fresh project, so no `MAX(seq)` lookup is needed) and sets the first
+ * stage as the project's current stage, same as the first manual `createStage`
+ * call would. A template carries names/units only, so every numeric column
+ * (fees, labour, quantities, costs) is left at its schema default.
+ */
+async function applyTemplateStages(
+  tx: AccountTx,
+  accountId: string,
+  projectId: string,
+  templateStages: StageTemplateStage[],
+): Promise<void> {
+  let firstStageId: string | null = null;
+  for (const [stageIdx, stage] of templateStages.entries()) {
+    const [stageRow] = await tx
+      .insert(stages)
+      .values({ accountId, projectId, name: stage.name, seq: stageIdx + 1 })
+      .returning({ id: stages.id });
+    firstStageId ??= stageRow.id;
+
+    for (const [taskIdx, task] of stage.tasks.entries()) {
+      const [taskRow] = await tx
+        .insert(tasks)
+        .values({
+          accountId,
+          stageId: stageRow.id,
+          description: task.description,
+          seq: taskIdx + 1,
+        })
+        .returning({ id: tasks.id });
+
+      if (task.materialLines.length > 0) {
+        await tx.insert(materialLines).values(
+          task.materialLines.map((line) => ({
+            accountId,
+            taskId: taskRow.id,
+            item: line.item,
+            unit: line.unit,
+          })),
+        );
+      }
+    }
+  }
+
+  if (firstStageId) {
+    await tx
+      .update(projects)
+      .set({ currentStageId: firstStageId, updatedAt: new Date() })
+      .where(eq(projects.id, projectId));
+  }
+}
+
+/**
  * Create a project and return its opaque id. The human-facing `project_code`
  * (`PRJ-{year}-{NNN}`, guidelines §46) is minted per-Account inside the same
  * transaction; the `UNIQUE (account_id, project_code)` constraint is the
- * backstop against the (single-user-account) race.
+ * backstop against the (single-user-account) race. `templateStages`, when
+ * given, applies a Stage Template's (Engineer-trimmed) tree in the same
+ * transaction — see `applyTemplateStages`.
  */
-export async function createProject(input: ProjectInput): Promise<string> {
+export async function createProject(
+  input: ProjectInput,
+  templateStages?: StageTemplateStage[],
+): Promise<string> {
   const accountId = await getCurrentAccountId();
   return withAccount(async (tx) => {
     const prefix = `PRJ-${new Date().getFullYear()}-`;
@@ -99,6 +160,10 @@ export async function createProject(input: ProjectInput): Promise<string> {
         notes: input.notes ?? null,
       })
       .returning({ id: projects.id });
+
+    if (templateStages && templateStages.length > 0) {
+      await applyTemplateStages(tx, accountId, row.id, templateStages);
+    }
     return row.id;
   });
 }

@@ -7,6 +7,7 @@ import {
   Plus,
   Receipt,
   ShoppingCartSimple,
+  Stack,
 } from "@phosphor-icons/react/dist/ssr";
 import { getProjectOverview } from "@/lib/data";
 import { financialHealth } from "@/lib/finance";
@@ -60,6 +61,13 @@ export default async function ProjectOverviewPage({
             >
               <PencilSimple size={16} aria-hidden="true" />
               Edit project
+            </Link>
+            <Link
+              href={`/projects/${project.id}/save-as-template`}
+              className="inline-flex min-h-12 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              <Stack size={16} aria-hidden="true" />
+              Save as template
             </Link>
             <Button
               variant="secondary"

@@ -2,9 +2,12 @@ import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createProjectAction } from "@/app/actions/projects";
+import { listStageTemplatesForApply } from "@/lib/data";
 import { ProjectForm } from "../_components/ProjectForm";
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  const templates = await listStageTemplatesForApply();
+
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <Link
@@ -23,6 +26,7 @@ export default function NewProjectPage() {
 
       <ProjectForm
         action={createProjectAction}
+        templates={templates}
         submitLabel="Create project"
         cancelHref="/"
       />

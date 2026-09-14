@@ -6,22 +6,26 @@ so only `tsc`/`eslint` run in WSL — `db:migrate`, `npm test`, `npm run build`
 verification goes through CI's own throwaway Postgres (confirmed working,
 Slice 2.8).
 
-_Last updated: session (2026-09-12). Slices 1-5 done and CI-verified,
+_Last updated: session (2026-09-14). Slices 1-5 done and CI-verified,
 including migration `0006_attachments` applying cleanly on CI run
 `34693498502` (`Apply migrations` / lint / typecheck / isolation suite /
-build all green, commit `496cd1a`). **Slice 6 (Stage templates) is the next
-slice, not yet started** —
-a fresh session should read this file + `map.md` decision 2 first, then
-follow the same pattern as Slice 4: design the `stage_templates` table
-(one JSONB column holding the whole `Stage → Task → typical Material Lines`
-tree is very likely the right shape — no relational benefit to normalising
-something that's only ever read/written wholesale — but confirm that call
-holds before generating the migration), generate it via the isolated
-Linux-`drizzle-kit` approach in a scratch directory (`web/node_modules` is
-Windows-built and can't run it under WSL — see Slice 4/5's migration commit
-for the exact steps), diff its snapshot against `0006`'s to confirm zero
-drift, then build the register CRUD + the "Create Project from template"
-flow per decision 2's two authoring paths._
+build all green, commit `496cd1a`). **Slice 6 (Stage templates) is now
+built, pending CI verification on push** — `stage_templates` (one JSONB
+`body` column holding the `{ stages: [{ name, tasks: [{ description,
+materialLines: [{ item, unit }] }] }] }` tree, per decision 2's call that
+something only ever read/written wholesale doesn't benefit from
+normalising), migration `0007_stage_templates` (generated via the isolated
+Linux-`drizzle-kit` scratch-directory approach, `web/node_modules` still
+can't run it under WSL; diffed against `0006`'s snapshot — zero drift beyond
+the new table), the register DAL/validation/actions/CRUD pages at
+`/stage-templates`, "Create Project from template" wired into `ProjectForm`
+(a checklist to deselect stages/tasks, applied inside `createProject`'s own
+transaction via `applyTemplateStages`), and "Save as template" on the
+project page (`createTemplateFromProject`, reusing the same write path).
+Unlike Suppliers/Subcontractors, a template supports a real delete — no
+history depends on it once applied. `tsc --noEmit` and `eslint` both clean
+in WSL. **Not yet pushed / CI-verified** — do that next, then this becomes
+the Slice 6 verification commit, closing Operational Control's build order._
 
 ## Slice ledger
 
@@ -32,4 +36,4 @@ flow per decision 2's two authoring paths._
 | 3 | Supplier / Subcontractor Statements — `src/lib/data/statements.ts` (`getSupplierStatement`/`getSubcontractorStatement`, account-wide, all-projects), new routes `/suppliers/[id]` and `/subcontractors/[id]` (linked from each register's row name), each order/task/payment links to its record. Variations line omitted per the map. No schema change. | **Done + CI-green** (`5b3bf33`, run `34692760968`) |
 | 4 | Document attachments — `attachments` table (migration `0006_attachments`, generated via the same isolated-Linux-drizzle-kit approach as `0005`, diffed against `0005`'s snapshot to confirm only the new table changed), 3 nullable composite FKs (PO/Payment/Labour Payment) each capped at one via `UNIQUE`. DAL (`getAttachmentMeta`/`getAttachmentFile`/`setAttachment`) supports all 3 targets; **UI wired for Purchase Orders only** this slice (a new `AttachmentCard` at the page level, not inside the large existing `PurchaseOrderDetail` component) — Payment/Labour Payment upload widgets are a fast-follow, same DAL. ≤5MB, PDF/PNG/JPEG. Download route `/attachments/[attachmentId]`. | **Done + CI-green** (`496cd1a`, run `34693498502`) |
 | 5 | Alerts follow-up — "missing receipt" / "missing delivery note" now computable from Slice 4's attachments (both collapse to "no attachment on this PO," worded by whether it's delivered-only or delivered-and-paid, since there's one attachment slot per PO, not per delivery/payment). | **Done + CI-green** (`496cd1a`, run `34693498502`) |
-| 6 | Stage templates — new `stage_templates` table (per-Account register). Needs a migration. | Not started |
+| 6 | Stage templates — `stage_templates` register (migration `0007`), `Stage → Task → Material Line` tree (names/units only), register CRUD at `/stage-templates`, "Create Project from template" (deselect stages/tasks on `ProjectForm`) and "Save as template" from an existing project. | **Built, `tsc`/`eslint` clean in WSL — not yet pushed / CI-verified** |
