@@ -159,3 +159,4 @@ export {
   resolveSurplusMaterials,
   type CloseStageResult,
 } from "./stage-closeout";
+export { getStageReconciliationReport } from "./reconciliation";

@@ -60,6 +60,12 @@ export default async function StageDetailPage({
           </Link>
           <Button
             variant="secondary"
+            href={`/projects/${id}/stages/${stageId}/financial-check`}
+          >
+            Run Financial Check
+          </Button>
+          <Button
+            variant="secondary"
             href={`/projects/${id}/stages/${stageId}/closeout`}
           >
             Stage Closeout
