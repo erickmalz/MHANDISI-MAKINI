@@ -21,12 +21,16 @@ own throwaway Postgres), `lint`, `typecheck`, the isolation suite
 prior slice was held to, achieved without touching the local dev Postgres
 this WSL sandbox found reachable on `localhost:5432` with live data in it.
 
-**Slice 2.7** is unchanged from before — CI-green, but its one remaining item
-(a human-eyeball "download all six documents and confirm they render
-correctly" check) is confirmed blocked in this WSL sandbox: `npm run dev`
-boots but hangs indefinitely compiling the proxy (never serves a page), and
-Docker isn't reachable from WSL. This needs the user's Windows machine, where
-`npm run dev` is known to work._
+**Slice 2.7 is now also fully closed (2026-09-14).** The user ran the manual
+smoke check on Windows (`npm ci` after fixing a Linux-symlinked
+`node_modules`, `npm run db:seed:smoke`, `npm run dev`, Issue the seeded FR +
+PO, download all six documents). That surfaced two real bugs — `null` from
+the JSON-serialized `lines` payload wasn't accepted by the optional-field
+Zod schemas in `src/lib/validation/funding.ts` and `procurement.ts` (their
+shared `emptyToUndefined` only handled empty strings, not `null`) — fixed in
+both files. All six documents then rendered correctly; the user confirmed
+"all works well." See `.scratch/phase2/slice-2.7-runbook.md`'s closing
+section for the full detail. **Phase 2 has no further open item.**_
 
 ## What Phase 2 is
 
@@ -57,7 +61,7 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 | 2.4b | **Remaining structure CRUD** — write DAL + Server Actions + forms + routes for the Supplier and Subcontractor registers, Tasks (under a stage), and Material Take-Off lines. No migration (tables landed in `0002`). Follows the 2.4a DAL / validation / action-helper pattern. Pulled ahead of 2.6 (2.6 needs the Supplier Register). | **Done + verified** (commit `85f778b`; CI run `34395773042` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.4b-runbook.md`. |
 | 2.5 | Funding Request write lifecycle — Draft→Issued state machine, atomic Issue transaction (freeze snapshot, mint `FR-{project}-NNN` + `FI-{project}-NNN` via `document_number_sequences`, raise Fee Invoice), version/supersede, Additional Funding Request, Deposit recording. Rebuilt the builder on the DAL as `FundingRequestForm` + new detail/edit/list routes. `funding-mock.ts` + the old `FundingRequestBuilder` **deleted**. | **Done + verified** (CI run `34360555087` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.5-runbook.md`. |
 | 2.6 | Purchase Order write lifecycle — Planned→Ordered Issue transaction, append-only Delivery/Payment records with reversal, over-limit soft-blocks, cancel / close / reopen, supplier acknowledgement. Supplier picked from the 2.4b register. Rebuilt `procurement/new` on a new shared `PurchaseOrderForm`; `PurchaseOrderDetail` rebuilt as a `"use client"` mutation surface. `claimDocumentNumber` extracted to `src/lib/data/document-numbers.ts`. **`mock-data.ts` + `PurchaseOrderBuilder.tsx` deleted.** | **Done + verified** (commit `34824f3`; CI run `34403407649` on PR #2 — `lint` / `typecheck` / isolation suite / `build` all ✓). Runbook: `.scratch/phase2/slice-2.6-runbook.md`. |
-| 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **4 commits, 3 pushed + CI-red, 1 local fix unpushed** — `8f84f0a`/`fada09a`/`2b73256` pushed, PR #2 `web` CI job failed (Turbopack: `react-dom/server` imported outside a Server Component); `fa890ad` (local) fixes it via dynamic import, not yet pushed/verified. Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
+| 2.7 | Document rendering (ticket 10 / ADR 0005) — `puppeteer` + warm in-container Chromium, `document_snapshot` type tightened to a `kind`-union + the 3 Issue writers updated, `src/lib/documents/` render module (browser singleton / concurrency gate / timeout, `renderPdf`/`renderJpg`, `print-css.ts` reusing `--mm-*`, 3 React templates), read DAL `src/lib/data/documents.ts` (`get*Document` + derived stamp + live-profile letterhead), 6 route handlers (`document.pdf`/`.jpg` for FR / Fee Invoice / PO), `DocumentDownloads` card on FR + PO detail, provisional `web/Dockerfile`, vocabulary test. **Code-only, no migration.** | **Done + verified — CI-green and the Windows manual smoke check passed.** Two `null`-handling bugs in `validation/{funding,procurement}.ts` found and fixed during the smoke check (see runbook). Runbook: `.scratch/phase2/slice-2.7-runbook.md` |
 | 2.8 | Account lifecycle (ticket 02) — hard-delete + maintenance-role sweep, JSON data export, profile edit (name/phone/logo for the letterhead). | **Done + verified — all 4 parts.** Commits `c7bafde`/`8721210` (Parts 1–2), `3040cf5` (Parts 3–4 minus the hook), `e83424a` (migration `0005` + the sign-in-cancels-deletion hook). CI run `34681877689` on PR #2 green (`Apply migrations` / lint / typecheck / isolation suite / build). Runbook: `.scratch/phase2/slice-2.8-runbook.md` |
 
 ## Key facts for the projection / DAL (already built, 2.2)
@@ -196,20 +200,13 @@ top of it (see the memory `mhandisi-makini-verify-migration-before-building-on-i
 
 ## Immediate next action
 
-**Slice 2.8 is fully done and verified — nothing left on it.** The only
-outstanding item across all of Phase 2 is **Slice 2.7's close-out**: a
-human-eyeball "download all six documents and confirm they render correctly"
-smoke check (`npm run dev`, an issued FR + Fee Invoice + PO, all six PDF/JPG
-routes), then a short verification commit recording it (2.5/2.6 pattern).
-This is confirmed blocked from this WSL sandbox, not by anything fixable
-here: `npm run dev` boots but hangs indefinitely compiling the proxy (never
-serves a page), and Docker isn't reachable from WSL (`docker` resolves to the
-Windows binary, which errors that WSL integration isn't enabled). The
-isolation suite's one "document" reference is unrelated (a table name in the
-RLS-conformance list) — it exercises none of `src/lib/documents/` or the six
-PDF/JPG routes, so a green CI run is not evidence for this checklist item. It
-needs the user's Windows machine, where `npm run dev` is known to work — the
-last thing standing before Phase 2 as a whole is complete.
+**Both Slice 2.7 and Slice 2.8 are fully done and verified — Phase 2's build
+has no open slice.** What's left is process, not code: push the two
+`validation/{funding,procurement}.ts` null-handling fixes (see the 2.7
+runbook's closing section) and this doc's update, confirm CI is green on
+`phase2-domain-structure` one more time, then decide whether/when to merge
+PR #2 (`phase2-domain-structure` → `main`, currently open and mergeable) and
+what comes after Phase 2.
 
 To cut the manual setup down to just the two "Issue" clicks + downloads:
 `web/scripts/seed-document-smoke-test.ts` (`npm run db:seed:smoke`) creates a

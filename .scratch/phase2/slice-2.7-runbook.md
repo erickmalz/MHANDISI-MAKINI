@@ -149,3 +149,29 @@ _Multi-tenancy ticket 10 / ADR 0005. One commit for the slice, same pattern as
 
 Single commit: `Phase 2 Slice 2.7: issued-document rendering (PDF + JPG)`.
 Then the verification commit once CI is green, per the 2.5 / 2.6 pattern.
+
+## Manual smoke check — done (2026-09-14, Windows)
+
+Ran on the user's Windows machine (this WSL sandbox cannot run `npm run dev`
+or reach Docker — see `.scratch/phase2/status.md`). `web/node_modules` first
+needed a clean `npm ci` from a **Windows** shell — it had been reinstalled
+from WSL at some point, so `.bin` held Linux symlinks with no `.cmd`/`.ps1`
+wrappers, which is why `tsx`/`next` weren't recognized.
+
+`npm run db:seed:smoke` then `npm run dev` worked as documented. Issuing the
+seeded Funding Request and Purchase Order through the UI surfaced two bugs,
+both in the same shape: the JSON-serialized `lines` payload sends explicit
+`null` for an unfilled optional field (`description`, `unit`, …), but
+`emptyToUndefined` in `src/lib/validation/{funding,procurement}.ts` only
+mapped an empty *string* to `undefined` — `null` fell through into
+`z.string()....optional()`, which rejects `null`, raising "Invalid input:
+expected string, received null" on save. Fixed in both files: `v === null ||
+(typeof v === "string" && v.trim() === "") ? undefined : v`. Checked the other
+three validation files sharing this duplicated helper (`registers.ts`,
+`tasks.ts`, `structure.ts`) — their forms post plain `FormData` strings, never
+JSON `null`, so they don't need the same fix.
+
+With those two fixes, all 6 documents (FR/Fee Invoice/PO × PDF/JPG)
+downloaded and rendered correctly: branded letterhead, correct line items and
+totals, footer pagination on the PDFs, one continuous JPG. Confirmed by the
+user ("all works well"). Slice 2.7 is now fully closed.

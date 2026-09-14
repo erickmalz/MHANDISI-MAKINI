@@ -14,7 +14,7 @@ import { z } from "zod";
  */
 
 const emptyToUndefined = (v: unknown) =>
-  typeof v === "string" && v.trim() === "" ? undefined : v;
+  v === null || (typeof v === "string" && v.trim() === "") ? undefined : v;
 
 const optText = (max: number) =>
   z.preprocess(emptyToUndefined, z.string().trim().max(max).optional());
