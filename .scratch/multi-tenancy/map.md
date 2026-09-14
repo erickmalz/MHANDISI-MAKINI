@@ -224,6 +224,33 @@ guessing. This map **produces decisions, not code**.
   later separate decision). The build owns the DDL, `derivePOStatus`'s new body,
   the mutation endpoints and every screen. Rendering *mechanism* graduated to
   ticket 10.
+- [Document rendering approach for issued Funding Requests, Fee Invoices and Purchase Orders](./issues/10-document-rendering-approach.md):
+  A document is an **HTML page rendered by a headless Chromium that lives in the
+  app container** (`puppeteer`, one warm browser instance), printed to PDF and
+  screenshotted to JPG. **Template = a React component** rendered to a static
+  string over a shared shell, reusing the app's `--mm-*` tokens and the existing
+  `formatTZS` / `formatDate` helpers — no templating language. **Chosen over
+  `@react-pdf/renderer`** because the documents are branded and the JPG falls
+  out of the same engine; the cold-start objection is void under ticket 05's
+  warm container. **Data contract**: the Issue transaction writes a
+  self-contained `document_snapshot` (JSONB) and the renderer reads only that
+  for transactional content — a later register edit or `finance.ts` change
+  cannot rewrite an issued document; **exception**: the letterhead identity
+  (business name, phone, logo) renders from the *current* Account profile.
+  **JPG** = a second full-page screenshot with page furniture suppressed — one
+  continuous image, no PDF rasteriser. **Placement**: same container as the app
+  (no sidecar) — feeds the Deployment-shape fog a ~1 GB RAM floor and a
+  `fonts-dejavu-core` requirement. **Invocation**: synchronous authenticated
+  route handlers (`document.pdf`, `document.jpg`) that stream the file — no
+  queue, no storage; a concurrency gate + render timeout → 503. **Content**:
+  ticket 10 pins a checklist per document (Funding Request from §18 + the fee
+  line + supersede line; Fee Invoice defined from scratch, with a new
+  `FI-{project}-NNN` per-project number minted in the FR Issue transaction;
+  Purchase Order from §22 minus lifecycle status), plus `SUPERSEDED` /
+  `CANCELLED` / `PAID` stamps. **English only** for v1. Recorded as
+  [ADR 0005](../../../docs/adr/0005-html-to-pdf-via-headless-chromium.md). The
+  build owns the snapshot shape, the React templates + print CSS, the Dockerfile
+  lines, the browser singleton/pool, and the two routes.
 
 ## Not yet specified
 
@@ -236,10 +263,11 @@ guessing. This map **produces decisions, not code**.
   separate implementation-planning effort. Still carries the **data-protection
   thread** from ticket 03: when an Account is hard-deleted, how that propagates
   to database backups holding its rows — a bounded retention window vs. active
-  scrubbing — which depends on the chosen backup mechanism. Ticket 10 (document
-  rendering approach) also has an operational-placement thread that interacts
-  with this — whether the PDF/JPG renderer is in the app container or a
-  companion process.
+  scrubbing — which depends on the chosen backup mechanism. Ticket 10 settled
+  its operational-placement thread — the PDF/JPG renderer runs **in the app
+  container** — and hands this decision two hard inputs: the app container needs
+  a **~1 GB RAM floor** (headless Chromium) and its base image must install
+  `fonts-dejavu-core`.
 
 ## Out of scope
 

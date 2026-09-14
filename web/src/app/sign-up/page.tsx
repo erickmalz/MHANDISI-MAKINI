@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Field, controlClass } from "@/components/ui/Field";
 import { signup, type SignupState } from "@/app/actions/auth";
@@ -17,14 +17,7 @@ export default function SignUpPage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 sm:px-6">
       <div className="w-full max-w-md">
-        <Image
-          src="/brand/logo-stacked.png"
-          alt="Mhandisi Makini"
-          width={905}
-          height={1000}
-          priority
-          className="h-auto w-[160px]"
-        />
+        <BrandLogo width={200} priority />
 
         <h1 className="mt-6 text-[1.75rem] font-bold text-foreground">
           Create your account

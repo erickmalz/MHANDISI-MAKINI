@@ -19,9 +19,21 @@
  * Phase 2 domain table gets ENABLE + FORCE. See ADR 0004.
  */
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { customType, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { auth_user } from "./auth";
+
+/**
+ * Raw image bytes for the Account logo (slice 2.8). Stored in Postgres rather
+ * than an external object store — the app is a single self-hosted container
+ * with no S3/blob/CDN today (ADR 0001's no-new-infra stance), and a letterhead
+ * logo is small, so row bloat is a non-issue.
+ */
+const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 export const accounts = pgTable("accounts", {
   id: uuid("id")
@@ -36,6 +48,16 @@ export const accounts = pgTable("accounts", {
   // Filled by the signup Server Action immediately after signUpEmail succeeds.
   acceptedTermsVersion: text("accepted_terms_version"),
   acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),
+  // Letterhead logo (slice 2.8) — both null until the Engineer uploads one;
+  // `getDocumentProfile` treats a null logo as "no logo on the letterhead".
+  logo: bytea("logo"),
+  logoContentType: text("logo_content_type"),
+  // Self-serve account deletion (ticket 02). Null = not scheduled. Set by the
+  // delete-account Server Action; cleared by any successful sign-in while it's
+  // set (that's how "cancel by signing in" works — see slice 2.8's sign-in
+  // action). The maintenance-role sweep hard-deletes any account whose value
+  // here is more than 30 days in the past.
+  deletionScheduledAt: timestamp("deletion_scheduled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

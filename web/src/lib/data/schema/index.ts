@@ -4,3 +4,36 @@
  */
 export * from "./auth";
 export * from "./accounts";
+
+// Phase 2 domain schema (multi-tenancy ticket 08). Every table here is
+// account-scoped and gets the standard RLS treatment (ENABLE + FORCE + the
+// `account_isolation` policy) via the hand-merged block at the end of its
+// migration.
+export * from "./enums";
+
+// Slice 2.1 — the structure tables (migration `0002_domain_structure`).
+export * from "./projects";
+export * from "./stages";
+export * from "./subcontractors";
+export * from "./suppliers";
+export * from "./tasks";
+export * from "./material-lines";
+
+// Slice 2.2 — the money tables (migration `0003_money_tables`). Type-only
+// `./snapshot` carries the `document_snapshot` shape and defines no table.
+export * from "./snapshot";
+export * from "./document-numbers";
+export * from "./funding-requests";
+export * from "./funding-request-lines";
+export * from "./fee-invoices";
+export * from "./deposits";
+export * from "./purchase-orders";
+export * from "./purchase-order-lines";
+export * from "./delivery-records";
+export * from "./payment-records";
+export * from "./labour-payments";
+export * from "./petty-cash-expenses";
+export * from "./other-commitments";
+
+// Operational Control Slice 4 — migration `0006_attachments`.
+export * from "./attachments";

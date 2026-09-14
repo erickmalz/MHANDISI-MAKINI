@@ -1,192 +1,142 @@
 "use client";
 
-import { useState } from "react";
-import { Truck, HandCoins, CheckCircle, Archive } from "@phosphor-icons/react/dist/ssr";
-import { Money } from "@/components/ui/Money";
+import { useActionState, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle,
+  PaperPlaneTilt,
+  Trash,
+} from "@phosphor-icons/react/dist/ssr";
+
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { Field, controlClass } from "@/components/ui/Field";
+import { Money } from "@/components/ui/Money";
 import { formatDate } from "@/lib/format";
+import type { ActionState } from "@/lib/forms/action-helpers";
 import {
   type PurchaseOrder,
-  type PaymentMethod,
-  type PaymentType,
+  acceptedValue,
   derivePOStatus,
   orderedTotal,
-  acceptedValue,
-  paidTotal,
   outstandingValue,
-} from "@/lib/procurement-mock";
+  paidTotal,
+} from "@/lib/procurement";
 import { POStatusBadge } from "../../_components/POStatusBadge";
 
-const PAYMENT_METHODS: PaymentMethod[] = ["Bank Transfer", "Mobile Money", "Cash", "Cheque"];
-const PAYMENT_TYPES: PaymentType[] = ["Deposit", "Partial", "Final"];
+type Bound = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
-function isoToday() {
-  return new Date().toISOString().slice(0, 10);
-}
+const today = () => new Date().toISOString().slice(0, 10);
 
 export function PurchaseOrderDetail({
-  initialPO,
-  projectName,
+  po,
+  projectId,
+  issueAction,
+  issueError,
+  discardAction,
+  editHref,
+  deliveryAction,
+  paymentAction,
+  ackAction,
+  cancelAction,
+  closeAction,
+  reopenAction,
+  voidDeliveryActions,
+  voidPaymentActions,
 }: {
-  initialPO: PurchaseOrder;
-  projectName: string;
+  po: PurchaseOrder;
+  projectId: string;
+  issueAction: () => Promise<void>;
+  issueError?: string;
+  discardAction: () => Promise<void>;
+  editHref: string;
+  deliveryAction: Bound;
+  paymentAction: Bound;
+  ackAction: Bound;
+  cancelAction: Bound;
+  closeAction: () => Promise<void>;
+  reopenAction: () => Promise<void>;
+  voidDeliveryActions: Record<string, Bound>;
+  voidPaymentActions: Record<string, Bound>;
 }) {
-  const [po, setPo] = useState(initialPO);
-  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-
   const status = derivePOStatus(po);
+  const isDraft = po.status === "planned";
+  const isOrdered = po.status === "ordered";
+  const isClosed = po.status === "closed";
+  const isCancelled = po.status === "cancelled";
+
   const ordered = orderedTotal(po);
   const delivered = acceptedValue(po);
   const paid = paidTotal(po);
   const outstanding = outstandingValue(po);
-
-  const canConfirm = status === "Issued";
-  const canCancel =
-    po.deliveries.length === 0 && po.payments.length === 0 && !po.cancelled && !po.closed;
-  const canClose =
-    status === "Paid" &&
-    po.lines.every((l) => l.qtyAccepted >= l.qtyOrdered) &&
-    !po.closed;
-
-  function confirmOrder() {
-    setPo((p) => ({ ...p, confirmed: true }));
-  }
-  function cancelOrder() {
-    setPo((p) => ({ ...p, cancelled: true }));
-  }
-  function closeOrder() {
-    setPo((p) => ({ ...p, closed: true }));
-  }
-
-  function recordDelivery(
-    entries: Record<string, { delivered: number; rejected: number }>,
-    noteNumber: string,
-    siteNotes: string
-  ) {
-    setPo((p) => {
-      const deliveryLines = p.lines
-        .map((l) => {
-          const entry = entries[l.id];
-          if (!entry || entry.delivered <= 0) return null;
-          const accepted = Math.max(0, entry.delivered - entry.rejected);
-          return {
-            lineId: l.id,
-            qtyDelivered: entry.delivered,
-            qtyAccepted: accepted,
-            qtyRejected: entry.rejected,
-          };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null);
-
-      const updatedLines = p.lines.map((l) => {
-        const entry = entries[l.id];
-        if (!entry || entry.delivered <= 0) return l;
-        const accepted = Math.max(0, entry.delivered - entry.rejected);
-        return {
-          ...l,
-          qtyDelivered: l.qtyDelivered + entry.delivered,
-          qtyAccepted: l.qtyAccepted + accepted,
-          qtyRejected: l.qtyRejected + entry.rejected,
-        };
-      });
-
-      return {
-        ...p,
-        lines: updatedLines,
-        deliveries: [
-          ...p.deliveries,
-          {
-            id: crypto.randomUUID(),
-            date: isoToday(),
-            noteNumber,
-            siteNotes: siteNotes || undefined,
-            lines: deliveryLines,
-          },
-        ],
-      };
-    });
-    setShowDeliveryForm(false);
-  }
-
-  function recordPayment(
-    amount: number,
-    method: PaymentMethod,
-    reference: string,
-    type: PaymentType
-  ) {
-    setPo((p) => ({
-      ...p,
-      payments: [
-        ...p.payments,
-        { id: crypto.randomUUID(), date: isoToday(), amount, method, reference, type },
-      ],
-    }));
-    setShowPaymentForm(false);
-  }
-
-  // One dominant action, chosen by where the order is in its lifecycle.
-  const openDelivery = () => {
-    setShowPaymentForm(false);
-    setShowDeliveryForm(true);
-  };
-  const openPayment = () => {
-    setShowDeliveryForm(false);
-    setShowPaymentForm(true);
-  };
-
-  let primaryAction: { label: string; onClick: () => void } | null = null;
-  if (!po.cancelled && !po.closed) {
-    if (status === "Issued") primaryAction = { label: "Confirm order", onClick: confirmOrder };
-    else if (status === "Confirmed" || status === "Partially Delivered")
-      primaryAction = { label: "Record delivery", onClick: openDelivery };
-    else if (status === "Delivered" || status === "Partially Paid")
-      primaryAction = { label: "Record payment", onClick: openPayment };
-    else if (canClose) primaryAction = { label: "Close order", onClick: closeOrder };
-  }
-
-  const showDeliverySecondary =
-    !po.cancelled && !po.closed && primaryAction?.label !== "Record delivery";
-  const showPaymentSecondary =
-    !po.cancelled && !po.closed && primaryAction?.label !== "Record payment";
 
   return (
     <div>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">
-            {projectName} &middot; {po.stageName}
+            {po.projectName} &middot; {po.stageName}
           </p>
-          <h1 className="text-[1.75rem] font-bold text-foreground">{po.number}</h1>
-          <p className="mt-1 text-muted-foreground">{po.supplier}</p>
+          <h1 className="text-[1.75rem] font-bold text-foreground">
+            {po.displayNumber ?? "Draft purchase order"}
+          </h1>
+          <p className="mt-1 text-muted-foreground">{po.supplierName}</p>
         </div>
         <POStatusBadge status={status} />
       </header>
 
+      {isDraft && (
+        <p className="mb-6 rounded-lg border border-border-strong bg-muted p-3 text-sm text-muted-foreground">
+          This order is still a draft. Issuing it freezes the supplier, lines,
+          quantities and unit prices, and assigns its number.
+        </p>
+      )}
+      {isCancelled && po.cancelReason && (
+        <p className="mb-6 rounded-lg bg-health-red-bg p-3 text-sm text-health-red">
+          Cancelled: {po.cancelReason}
+        </p>
+      )}
+      {isClosed && (
+        <p className="mb-6 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+          This order is closed. Its float exposure is limited to what has been
+          paid. Reopen it if more needs to be recorded against it.
+        </p>
+      )}
+
       <Card className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Ordered" amount={ordered} emphasis />
-        <Stat label="Delivered" amount={delivered} />
+        <Stat label="Delivered (accepted)" amount={delivered} />
         <Stat label="Paid" amount={paid} />
         <Stat
           label="Outstanding"
           amount={outstanding}
-          tone={outstanding > 0 ? "destructive" : undefined}
+          tone={outstanding < 0 ? "destructive" : undefined}
         />
       </Card>
 
       <Card className="mb-6">
-        <h2 className="text-xl font-bold text-card-foreground">Material lines</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-bold text-card-foreground">Material lines</h2>
+          {isDraft && (
+            <Link
+              href={editHref}
+              className="text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              Edit draft
+            </Link>
+          )}
+        </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-sm text-muted-foreground">
                 <th className="pb-2 font-bold">Item</th>
                 <th className="pb-2 font-bold">Ordered</th>
-                <th className="pb-2 font-bold">Delivered</th>
-                <th className="pb-2 font-bold">Accepted</th>
-                <th className="pb-2 font-bold">Rejected</th>
+                {!isDraft && <th className="pb-2 font-bold">Delivered</th>}
+                {!isDraft && <th className="pb-2 font-bold">Accepted</th>}
+                {!isDraft && <th className="pb-2 font-bold">Rejected</th>}
                 <th className="pb-2 text-right font-bold">Value</th>
               </tr>
             </thead>
@@ -194,14 +144,26 @@ export function PurchaseOrderDetail({
               {po.lines.map((l) => (
                 <tr key={l.id}>
                   <td className="py-3 text-card-foreground">{l.item}</td>
-                  <td className="py-3 text-muted-foreground">{l.qtyOrdered} {l.unit}</td>
-                  <td className="py-3 text-muted-foreground">{l.qtyDelivered} {l.unit}</td>
-                  <td className="py-3 text-muted-foreground">{l.qtyAccepted} {l.unit}</td>
-                  <td
-                    className={`py-3 ${l.qtyRejected > 0 ? "font-bold text-destructive" : "text-muted-foreground"}`}
-                  >
-                    {l.qtyRejected} {l.unit}
+                  <td className="py-3 text-muted-foreground">
+                    {l.qtyOrdered} {l.unit}
                   </td>
+                  {!isDraft && (
+                    <td className="py-3 text-muted-foreground">
+                      {l.qtyDelivered} {l.unit}
+                    </td>
+                  )}
+                  {!isDraft && (
+                    <td className="py-3 text-muted-foreground">
+                      {l.qtyAccepted} {l.unit}
+                    </td>
+                  )}
+                  {!isDraft && (
+                    <td
+                      className={`py-3 ${l.qtyRejected > 0 ? "font-bold text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {l.qtyRejected} {l.unit}
+                    </td>
+                  )}
                   <td className="py-3 text-right">
                     <Money
                       amount={l.qtyOrdered * l.unitPrice}
@@ -210,13 +172,30 @@ export function PurchaseOrderDetail({
                   </td>
                 </tr>
               ))}
+              {po.lines.length === 0 && (
+                <tr>
+                  <td colSpan={isDraft ? 3 : 6} className="py-3 text-muted-foreground">
+                    No lines on this order yet.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Issued {formatDate(po.date)} &middot; expected delivery{" "}
-          {formatDate(po.expectedDeliveryDate)} &middot; {po.paymentTerms}
+          {po.orderedAt ? `Issued ${formatDate(po.orderedAt)}` : "Not yet issued"}
+          {po.expectedDeliveryOn && (
+            <> &middot; expected delivery {formatDate(po.expectedDeliveryOn)}</>
+          )}
+          {po.paymentTerms && <> &middot; {po.paymentTerms}</>}
         </p>
+        {po.supplierAckNote && (
+          <p className="mt-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            Supplier acknowledgement
+            {po.supplierAckOn && ` (${formatDate(po.supplierAckOn)})`}:{" "}
+            {po.supplierAckNote}
+          </p>
+        )}
         {po.notes && (
           <p className="mt-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
             {po.notes}
@@ -224,349 +203,565 @@ export function PurchaseOrderDetail({
         )}
       </Card>
 
-      {!po.cancelled && !po.closed && (
-        <section className="mb-6 flex flex-wrap items-center gap-3">
-          {primaryAction && (
-            <Button variant="primary" type="button" onClick={primaryAction.onClick}>
-              {primaryAction.label === "Record delivery" && (
-                <Truck size={20} aria-hidden="true" />
-              )}
-              {primaryAction.label === "Record payment" && (
-                <HandCoins size={20} aria-hidden="true" />
-              )}
-              {primaryAction.label === "Confirm order" && (
-                <CheckCircle size={20} aria-hidden="true" />
-              )}
-              {primaryAction.label === "Close order" && (
-                <Archive size={20} aria-hidden="true" />
-              )}
-              {primaryAction.label}
-            </Button>
-          )}
-          {canConfirm && primaryAction?.label !== "Confirm order" && (
-            <Button variant="secondary" type="button" onClick={confirmOrder}>
-              <CheckCircle size={20} aria-hidden="true" />
-              Confirm order
-            </Button>
-          )}
-          {showDeliverySecondary && (
-            <Button variant="secondary" type="button" onClick={openDelivery}>
-              <Truck size={20} aria-hidden="true" />
-              Record delivery
-            </Button>
-          )}
-          {showPaymentSecondary && (
-            <Button variant="secondary" type="button" onClick={openPayment}>
-              <HandCoins size={20} aria-hidden="true" />
-              Record payment
-            </Button>
-          )}
-          {canClose && primaryAction?.label !== "Close order" && (
-            <Button variant="secondary" type="button" onClick={closeOrder}>
-              <Archive size={20} aria-hidden="true" />
-              Close order
-            </Button>
-          )}
-          {canCancel && (
-            <Button
-              variant="danger-quiet"
-              type="button"
-              onClick={cancelOrder}
-              className="ml-auto"
-            >
-              Cancel order
-            </Button>
-          )}
-        </section>
+      {!isDraft && po.displayNumber && (
+        <div className="mb-6">
+          <DocumentDownloads
+            links={[
+              {
+                label: `Purchase order ${po.displayNumber}`,
+                pdfHref: `/projects/${projectId}/procurement/${po.id}/document.pdf`,
+                jpgHref: `/projects/${projectId}/procurement/${po.id}/document.jpg`,
+              },
+            ]}
+          />
+        </div>
       )}
 
-      {showDeliveryForm && (
-        <DeliveryForm
-          po={po}
-          onCancel={() => setShowDeliveryForm(false)}
-          onSubmit={recordDelivery}
+      {isDraft ? (
+        <DraftActions
+          issueAction={issueAction}
+          issueError={issueError}
+          discardAction={discardAction}
         />
-      )}
-      {showPaymentForm && (
-        <PaymentForm
-          outstanding={outstanding}
-          onCancel={() => setShowPaymentForm(false)}
-          onSubmit={recordPayment}
-        />
-      )}
+      ) : (
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <DeliveriesCard
+              po={po}
+              canRecord={isOrdered}
+              deliveryAction={deliveryAction}
+              voidActions={voidDeliveryActions}
+            />
+            <PaymentsCard
+              po={po}
+              canRecord={isOrdered}
+              paymentAction={paymentAction}
+              voidActions={voidPaymentActions}
+            />
+          </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <HistoryPanel title="Deliveries">
-          {po.deliveries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No deliveries recorded yet.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {po.deliveries.map((d) => (
-                <li key={d.id} className="rounded-lg border border-border p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-card-foreground">{d.noteNumber}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(d.date)}
-                    </span>
-                  </div>
-                  {d.siteNotes && (
-                    <p className="mt-1 text-sm text-muted-foreground">{d.siteNotes}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
+          {(isOrdered || isClosed) && <SupplierAckCard ackAction={ackAction} />}
+
+          {isOrdered && (
+            <TerminalCard cancelAction={cancelAction} closeAction={closeAction} />
           )}
-        </HistoryPanel>
-        <HistoryPanel title="Payments">
-          {po.payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {po.payments.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border p-3 text-sm"
-                >
-                  <span>
-                    <span className="font-bold text-card-foreground">{p.type}</span>
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {p.method} &middot; {p.reference} &middot; {formatDate(p.date)}
-                    </span>
-                  </span>
-                  <Money
-                    amount={p.amount}
-                    className="shrink-0 whitespace-nowrap font-bold text-card-foreground"
-                  />
-                </li>
-              ))}
-            </ul>
+          {isClosed && (
+            <Card className="flex flex-col gap-3">
+              <h2 className="text-xl font-bold text-card-foreground">Reopen</h2>
+              <p className="text-sm text-muted-foreground">
+                Reopening puts the order back to issued so more deliveries or
+                payments can be recorded.
+              </p>
+              <form action={reopenAction}>
+                <Button variant="secondary" type="submit">
+                  Reopen this order
+                </Button>
+              </form>
+            </Card>
           )}
-        </HistoryPanel>
-      </div>
+
+          <Link
+            href={`/projects/${projectId}/procurement`}
+            className="inline-flex items-center gap-2 text-sm font-bold text-foreground underline"
+          >
+            Back to all purchase orders
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
 
-function DeliveryForm({
-  po,
-  onCancel,
-  onSubmit,
+function DraftActions({
+  issueAction,
+  issueError,
+  discardAction,
 }: {
-  po: PurchaseOrder;
-  onCancel: () => void;
-  onSubmit: (
-    entries: Record<string, { delivered: number; rejected: number }>,
-    noteNumber: string,
-    siteNotes: string
-  ) => void;
+  issueAction: () => Promise<void>;
+  issueError?: string;
+  discardAction: () => Promise<void>;
 }) {
-  const [noteNumber, setNoteNumber] = useState("");
-  const [siteNotes, setSiteNotes] = useState("");
-  const [qty, setQty] = useState<Record<string, { delivered: string; rejected: string }>>(
-    () => Object.fromEntries(po.lines.map((l) => [l.id, { delivered: "0", rejected: "0" }]))
-  );
-  const [attempted, setAttempted] = useState(false);
-
-  const hasQuantity = po.lines.some((l) => Number(qty[l.id]?.delivered) > 0);
-  const noteMissing = noteNumber.trim().length === 0;
-  const canSubmit = !noteMissing && hasQuantity;
-
   return (
-    <section className="mb-6 rounded-lg border border-border-strong bg-muted p-4">
-      <h3 className="text-base font-bold text-foreground">Record delivery</h3>
-      <div className="mt-4 flex flex-col gap-4">
-        {po.lines.map((l) => {
-          const remaining = Math.max(0, l.qtyOrdered - l.qtyDelivered);
-          return (
-            <div key={l.id} className="rounded-lg border border-border bg-card p-3">
-              <p className="text-sm font-bold text-card-foreground">
-                {l.item}
-                <span className="ml-2 font-normal text-muted-foreground">
-                  {remaining} {l.unit} remaining
-                </span>
-              </p>
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label={`Quantity delivered (${l.unit})`}>
-                  <input
-                    type="number"
-                    min={0}
-                    max={remaining}
-                    value={qty[l.id]?.delivered ?? "0"}
-                    onChange={(e) =>
-                      setQty((q) => ({
-                        ...q,
-                        [l.id]: { ...q[l.id], delivered: e.target.value },
-                      }))
-                    }
-                    className={controlClass}
-                  />
-                </Field>
-                <Field label={`Quantity rejected (${l.unit})`}>
-                  <input
-                    type="number"
-                    min={0}
-                    value={qty[l.id]?.rejected ?? "0"}
-                    onChange={(e) =>
-                      setQty((q) => ({
-                        ...q,
-                        [l.id]: { ...q[l.id], rejected: e.target.value },
-                      }))
-                    }
-                    className={controlClass}
-                  />
-                </Field>
-              </div>
-            </div>
-          );
-        })}
-        <Field
-          label="Delivery note number"
-          required
-          error={attempted && noteMissing ? "Enter the delivery note number." : undefined}
-        >
-          <input
-            value={noteNumber}
-            onChange={(e) => setNoteNumber(e.target.value)}
-            className={controlClass}
-          />
-        </Field>
-        <Field label="Site notes" hint="Optional — anything the record should show.">
-          <textarea
-            value={siteNotes}
-            onChange={(e) => setSiteNotes(e.target.value)}
-            rows={2}
-            className={`${controlClass} min-h-24`}
-          />
-        </Field>
-      </div>
-      {attempted && !hasQuantity && (
-        <p className="mt-3 text-sm font-bold text-destructive">
-          Enter a delivered quantity for at least one line.
-        </p>
+    <Card className="flex flex-col gap-3">
+      <h2 className="text-xl font-bold text-card-foreground">Issue to supplier</h2>
+      <p className="text-sm text-muted-foreground">
+        This freezes the order and cannot be undone — a real change after this is
+        made by cancelling and raising a new order.
+      </p>
+      {issueError && (
+        <p className="text-sm font-bold text-destructive">{issueError}</p>
       )}
-      <div className="mt-4 flex items-center gap-3">
-        <Button
-          variant="primary"
-          type="button"
-          onClick={() => {
-            setAttempted(true);
-            if (!canSubmit) return;
-            onSubmit(
-              Object.fromEntries(
-                Object.entries(qty).map(([id, v]) => [
-                  id,
-                  { delivered: Number(v.delivered) || 0, rejected: Number(v.rejected) || 0 },
-                ])
-              ),
-              noteNumber,
-              siteNotes
-            );
-          }}
-        >
-          Save delivery
-        </Button>
-        <Button variant="ghost" type="button" onClick={onCancel}>
-          Cancel
-        </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <form action={issueAction}>
+          <Button variant="primary" type="submit">
+            <PaperPlaneTilt size={18} aria-hidden="true" />
+            Issue purchase order
+          </Button>
+        </form>
+        <form action={discardAction}>
+          <button
+            type="submit"
+            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline"
+          >
+            Discard draft
+          </button>
+        </form>
       </div>
-    </section>
+    </Card>
   );
 }
 
-function PaymentForm({
-  outstanding,
-  onCancel,
-  onSubmit,
+function DeliveriesCard({
+  po,
+  canRecord,
+  deliveryAction,
+  voidActions,
 }: {
-  outstanding: number;
-  onCancel: () => void;
-  onSubmit: (amount: number, method: PaymentMethod, reference: string, type: PaymentType) => void;
+  po: PurchaseOrder;
+  canRecord: boolean;
+  deliveryAction: Bound;
+  voidActions: Record<string, Bound>;
 }) {
-  const [amount, setAmount] = useState(String(Math.max(0, outstanding)));
-  const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
-  const [reference, setReference] = useState("");
-  const [type, setType] = useState<PaymentType>("Partial");
-  const [attempted, setAttempted] = useState(false);
+  return (
+    <Card>
+      <h2 className="text-xl font-bold text-card-foreground">Deliveries</h2>
+      {po.deliveries.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          No deliveries recorded yet.
+        </p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {po.deliveries.map((d) => (
+            <li
+              key={d.id}
+              className={`rounded-lg border border-border p-3 text-sm ${d.voidedAt ? "opacity-60" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-bold text-card-foreground">
+                  {d.noteNumber ?? "No delivery note"}
+                </span>
+                <span className="text-muted-foreground">
+                  {formatDate(d.deliveredOn)}
+                </span>
+              </div>
+              {d.siteNotes && (
+                <p className="mt-1 text-muted-foreground">{d.siteNotes}</p>
+              )}
+              {d.overDeliveryReason && (
+                <p className="mt-1 text-health-amber">
+                  Over-delivery: {d.overDeliveryReason}
+                </p>
+              )}
+              {d.voidedAt ? (
+                <p className="mt-1 font-bold text-destructive">
+                  Voided{d.voidReason ? ` — ${d.voidReason}` : ""}
+                </p>
+              ) : (
+                <VoidForm action={voidActions[d.id]} label="Void delivery" />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
-  const amountInvalid = !(Number(amount) > 0);
-  const referenceMissing = reference.trim().length === 0;
-  const canSubmit = !amountInvalid && !referenceMissing;
+      {canRecord && po.lines.length > 0 && (
+        <div className="mt-5 border-t border-border pt-4">
+          <RecordDeliveryForm po={po} action={deliveryAction} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RecordDeliveryForm({
+  po,
+  action,
+}: {
+  po: PurchaseOrder;
+  action: Bound;
+}) {
+  const [state, formAction, pending] = useActionState(action, {});
+  const errors = state.fieldErrors ?? {};
+  const [rows, setRows] = useState<
+    Record<string, { delivered: string; accepted: string; rejected: string }>
+  >(
+    Object.fromEntries(
+      po.lines.map((l) => [l.id, { delivered: "", accepted: "", rejected: "" }]),
+    ),
+  );
+
+  const num = (v: string) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const serialized = po.lines
+    .map((l) => ({
+      lineId: l.id,
+      qtyDelivered: num(rows[l.id]?.delivered ?? ""),
+      qtyAccepted: num(rows[l.id]?.accepted ?? ""),
+      qtyRejected: num(rows[l.id]?.rejected ?? ""),
+    }))
+    .filter(
+      (r) => r.qtyDelivered > 0 || r.qtyAccepted > 0 || r.qtyRejected > 0,
+    );
+
+  const set = (
+    lineId: string,
+    patch: Partial<{ delivered: string; accepted: string; rejected: string }>,
+  ) =>
+    setRows((prev) => ({
+      ...prev,
+      [lineId]: { ...prev[lineId], ...patch },
+    }));
 
   return (
-    <section className="mb-6 rounded-lg border border-border-strong bg-muted p-4">
-      <h3 className="text-base font-bold text-foreground">Record payment</h3>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field
-          label="Amount (TZS)"
-          required
-          hint={`Outstanding: ${Math.max(0, outstanding).toLocaleString("en-US")}`}
-          error={attempted && amountInvalid ? "Enter an amount greater than zero." : undefined}
-        >
+    <form action={formAction} className="flex flex-col gap-4" noValidate>
+      <input type="hidden" name="lines" value={JSON.stringify(serialized)} />
+      <h3 className="font-bold text-card-foreground">Record a delivery</h3>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] text-left text-sm">
+          <thead>
+            <tr className="text-muted-foreground">
+              <th className="pb-1 font-bold">Item</th>
+              <th className="pb-1 font-bold">Delivered</th>
+              <th className="pb-1 font-bold">Accepted</th>
+              <th className="pb-1 font-bold">Rejected</th>
+            </tr>
+          </thead>
+          <tbody>
+            {po.lines.map((l) => {
+              const remaining = Math.max(0, l.qtyOrdered - l.qtyDelivered);
+              return (
+                <tr key={l.id}>
+                  <td className="py-1 pr-2 text-card-foreground">
+                    {l.item}
+                    <span className="block text-xs text-muted-foreground">
+                      {remaining} {l.unit} left of {l.qtyOrdered}
+                    </span>
+                  </td>
+                  <td className="py-1 pr-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.001"
+                      aria-label={`${l.item} delivered`}
+                      value={rows[l.id]?.delivered ?? ""}
+                      onChange={(e) => set(l.id, { delivered: e.target.value })}
+                      className="min-h-10 w-24 rounded-lg border border-border-strong bg-card px-2 py-1"
+                    />
+                  </td>
+                  <td className="py-1 pr-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.001"
+                      aria-label={`${l.item} accepted`}
+                      value={rows[l.id]?.accepted ?? ""}
+                      onChange={(e) => set(l.id, { accepted: e.target.value })}
+                      className="min-h-10 w-24 rounded-lg border border-border-strong bg-card px-2 py-1"
+                    />
+                  </td>
+                  <td className="py-1">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.001"
+                      aria-label={`${l.item} rejected`}
+                      value={rows[l.id]?.rejected ?? ""}
+                      onChange={(e) => set(l.id, { rejected: e.target.value })}
+                      className="min-h-10 w-24 rounded-lg border border-border-strong bg-card px-2 py-1"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {errors.lines && (
+        <p className="text-sm font-bold text-destructive">{errors.lines}</p>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Delivered on" required error={errors.deliveredOn}>
           <input
-            type="number"
-            min={0}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            name="deliveredOn"
+            type="date"
+            defaultValue={today()}
             className={controlClass}
           />
         </Field>
-        <Field label="Payment type">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as PaymentType)}
-            className={`${controlClass} cursor-pointer`}
-          >
-            {PAYMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+        <Field label="Delivery note number" error={errors.noteNumber}>
+          <input name="noteNumber" className={controlClass} />
         </Field>
-        <Field label="Payment method">
-          <select
-            value={method}
-            onChange={(e) => setMethod(e.target.value as PaymentMethod)}
-            className={`${controlClass} cursor-pointer`}
-          >
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+      </div>
+      <Field label="Site notes" error={errors.siteNotes}>
+        <input name="siteNotes" className={controlClass} />
+      </Field>
+      <Field
+        label="Over-delivery reason"
+        hint="Only needed if a line goes past its ordered quantity."
+        error={errors.overDeliveryReason}
+      >
+        <input name="overDeliveryReason" className={controlClass} />
+      </Field>
+
+      {state.error && (
+        <p className="text-sm font-bold text-destructive">{state.error}</p>
+      )}
+      <div>
+        <Button variant="secondary" type="submit" disabled={pending}>
+          <CheckCircle size={18} aria-hidden="true" />
+          {pending ? "Recording…" : "Record delivery"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function PaymentsCard({
+  po,
+  canRecord,
+  paymentAction,
+  voidActions,
+}: {
+  po: PurchaseOrder;
+  canRecord: boolean;
+  paymentAction: Bound;
+  voidActions: Record<string, Bound>;
+}) {
+  return (
+    <Card>
+      <h2 className="text-xl font-bold text-card-foreground">Payments</h2>
+      {po.payments.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          No payments recorded yet.
+        </p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {po.payments.map((p) => (
+            <li
+              key={p.id}
+              className={`rounded-lg border border-border p-3 text-sm ${p.voidedAt ? "opacity-60" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="font-bold text-card-foreground">
+                    {p.kind ?? "Payment"}
+                  </span>
+                  <span className="ml-2 text-muted-foreground">
+                    {p.method}
+                    {p.reference && ` · ${p.reference}`} &middot;{" "}
+                    {formatDate(p.paidOn)}
+                  </span>
+                </span>
+                <Money
+                  amount={p.amount}
+                  className={`shrink-0 whitespace-nowrap font-bold text-card-foreground ${p.voidedAt ? "line-through" : ""}`}
+                />
+              </div>
+              {p.overPaymentReason && (
+                <p className="mt-1 text-health-amber">
+                  Over-payment: {p.overPaymentReason}
+                </p>
+              )}
+              {p.voidedAt ? (
+                <p className="mt-1 font-bold text-destructive">
+                  Voided{p.voidReason ? ` — ${p.voidReason}` : ""}
+                </p>
+              ) : (
+                <VoidForm action={voidActions[p.id]} label="Void payment" />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {canRecord && (
+        <div className="mt-5 border-t border-border pt-4">
+          <RecordPaymentForm action={paymentAction} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RecordPaymentForm({ action }: { action: Bound }) {
+  const [state, formAction, pending] = useActionState(action, {});
+  const errors = state.fieldErrors ?? {};
+
+  return (
+    <form action={formAction} className="flex flex-col gap-4" noValidate>
+      <h3 className="font-bold text-card-foreground">Record a payment</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Amount (TZS)" required error={errors.amount}>
+          <input name="amount" type="number" min={1} className={controlClass} />
         </Field>
-        <Field
-          label="Payment reference"
-          required
-          error={
-            attempted && referenceMissing ? "Enter the payment reference." : undefined
-          }
-        >
+        <Field label="Paid on" required error={errors.paidOn}>
           <input
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
+            name="paidOn"
+            type="date"
+            defaultValue={today()}
             className={controlClass}
           />
         </Field>
+        <Field label="Method" required error={errors.method}>
+          <select
+            name="method"
+            defaultValue="bank_transfer"
+            className={`${controlClass} cursor-pointer`}
+          >
+            <option value="bank_transfer">Bank transfer</option>
+            <option value="mobile_money">Mobile money</option>
+            <option value="cheque">Cheque</option>
+            <option value="cash">Cash</option>
+            <option value="other">Other</option>
+          </select>
+        </Field>
+        <Field label="Kind" error={errors.kind}>
+          <select
+            name="kind"
+            defaultValue=""
+            className={`${controlClass} cursor-pointer`}
+          >
+            <option value="">Unspecified</option>
+            <option value="deposit">Deposit</option>
+            <option value="partial">Partial</option>
+            <option value="final">Final</option>
+          </select>
+        </Field>
       </div>
-      <div className="mt-4 flex items-center gap-3">
-        <Button
-          variant="primary"
-          type="button"
-          onClick={() => {
-            setAttempted(true);
-            if (!canSubmit) return;
-            onSubmit(Number(amount), method, reference, type);
-          }}
-        >
-          Save payment
-        </Button>
-        <Button variant="ghost" type="button" onClick={onCancel}>
-          Cancel
+      <Field label="Reference" error={errors.reference}>
+        <input name="reference" className={controlClass} />
+      </Field>
+      <Field
+        label="Over-payment reason"
+        hint="Only needed if this takes the paid total past the ordered total."
+        error={errors.overPaymentReason}
+      >
+        <input name="overPaymentReason" className={controlClass} />
+      </Field>
+      {state.error && (
+        <p className="text-sm font-bold text-destructive">{state.error}</p>
+      )}
+      <div>
+        <Button variant="secondary" type="submit" disabled={pending}>
+          <CheckCircle size={18} aria-hidden="true" />
+          {pending ? "Recording…" : "Record payment"}
         </Button>
       </div>
-    </section>
+    </form>
+  );
+}
+
+function SupplierAckCard({ ackAction }: { ackAction: Bound }) {
+  const [state, formAction, pending] = useActionState(ackAction, {});
+  const errors = state.fieldErrors ?? {};
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="text-xl font-bold text-card-foreground">
+        Supplier acknowledgement
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        A dated note that the supplier confirmed the order — it does not change
+        the order&apos;s state.
+      </p>
+      <form action={formAction} className="flex flex-col gap-4" noValidate>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
+          <Field label="What did the supplier confirm?" required error={errors.supplierAckNote}>
+            <input name="supplierAckNote" className={controlClass} />
+          </Field>
+          <Field label="On" error={errors.supplierAckOn}>
+            <input
+              name="supplierAckOn"
+              type="date"
+              defaultValue={today()}
+              className={controlClass}
+            />
+          </Field>
+        </div>
+        {state.error && (
+          <p className="text-sm font-bold text-destructive">{state.error}</p>
+        )}
+        <div>
+          <Button variant="secondary" type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save acknowledgement"}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+function TerminalCard({
+  cancelAction,
+  closeAction,
+}: {
+  cancelAction: Bound;
+  closeAction: () => Promise<void>;
+}) {
+  const [state, formAction, pending] = useActionState(cancelAction, {});
+  const errors = state.fieldErrors ?? {};
+  return (
+    <Card className="flex flex-col gap-4">
+      <h2 className="text-xl font-bold text-card-foreground">Close or cancel</h2>
+      <p className="text-sm text-muted-foreground">
+        Close an order once everything against it is recorded — its float
+        exposure then drops to what has been paid. Cancel it if it is being
+        replaced; a real change is cancel-and-reissue.
+      </p>
+      <form action={closeAction}>
+        <Button variant="secondary" type="submit">
+          Close this order
+        </Button>
+      </form>
+      <form action={formAction} className="flex flex-col gap-3 border-t border-border pt-4" noValidate>
+        <Field label="Reason for cancelling" required error={errors.reason}>
+          <input name="reason" className={controlClass} />
+        </Field>
+        {state.error && (
+          <p className="text-sm font-bold text-destructive">{state.error}</p>
+        )}
+        <div>
+          <button
+            type="submit"
+            disabled={pending}
+            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline disabled:opacity-50"
+          >
+            {pending ? "Cancelling…" : "Cancel this order"}
+          </button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+function VoidForm({ action, label }: { action: Bound; label: string }) {
+  const [state, formAction, pending] = useActionState(action, {});
+  return (
+    <form action={formAction} className="mt-2 flex flex-wrap items-center gap-2">
+      <input
+        name="reason"
+        placeholder="Reason to void"
+        aria-label={`Reason to ${label.toLowerCase()}`}
+        className="min-h-10 flex-1 rounded-lg border border-border-strong bg-card px-2 py-1 text-sm"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex min-h-10 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-destructive hover:underline disabled:opacity-50"
+      >
+        <Trash size={14} aria-hidden="true" />
+        {label}
+      </button>
+      {(state.fieldErrors?.reason || state.error) && (
+        <span className="w-full text-sm font-bold text-destructive">
+          {state.fieldErrors?.reason ?? state.error}
+        </span>
+      )}
+    </form>
   );
 }
 
@@ -592,14 +787,5 @@ function Stat({
         negativeClassName={`whitespace-nowrap font-bold text-destructive ${emphasis ? "text-xl" : "text-lg"}`}
       />
     </div>
-  );
-}
-
-function HistoryPanel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card>
-      <h2 className="text-xl font-bold text-card-foreground">{title}</h2>
-      <div className="mt-4">{children}</div>
-    </Card>
   );
 }

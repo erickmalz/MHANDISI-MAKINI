@@ -1,24 +1,15 @@
 import "server-only";
 
-import { hash as argon2Hash, verify as argon2Verify } from "@node-rs/argon2";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { sql } from "drizzle-orm";
 
 import { db } from "@/lib/data/db";
 import * as schema from "@/lib/data/schema";
 
+import { hashPassword, verifyPassword } from "./argon2";
 import { sendResetPasswordEmail, sendVerificationEmail } from "./emails";
-
-// OWASP argon2id parameters (m=19 MiB, t=2, p=1). `@node-rs/argon2` uses
-// Argon2id by default, so `algorithm` is left unset (its `Algorithm` is a
-// const enum, unusable under `isolatedModules`). This overrides better-auth's
-// scrypt default (ADR 0002).
-const ARGON2_OPTS = {
-  memoryCost: 19_456,
-  timeCost: 2,
-  parallelism: 1,
-} as const;
 
 const SECONDS = 1;
 const MINUTES = 60 * SECONDS;
@@ -36,6 +27,13 @@ function build() {
   return betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+
+    // baseURL is always trusted; this adds any extra origins (comma-separated)
+    // that may call the auth API — e.g. a phone on the LAN hitting the dev
+    // server by IP for a mobile preview. Unset in production.
+    trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
 
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -69,9 +67,8 @@ function build() {
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 1 * HOURS,
       password: {
-        hash: (password) => argon2Hash(password, ARGON2_OPTS),
-        verify: ({ hash, password }) =>
-          argon2Verify(hash, password, ARGON2_OPTS),
+        hash: hashPassword,
+        verify: ({ hash, password }) => verifyPassword(hash, password),
       },
       sendResetPassword: async ({ user, url }) => {
         await sendResetPasswordEmail(user.email, url);
@@ -92,6 +89,24 @@ function build() {
       enabled: true,
       storage: "database",
       modelName: "auth_rate_limit",
+    },
+
+    databaseHooks: {
+      session: {
+        create: {
+          // "Any sign-in during the [30-day deletion] window cancels it"
+          // (ticket 02, Slice 2.8 Part 4). Fires on every new session — sign-in,
+          // and signup/verify-email's `autoSignIn` above, harmlessly, since
+          // there's nothing scheduled yet at either of those points. Goes
+          // through `app.cancel_account_deletion` (migration 0005), a
+          // SECURITY DEFINER function: no account context exists yet at this
+          // point (same chicken-and-egg as `app.record_terms_acceptance`,
+          // migration 0001), so this can't go through `withAccount`.
+          after: async (session) => {
+            await db.execute(sql`SELECT app.cancel_account_deletion(${session.userId})`);
+          },
+        },
+      },
     },
 
     // nextCookies() must be last — it writes Set-Cookie from Server Actions.

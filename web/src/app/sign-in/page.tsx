@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Field, controlClass } from "@/components/ui/Field";
 import { authClient } from "@/lib/auth/client";
@@ -45,14 +45,7 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 sm:px-6">
       <div className="w-full max-w-md">
-        <Image
-          src="/brand/logo-stacked.png"
-          alt="Mhandisi Makini"
-          width={905}
-          height={1000}
-          priority
-          className="h-auto w-[160px]"
-        />
+        <BrandLogo width={200} priority />
 
         <h1 className="mt-6 text-[1.75rem] font-bold text-foreground">Sign in</h1>
         <p className="mt-1 text-muted-foreground">

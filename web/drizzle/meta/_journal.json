@@ -15,6 +15,41 @@
       "when": 1788812173408,
       "tag": "0001_rls_and_provisioning",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788857076965,
+      "tag": "0002_domain_structure",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788901593213,
+      "tag": "0003_money_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789159456416,
+      "tag": "0004_account_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789198819619,
+      "tag": "0005_account_deletion_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789215028773,
+      "tag": "0006_attachments",
+      "breakpoints": true
     }
   ]
 }

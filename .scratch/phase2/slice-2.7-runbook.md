@@ -1,0 +1,177 @@
+# Slice 2.7 runbook — Document rendering (PDF + JPG)
+
+_Multi-tenancy ticket 10 / ADR 0005. One commit for the slice, same pattern as
+2.5 / 2.6. **Code-only — no migration.** WSL runs `tsc` + `eslint`; `build`,
+`vitest`, and any real Chromium render are Windows-side or CI._
+
+## Decisions taken with the user (2026-09-09/10)
+
+1. **Verification: local dev only.** WSL builds the templates / routes / snapshot
+   changes and the vocabulary test. The real Chromium render is checked by
+   running `npm run dev` on Windows and downloading each document. No CI render
+   job, no golden-file check in v1.
+2. **`web/Dockerfile` lands now** (provisional). It captures the Chromium deps +
+   `fonts-dejavu-core` + the ~1 GB RAM floor. The deployment-shape slice owns
+   final hardening / image-slimming — the file says so at the top.
+3. **Letterhead: name + phone only.** `accounts` has `full_name` + `phone`
+   today; logo + email arrive with Slice 2.8's profile-edit work. The template
+   already renders name-only gracefully.
+4. **No migration.** `document_snapshot` (jsonb) and the `FI-{project}-NNN`
+   sequence already exist. 2.7 only *tightens* the snapshot TypeScript type and
+   the three Issue paths that write it.
+
+## What changed
+
+### Snapshot contract (tightened, ticket 10 §3)
+- `web/src/lib/data/schema/snapshot.ts` — `DocumentSnapshot` is now a
+  `kind`-discriminated union: `FundingRequestSnapshot` (adds `feeAmount`),
+  `FeeInvoiceSnapshot` (adds `fundingRequestNumber`, `feeBasis` / `feePercent`
+  / `basisValue`, `isDelta`, `parentNumber`), `PurchaseOrderSnapshot` (adds
+  `supplierContact`, `expectedDeliveryOn`).
+- `web/src/lib/data/funding.ts` — `buildFundingRequestSnapshot` drops the fee
+  *section* (now a stand-alone `feeAmount` field the template renders as a
+  "billed separately" line); `buildFeeInvoiceSnapshot` takes the new fields;
+  the `feeInvoiceSnapshot(fiNumber, { isDelta, parentNumber, feeAmount })`
+  closure threads them through the three raise paths.
+- `web/src/lib/data/procurement.ts` — `issuePurchaseOrder` selects
+  `suppliers.phone` and freezes `supplierContact` + `expectedDeliveryOn` into
+  the snapshot.
+
+### Render module (`web/src/lib/documents/`)
+- `browser.ts` — lazy singleton `puppeteer` browser, relaunch on `disconnected`,
+  `closeBrowser()` for shutdown/tests. Dynamic `import("puppeteer")` so it stays
+  external (see `next.config.ts`).
+- `render.ts` — `renderPdf` / `renderJpg` off a page from the warm browser.
+  In-process concurrency gate (2 active + 4 waiting → `RenderUnavailableError`),
+  20 s hard per-render timeout, page closed in `finally`. PDF: A4,
+  `displayHeaderFooter` with a charcoal footer ("Let's build together · page
+  X / Y"). JPG: viewport 794×1123 @2×, `fullPage`, `type: "jpeg"`, `quality: 90`.
+- `print-css.ts` — `PRINT_CSS`: the `--mm-*` primitives copied **verbatim** from
+  `.claude/skills/mhandisi-makini-design-system/references/tokens.css` (the same
+  sanctioned copy `globals.css` makes), plus the document layout, `@page`, the
+  diagonal `.stamp`, and the `body.screenshot` variant.
+- `templates/parts.tsx` — `Shell` (letterhead + heading + meta grid + footer +
+  stamp), `SectionTable`, `GrandTotal`, `Callout`, `TextBlock`. Money / dates
+  via `formatTZS` / `formatDate` only.
+- `templates/{FundingRequestDoc,FeeInvoiceDoc,PurchaseOrderDoc}.tsx` — one per
+  document, content per ticket 10 §7.
+- `templates/render-html.tsx` — `renderDocumentHtml(doc, { screenshot? })` →
+  full HTML string via `renderToStaticMarkup`.
+- `index.ts` — `renderDocument(doc, "pdf" | "jpg")` → `{ bytes, contentType,
+  filename }` (filename from the frozen number).
+- `response.ts` — `serveDocument(load, belongsToRoute, format)`: session gate
+  (DAL `NotAuthenticatedError` → 404, since Route Handlers skip the `(app)`
+  layout), cross-account / missing / draft → 404, render overload → 503,
+  otherwise streamed `attachment` with `Cache-Control: private, no-store`.
+
+### Read DAL (`web/src/lib/data/documents.ts`, new)
+- `getDocumentProfile()` → `{ businessName, phone }` from the live Account.
+- `getFundingRequestDocument(frId)` / `getFeeInvoiceDocument(frId)` /
+  `getPurchaseOrderDocument(poId)` → `{ kind, projectId, snapshot, stamp,
+  profile } | null`. `stamp` derived from the **live** row status:
+  FR `superseded`/`cancelled` → `SUPERSEDED`/`CANCELLED`; FI `paid` →
+  `PAID — {date}`, `supersededAt` → `SUPERSEDED`; PO `cancelled` → `CANCELLED`.
+- Re-exported from `web/src/lib/data/index.ts`.
+
+### Routes (authenticated `(app)` segment)
+- `projects/[id]/funding/[frId]/document.pdf|.jpg/route.ts`
+- `projects/[id]/funding/[frId]/fee-invoice.pdf|.jpg/route.ts`
+- `projects/[id]/procurement/[poId]/document.pdf|.jpg/route.ts`
+
+### UI
+- `web/src/components/DocumentDownloads.tsx` — a card with PDF + JPG links per
+  document.
+- `FundingRequestDetail` (FR + Fee Invoice) and `PurchaseOrderDetail` (PO) show
+  it once `displayNumber != null`.
+
+### Build / deploy
+- `web/package.json` — `puppeteer ^24.14.0`.
+- `web/next.config.ts` — `puppeteer` added to `serverExternalPackages`.
+- `web/Dockerfile` — provisional multi-stage image (Chromium deps +
+  `fonts-dejavu-core`, `PUPPETEER_CACHE_DIR`, standalone output).
+- `web/vitest.config.ts` — `@` alias + automatic JSX + `tests/**/*.test.{ts,tsx}`
+  so the pure-render test runs without a container.
+- `web/tests/documents/vocabulary.test.tsx` — vocabulary / number-format lock.
+
+## WSL checks done
+
+- `npx next typegen` — ✓ (needed for the `RouteContext` literals).
+- `npx tsc --noEmit` — clean **except** three
+  `Cannot find module 'puppeteer'` errors in `browser.ts` / `render.ts`. Those
+  clear once `npm install` runs where `puppeteer` can install (Windows / CI).
+- `npx eslint` over every touched path — ✓.
+- `npx vitest run` — cannot run in WSL (rolldown native binding, same as the
+  isolation suite). Windows / CI only.
+
+## Windows-side / CI steps (in order)
+
+1. `cd web && npm install` — pulls `puppeteer` + downloads its Chromium
+   (~150 MB). First run only.
+2. `npm run typecheck` — must be fully clean now (puppeteer resolved).
+3. `npm run lint` — clean.
+4. `npm test` — the isolation suite (unchanged; the snapshot-writer edits go
+   through it via the 2.5 / 2.6 Issue-transaction tests) **plus** the new
+   `tests/documents/vocabulary.test.tsx`. All green.
+5. `npm run build` — standalone build succeeds with `puppeteer` external.
+6. `npm run dev`. To skip building the fixture by hand: `npx tsx
+   scripts/seed-document-smoke-test.ts` (or `npm run db:seed:smoke`) creates a
+   throwaway test account with a project/stage plus one draft Funding Request
+   and one draft Purchase Order, each with a line already filled in, and
+   prints the sign-in email/password. It stops at Draft on purpose — it does
+   not fabricate the "Issued" `document_snapshot` itself, since that's the
+   exact code path this check exists to exercise. Sign in, open the Funding
+   Request, click "Issue" (this also raises the Fee Invoice), open the
+   Purchase Order, click "Issue", then continue below. It's a dev-only script
+   (see its own doc comment) — it never runs as part of the app and doesn't
+   touch a real Engineer's account; safe to leave the test account or delete
+   it afterward.
+
+   For a project that has an **issued** FR, its Fee Invoice, and an **issued**
+   PO:
+   - open each detail screen, confirm the **Documents** card appears
+   - download all six files; confirm:
+     - the PDF is A4, branded (Site Yellow rule, charcoal total bar, DejaVu),
+       footer shows "page X / Y"
+     - the JPG is one continuous image, no repeated page furniture
+     - the letterhead shows the Account name + phone
+     - a superseded FR shows the diagonal `SUPERSEDED` stamp; a paid Fee Invoice
+       shows `PAID — {date}`; a cancelled PO shows `CANCELLED` — no extra
+       fixture needed for these: from the same seeded, now-issued FR/PO,
+       use the existing "Supersede" / mark-Fee-Invoice-paid / "Cancel"
+       actions (built in 2.5/2.6) to reach each state, then re-download
+     - the Fee Invoice says "billed separately from the project funds in
+       Funding Request FR-…"
+   - a **draft** FR / PO detail screen has **no** Documents card, and hitting a
+     `document.pdf` URL for a draft returns 404
+7. CI on the PR (`lint` / `typecheck` / isolation suite / `build`) green.
+
+## Commit
+
+Single commit: `Phase 2 Slice 2.7: issued-document rendering (PDF + JPG)`.
+Then the verification commit once CI is green, per the 2.5 / 2.6 pattern.
+
+## Manual smoke check — done (2026-09-14, Windows)
+
+Ran on the user's Windows machine (this WSL sandbox cannot run `npm run dev`
+or reach Docker — see `.scratch/phase2/status.md`). `web/node_modules` first
+needed a clean `npm ci` from a **Windows** shell — it had been reinstalled
+from WSL at some point, so `.bin` held Linux symlinks with no `.cmd`/`.ps1`
+wrappers, which is why `tsx`/`next` weren't recognized.
+
+`npm run db:seed:smoke` then `npm run dev` worked as documented. Issuing the
+seeded Funding Request and Purchase Order through the UI surfaced two bugs,
+both in the same shape: the JSON-serialized `lines` payload sends explicit
+`null` for an unfilled optional field (`description`, `unit`, …), but
+`emptyToUndefined` in `src/lib/validation/{funding,procurement}.ts` only
+mapped an empty *string* to `undefined` — `null` fell through into
+`z.string()....optional()`, which rejects `null`, raising "Invalid input:
+expected string, received null" on save. Fixed in both files: `v === null ||
+(typeof v === "string" && v.trim() === "") ? undefined : v`. Checked the other
+three validation files sharing this duplicated helper (`registers.ts`,
+`tasks.ts`, `structure.ts`) — their forms post plain `FormData` strings, never
+JSON `null`, so they don't need the same fix.
+
+With those two fixes, all 6 documents (FR/Fee Invoice/PO × PDF/JPG)
+downloaded and rendered correctly: branded letterhead, correct line items and
+totals, footer pagination on the PDFs, one continuous JPG. Confirmed by the
+user ("all works well"). Slice 2.7 is now fully closed.

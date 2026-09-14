@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
@@ -12,14 +13,7 @@ export default function WelcomePage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 text-center sm:px-6">
       <div className="flex w-full max-w-xl flex-col items-center">
-      <Image
-        src="/brand/logo-stacked.png"
-        alt="Mhandisi Makini"
-        width={905}
-        height={1000}
-        priority
-        className="h-auto w-[220px]"
-      />
+      <BrandLogo width={220} priority />
 
       <h1 className="mt-8 text-[2.25rem] font-bold leading-tight text-foreground">
         A clearer view of your site
