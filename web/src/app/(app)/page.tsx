@@ -4,6 +4,7 @@ import {
   Bell,
   CaretRight,
   Plus,
+  Stack,
   Truck,
   Users,
 } from "@phosphor-icons/react/dist/ssr";
@@ -113,7 +114,7 @@ export default async function ChooseProjectPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Shared across every project.
         </p>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Link
             href="/suppliers"
             className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
@@ -128,6 +129,14 @@ export default async function ChooseProjectPage() {
           >
             <Users size={20} aria-hidden="true" className="shrink-0 text-muted-foreground" />
             <span className="font-bold text-card-foreground">Subcontractor register</span>
+            <CaretRight size={16} aria-hidden="true" className="ml-auto text-muted-foreground" />
+          </Link>
+          <Link
+            href="/stage-templates"
+            className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
+          >
+            <Stack size={20} aria-hidden="true" className="shrink-0 text-muted-foreground" />
+            <span className="font-bold text-card-foreground">Stage templates</span>
             <CaretRight size={16} aria-hidden="true" className="ml-auto text-muted-foreground" />
           </Link>
         </div>

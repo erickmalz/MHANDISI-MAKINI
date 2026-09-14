@@ -37,3 +37,6 @@ export * from "./other-commitments";
 
 // Operational Control Slice 4 — migration `0006_attachments`.
 export * from "./attachments";
+
+// Operational Control Slice 6 — migration `0007_stage_templates`.
+export * from "./stage-templates";

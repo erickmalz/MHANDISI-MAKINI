@@ -50,6 +50,13 @@
       "when": 1789215028773,
       "tag": "0006_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789404198093,
+      "tag": "0007_stage_templates",
+      "breakpoints": true
     }
   ]
 }

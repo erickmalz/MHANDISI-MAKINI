@@ -115,3 +115,12 @@ export {
   type AttachmentMeta,
   type AttachmentFile,
 } from "./attachments";
+export {
+  listStageTemplates,
+  listStageTemplatesForApply,
+  getStageTemplateInput,
+  createStageTemplate,
+  updateStageTemplate,
+  deleteStageTemplate,
+  createTemplateFromProject,
+} from "./stage-templates";

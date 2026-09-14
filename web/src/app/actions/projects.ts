@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { z } from "zod";
+
 import { createProject, updateProject } from "@/lib/data";
 import { type ActionState, zodFieldErrors } from "@/lib/forms/action-helpers";
+import { templateStageSchema } from "@/lib/validation/stage-templates";
 import { projectInputSchema } from "@/lib/validation/structure";
 
 /**
@@ -28,6 +31,23 @@ function readForm(formData: FormData) {
   };
 }
 
+/**
+ * Parse the hidden `templateSelection` JSON payload `ProjectForm` posts when
+ * the Engineer picked a Stage Template (Operational Control decision 2) — the
+ * template's tree, already trimmed to what they left checked. Malformed or
+ * absent input silently falls back to no template rather than blocking
+ * project creation over a field with nowhere to show an error.
+ */
+function readTemplateSelection(formData: FormData) {
+  try {
+    const raw: unknown = JSON.parse(String(formData.get("templateSelection") ?? "[]"));
+    const parsed = z.array(templateStageSchema).safeParse(raw);
+    return parsed.success ? parsed.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function createProjectAction(
   _prev: ActionState,
   formData: FormData,
@@ -37,7 +57,7 @@ export async function createProjectAction(
 
   let projectId: string;
   try {
-    projectId = await createProject(parsed.data);
+    projectId = await createProject(parsed.data, readTemplateSelection(formData));
   } catch {
     return { error: "Could not create the project. Try again." };
   }
