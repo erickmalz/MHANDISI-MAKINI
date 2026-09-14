@@ -24,8 +24,10 @@ transaction via `applyTemplateStages`), and "Save as template" on the
 project page (`createTemplateFromProject`, reusing the same write path).
 Unlike Suppliers/Subcontractors, a template supports a real delete — no
 history depends on it once applied. `tsc --noEmit` and `eslint` both clean
-in WSL. **Not yet pushed / CI-verified** — do that next, then this becomes
-the Slice 6 verification commit, closing Operational Control's build order._
+in WSL. **Pushed and CI-verified**: PR #3 (`operational-control` branch),
+CI run `34871803810` green (`Apply migrations` including `0007` / lint /
+typecheck / isolation suite / `build`). This closes Operational Control's
+build order — all 6 slices done._
 
 ## Slice ledger
 
@@ -36,4 +38,4 @@ the Slice 6 verification commit, closing Operational Control's build order._
 | 3 | Supplier / Subcontractor Statements — `src/lib/data/statements.ts` (`getSupplierStatement`/`getSubcontractorStatement`, account-wide, all-projects), new routes `/suppliers/[id]` and `/subcontractors/[id]` (linked from each register's row name), each order/task/payment links to its record. Variations line omitted per the map. No schema change. | **Done + CI-green** (`5b3bf33`, run `34692760968`) |
 | 4 | Document attachments — `attachments` table (migration `0006_attachments`, generated via the same isolated-Linux-drizzle-kit approach as `0005`, diffed against `0005`'s snapshot to confirm only the new table changed), 3 nullable composite FKs (PO/Payment/Labour Payment) each capped at one via `UNIQUE`. DAL (`getAttachmentMeta`/`getAttachmentFile`/`setAttachment`) supports all 3 targets; **UI wired for Purchase Orders only** this slice (a new `AttachmentCard` at the page level, not inside the large existing `PurchaseOrderDetail` component) — Payment/Labour Payment upload widgets are a fast-follow, same DAL. ≤5MB, PDF/PNG/JPEG. Download route `/attachments/[attachmentId]`. | **Done + CI-green** (`496cd1a`, run `34693498502`) |
 | 5 | Alerts follow-up — "missing receipt" / "missing delivery note" now computable from Slice 4's attachments (both collapse to "no attachment on this PO," worded by whether it's delivered-only or delivered-and-paid, since there's one attachment slot per PO, not per delivery/payment). | **Done + CI-green** (`496cd1a`, run `34693498502`) |
-| 6 | Stage templates — `stage_templates` register (migration `0007`), `Stage → Task → Material Line` tree (names/units only), register CRUD at `/stage-templates`, "Create Project from template" (deselect stages/tasks on `ProjectForm`) and "Save as template" from an existing project. | **Built, `tsc`/`eslint` clean in WSL — not yet pushed / CI-verified** |
+| 6 | Stage templates — `stage_templates` register (migration `0007`), `Stage → Task → Material Line` tree (names/units only), register CRUD at `/stage-templates`, "Create Project from template" (deselect stages/tasks on `ProjectForm`) and "Save as template" from an existing project. | **Done + CI-green** (`71d9519`, PR #3, run `34871803810`) |
