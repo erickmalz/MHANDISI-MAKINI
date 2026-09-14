@@ -48,8 +48,16 @@ const optUuid = z.preprocess(
   z.uuid({ error: "Choose a subcontractor from the register." }).optional(),
 );
 
+/**
+ * A take-off line's own id, present only when the form is editing a line
+ * that already exists in the database (Phase 3 ticket 03 §2). Absent on a
+ * brand-new line — the DAL's per-line diff treats a missing id as "insert."
+ */
+const optLineId = z.preprocess(emptyToUndefined, z.uuid().optional());
+
 /** One Material Take-Off line, as the form posts it (guidelines §16). */
 export const takeOffLineSchema = z.object({
+  id: optLineId,
   item: z
     .string()
     .trim()

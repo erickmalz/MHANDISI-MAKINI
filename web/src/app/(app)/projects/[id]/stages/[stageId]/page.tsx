@@ -6,7 +6,11 @@ import {
   Plus,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { getStageDetail, listVariationsForStage } from "@/lib/data";
+import {
+  getAccumulatedMaterialVariance,
+  getStageDetail,
+  listVariationsForStage,
+} from "@/lib/data";
 import { estimatedMaterialCost, taskStatusLabel } from "@/lib/tasks";
 import { stageStatusLabel } from "@/lib/project-view";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { VariationStatusBadge } from "../../variations/_components/VariationStatusBadge";
+import { BudgetVarianceCard } from "./_components/BudgetVarianceCard";
 
 export default async function StageDetailPage({
   params,
@@ -23,7 +28,10 @@ export default async function StageDetailPage({
   const stage = await getStageDetail(stageId);
   if (!stage || stage.projectId !== id) notFound();
 
-  const variations = await listVariationsForStage(stageId);
+  const [variations, accumulatedMaterialVariance] = await Promise.all([
+    listVariationsForStage(stageId),
+    getAccumulatedMaterialVariance(id),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -131,6 +139,13 @@ export default async function StageDetailPage({
           ))}
         </ul>
       )}
+
+      <div className="mt-10">
+        <BudgetVarianceCard
+          f={stage.financials}
+          accumulatedMaterialVariance={accumulatedMaterialVariance}
+        />
+      </div>
 
       <div className="mt-10 mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>

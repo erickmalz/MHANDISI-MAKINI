@@ -22,6 +22,21 @@ export interface StageFinancials {
   /** = Outstanding Labour (§6.3): unpaid remainder of signed Labour Agreements. */
   openLabourCommitments: number;
   labourPayments: number;
+  /**
+   * Σ current labour agreement (`labourRevised ?? labourOriginal`) across the
+   * stage's Tasks, unfloored (Phase 3 ticket 03 — Budget Variance Analysis).
+   * The labour-side counterpart to `materialEstimated`; `@/lib/finance`'s
+   * `labourVariance` reads it against `labourPayments`.
+   */
+  labourAgreementTotal: number;
+  /**
+   * Total Estimated Material Cost, stage-level (ticket 03 §3): Σ every
+   * take-off line under every Task in the stage, using each line's current
+   * figures (the revised pair once set, else the original pair) — includes
+   * Variation-appended lines. `@/lib/finance`'s `materialVariance` reads it
+   * against `paidPurchases`.
+   */
+  materialEstimated: number;
   pettyCashExpenses: number;
   otherApprovedCommitments: number;
 

@@ -8,15 +8,21 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
+import type { EditableTakeOffLine } from "@/lib/data";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { TaskInput } from "@/lib/validation/tasks";
 
 type LineRow = {
+  /** Present only for a line that already exists in the database (Phase 3 ticket 03 §2) — a missing id tells the DAL to insert a new row. */
+  id?: string;
   item: string;
   description: string;
   qty: string;
   unit: string;
   estUnitCost: string;
+  /** The frozen Approved Estimate, before any revision — `null`/absent for a line with none yet. */
+  qtyOriginal?: number | null;
+  estUnitCostOriginal?: number | null;
 };
 
 const STATUSES: { value: TaskInput["status"]; label: string }[] = [
@@ -43,27 +49,33 @@ export function TaskForm({
   cancelHref,
   labourOriginalAmount,
   budgetLocked = false,
+  variationMaterialTotal,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subcontractors: { id: string; name: string }[];
-  initial?: Partial<TaskInput>;
+  initial?: Partial<Omit<TaskInput, "lines">> & { lines?: EditableTakeOffLine[] };
   seq?: number;
   submitLabel: string;
   cancelHref: string;
   /** The labour agreement's first-ever value — shown once a revision has happened (Operational Control decision 3). */
   labourOriginalAmount?: number | null;
-  /** The stage's Funding Request is issued/closed — the amount field and material take-off lock. */
+  /** The stage's Funding Request is issued/closed (Phase 3 ticket 03 §1/§2): item/unit freeze on an existing line; qty/cost edits become revisions instead of overwrites. */
   budgetLocked?: boolean;
+  /** Σ estimate of this Task's Variation-appended material lines — shown separately, since those lines never appear here (ticket 03's cross-reference note). */
+  variationMaterialTotal?: number;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
   const seededLines: LineRow[] = (initial?.lines ?? []).map((l) => ({
+    id: l.id,
     item: l.item,
     description: l.description ?? "",
     qty: l.qty != null ? String(l.qty) : "",
     unit: l.unit,
     estUnitCost: l.estUnitCost != null ? String(l.estUnitCost) : "",
+    qtyOriginal: l.qtyOriginal ?? null,
+    estUnitCostOriginal: l.estUnitCostOriginal ?? null,
   }));
   const [lines, setLines] = useState<LineRow[]>(
     seededLines.length ? seededLines : [{ ...emptyLine }],
@@ -72,6 +84,7 @@ export function TaskForm({
   const serialized = lines
     .filter((l) => l.item.trim() !== "")
     .map((l) => ({
+      id: l.id,
       item: l.item.trim(),
       description: l.description.trim() || undefined,
       qty: l.qty.trim() ? toNumber(l.qty) : undefined,
@@ -199,105 +212,123 @@ export function TaskForm({
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {budgetLocked
-              ? "Locked — this stage's Funding Request has been issued, so the take-off that was estimated from is frozen."
+              ? "Locked — this stage's Funding Request has been issued, so item name and unit are frozen as the Approved Estimate. Change a quantity or cost to record a revision, remove a line to drop it, or add a new one."
               : "Your material estimate for this task. Optional now — it feeds Material Variance at closeout and pre-fills purchase orders."}
           </p>
         </div>
 
         <ul className="flex flex-col gap-3">
-          {lines.map((row, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-2 items-center gap-2 rounded-lg border border-border p-3 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
-            >
-              <input
-                aria-label={`Material item, line ${i + 1}`}
-                placeholder="Item"
-                value={row.item}
-                readOnly={budgetLocked}
-                onChange={(e) =>
-                  setLines(lines.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))
-                }
-                className={`${controlClass} sm:col-span-2`}
-              />
-              <input
-                aria-label={`Quantity, line ${i + 1}`}
-                type="number"
-                min={0}
-                step="0.001"
-                placeholder="Qty"
-                value={row.qty}
-                readOnly={budgetLocked}
-                onChange={(e) =>
-                  setLines(lines.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))
-                }
-                className={controlClass}
-              />
-              <input
-                aria-label={`Unit, line ${i + 1}`}
-                placeholder="Unit"
-                value={row.unit}
-                readOnly={budgetLocked}
-                onChange={(e) =>
-                  setLines(lines.map((r, j) => (j === i ? { ...r, unit: e.target.value } : r)))
-                }
-                className={controlClass}
-              />
-              <input
-                aria-label={`Estimated unit cost, line ${i + 1}`}
-                type="number"
-                min={0}
-                placeholder="Unit cost"
-                value={row.estUnitCost}
-                readOnly={budgetLocked}
-                onChange={(e) =>
-                  setLines(
-                    lines.map((r, j) => (j === i ? { ...r, estUnitCost: e.target.value } : r)),
-                  )
-                }
-                className={controlClass}
-              />
-              <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:justify-end">
-                <Money
-                  amount={lineTotal(row)}
-                  className="text-sm font-bold text-card-foreground"
-                />
-                {!budgetLocked && (
-                  <button
-                    type="button"
-                    aria-label={`Remove material line ${i + 1}`}
-                    onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                    className="cursor-pointer text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash size={16} aria-hidden="true" />
-                  </button>
+          {lines.map((row, i) => {
+            // Item/unit freeze once a line has existed since before lock —
+            // a brand-new line (no id yet) added after lock is fully
+            // editable (ticket 03 §2).
+            const identityLocked = budgetLocked && Boolean(row.id);
+            const wasRevised =
+              row.id != null &&
+              (row.qtyOriginal != null || row.estUnitCostOriginal != null) &&
+              (toNumber(row.qty) !== (row.qtyOriginal ?? 0) ||
+                toNumber(row.estUnitCost) !== (row.estUnitCostOriginal ?? 0));
+            return (
+              <li
+                key={row.id ?? `new-${i}`}
+                className="rounded-lg border border-border p-3"
+              >
+                <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
+                  <input
+                    aria-label={`Material item, line ${i + 1}`}
+                    placeholder="Item"
+                    value={row.item}
+                    readOnly={identityLocked}
+                    onChange={(e) =>
+                      setLines(lines.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))
+                    }
+                    className={`${controlClass} sm:col-span-2 ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
+                  />
+                  <input
+                    aria-label={`Quantity, line ${i + 1}`}
+                    type="number"
+                    min={0}
+                    step="0.001"
+                    placeholder="Qty"
+                    value={row.qty}
+                    onChange={(e) =>
+                      setLines(lines.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))
+                    }
+                    className={controlClass}
+                  />
+                  <input
+                    aria-label={`Unit, line ${i + 1}`}
+                    placeholder="Unit"
+                    value={row.unit}
+                    readOnly={identityLocked}
+                    onChange={(e) =>
+                      setLines(lines.map((r, j) => (j === i ? { ...r, unit: e.target.value } : r)))
+                    }
+                    className={`${controlClass} ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
+                  />
+                  <input
+                    aria-label={`Estimated unit cost, line ${i + 1}`}
+                    type="number"
+                    min={0}
+                    placeholder="Unit cost"
+                    value={row.estUnitCost}
+                    onChange={(e) =>
+                      setLines(
+                        lines.map((r, j) => (j === i ? { ...r, estUnitCost: e.target.value } : r)),
+                      )
+                    }
+                    className={controlClass}
+                  />
+                  <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:justify-end">
+                    <Money
+                      amount={lineTotal(row)}
+                      className="text-sm font-bold text-card-foreground"
+                    />
+                    <button
+                      type="button"
+                      aria-label={`Remove material line ${i + 1}`}
+                      onClick={() => setLines(lines.filter((_, j) => j !== i))}
+                      className="cursor-pointer text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+                {wasRevised && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Original: {row.qtyOriginal ?? "—"} {row.unit} @{" "}
+                    <Money amount={row.estUnitCostOriginal ?? 0} className="text-xs" />
+                  </p>
                 )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
           {lines.length === 0 && (
             <li className="text-sm text-muted-foreground">No material lines yet.</li>
           )}
         </ul>
 
         <div className="flex items-center justify-between gap-3">
-          {budgetLocked ? (
-            <span />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setLines([...lines, { ...emptyLine }])}
-              className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
-            >
-              <Plus size={16} aria-hidden="true" />
-              Add material line
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setLines([...lines, { ...emptyLine }])}
+            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Add material line
+          </button>
           <span className="text-sm text-muted-foreground">
             Estimated material cost{" "}
             <Money amount={materialEstimate} className="font-bold text-card-foreground" />
           </span>
         </div>
+        {!!variationMaterialTotal && (
+          <p className="text-sm text-muted-foreground">
+            Plus{" "}
+            <Money amount={variationMaterialTotal} className="font-bold text-card-foreground" />{" "}
+            from approved Variations (recorded separately — see the Variation).
+          </p>
+        )}
         {errors.lines && (
           <p className="text-sm font-bold text-destructive">{errors.lines}</p>
         )}

@@ -45,6 +45,7 @@ export default async function EditTaskPage({
         cancelHref={back}
         labourOriginalAmount={task.labourOriginalAmount}
         budgetLocked={task.budgetLocked}
+        variationMaterialTotal={task.variationMaterialTotal}
       />
 
       <div className="mt-8 border-t border-border pt-6">

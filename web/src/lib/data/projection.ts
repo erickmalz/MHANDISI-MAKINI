@@ -18,8 +18,14 @@ import type { AccountTx } from "./with-account";
  * value is `Number()`-ed here. TZS amounts are whole numbers well inside the
  * safe integer range.
  *
- * `variations` do not exist yet (deferred to Phase 3), so
  * `remainingOtherApproved` is 0 — see `.scratch/phase2/slice-2.2-runbook.md`.
+ *
+ * `materialEstimated` / `labourAgreementTotal` (Phase 3 ticket 03 — Budget
+ * Variance Analysis) are additive: the stage-level Approved Estimate each
+ * side of the variance reconciles against. `@/lib/finance`'s
+ * `materialVariance`/`labourVariance`/`budgetVarianceTotal` derive the actual
+ * variance figures from these plus the existing `paidPurchases`/
+ * `labourPayments` — "one authoritative calculation path" (guidelines §51).
  */
 export async function computeStageFinancials(
   tx: AccountTx,
@@ -117,12 +123,42 @@ export async function computeStageFinancials(
 
   let openLabourCommitments = 0;
   let labourPayments = 0;
+  let labourAgreementTotal = 0;
   for (const row of labourRows) {
     const agreement = Number(row.agreement);
     const paid = Number(row.paid);
     labourPayments += paid;
+    labourAgreementTotal += agreement;
     openLabourCommitments += Math.max(0, agreement - paid);
   }
+
+  // --- Material Take-Off: Total Estimated Material Cost, stage-level (ticket
+  //     03 §3) — Σ every take-off line under every Task in the stage,
+  //     current figures (the revised pair once either side of it has been
+  //     written, else the original pair). A Variation-appended row
+  //     (`variation_id` not null) is summed the same way as any other row:
+  //     it carries only an original pair (`qty=1`, `est_unit_cost_original =
+  //     material_impact`, ticket 01 §3), so it folds its signed
+  //     `material_impact` straight into the estimate — exactly the increase
+  //     (or decrease) an approved Variation is supposed to make, with no
+  //     per-line matching against actual purchases that would otherwise read
+  //     it as a spurious 100% saving. -----------------------------------
+  const materialRow = (
+    await tx.execute<{ material_estimated: string }>(sql`
+      SELECT COALESCE(SUM(
+        CASE
+          WHEN ml.qty_revised IS NOT NULL OR ml.est_unit_cost_revised IS NOT NULL
+            THEN COALESCE(ml.qty_revised, ml.qty_original, 0)
+                 * COALESCE(ml.est_unit_cost_revised, ml.est_unit_cost_original, 0)
+          ELSE COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)
+        END
+      ), 0) AS material_estimated
+      FROM material_lines ml
+      JOIN tasks t ON t.id = ml.task_id
+      WHERE t.stage_id = ${stageId}
+    `)
+  ).rows[0];
+  const materialEstimated = Number(materialRow?.material_estimated ?? 0);
 
   // --- Petty cash + other approved commitments for the stage. ---------------
   const otherRow = (
@@ -148,6 +184,8 @@ export async function computeStageFinancials(
     paidPurchases,
     openLabourCommitments,
     labourPayments,
+    labourAgreementTotal,
+    materialEstimated,
     pettyCashExpenses,
     otherApprovedCommitments,
 

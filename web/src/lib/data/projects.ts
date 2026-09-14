@@ -1,6 +1,6 @@
 import "server-only";
 
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 
 import { getCurrentStage, stageStatusLabel } from "@/lib/project-view";
 import type { Project, Stage } from "@/lib/types";
@@ -118,5 +118,51 @@ export async function getProjectOverview(
       .limit(1);
     if (!row) return null;
     return toProject(tx, row, await buildStages(tx, row.id));
+  });
+}
+
+/**
+ * Accumulated Material Variance (Phase 3 ticket 03 §5) — Σ Material Variance
+ * across every stage of the project, live-computed, never stored: what
+ * "credited to Petty Cash" means given Petty Cash was never a separately
+ * tracked balance (`CONTEXT.md`) — an underspend against the estimate simply
+ * shows up here as reporting headroom, not a posted ledger event. One SQL
+ * aggregate rather than looping `computeStageFinancials` per stage.
+ */
+export async function getAccumulatedMaterialVariance(
+  projectId: string,
+): Promise<number> {
+  return withAccount(async (tx) => {
+    const row = (
+      await tx.execute<{ material_estimated: string; paid_purchases: string }>(sql`
+        SELECT
+          COALESCE((
+            SELECT SUM(
+              CASE
+                WHEN ml.qty_revised IS NOT NULL OR ml.est_unit_cost_revised IS NOT NULL
+                  THEN COALESCE(ml.qty_revised, ml.qty_original, 0)
+                       * COALESCE(ml.est_unit_cost_revised, ml.est_unit_cost_original, 0)
+                ELSE COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)
+              END
+            )
+            FROM material_lines ml
+            JOIN tasks t ON t.id = ml.task_id
+            JOIN stages s ON s.id = t.stage_id
+            WHERE s.project_id = ${projectId}
+          ), 0) AS material_estimated,
+          COALESCE((
+            SELECT SUM(p.amount)
+            FROM payment_records p
+            JOIN purchase_orders po ON po.id = p.purchase_order_id
+            JOIN stages s ON s.id = po.stage_id
+            WHERE s.project_id = ${projectId}
+              AND po.status IN ('ordered', 'closed')
+              AND p.voided_at IS NULL
+          ), 0) AS paid_purchases
+      `)
+    ).rows[0];
+    return (
+      Number(row?.material_estimated ?? 0) - Number(row?.paid_purchases ?? 0)
+    );
   });
 }

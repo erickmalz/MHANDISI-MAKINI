@@ -38,11 +38,48 @@ export interface MaterialTakeOffLine {
   seq: number;
   item: string;
   description: string | null;
-  /** Estimated quantity (`qty_original`); `null` if not yet quantified. */
+  /**
+   * Set only on a row an approved Variation appended (Phase 3 ticket 01 §3);
+   * `null` for every ordinary take-off line. A Variation-tagged row reconciles
+   * against its Variation's `material_impact`, never against a per-line
+   * original/revised split of its own (ticket 03's cross-reference note).
+   */
+  variationId: string | null;
+  /**
+   * The *current* estimated quantity — `qty_revised` once either side of the
+   * revised pair has been written, else `qty_original` (ticket 03 §3's
+   * "revised pair where a line has one, else the original pair"). `null` if
+   * not yet quantified.
+   */
   qty: number | null;
   unit: string;
-  /** Estimated unit cost (`est_unit_cost_original`), whole TZS; `null` if unpriced. */
+  /** The current estimated unit cost (see `qty`), whole TZS; `null` if unpriced. */
   estUnitCost: number | null;
+  /** The frozen Approved Estimate quantity, before any revision — `null` until the stage locks and a first estimate was recorded, or for a line added after lock. */
+  qtyOriginal: number | null;
+  /** The frozen Approved Estimate unit cost — see `qtyOriginal`. */
+  estUnitCostOriginal: number | null;
+}
+
+/**
+ * The pair-fallback used everywhere a take-off line's *current* figures are
+ * read (ticket 03 §3): once either side of the revised pair has been written,
+ * the revised pair is the current one (falling back within the pair to the
+ * original side that wasn't touched); otherwise the original pair stands.
+ */
+export function currentTakeOffFigures(row: {
+  qtyOriginal: number | null;
+  qtyRevised: number | null;
+  estUnitCostOriginal: number | null;
+  estUnitCostRevised: number | null;
+}): { qty: number | null; estUnitCost: number | null } {
+  const hasRevision = row.qtyRevised != null || row.estUnitCostRevised != null;
+  return hasRevision
+    ? {
+        qty: row.qtyRevised ?? row.qtyOriginal,
+        estUnitCost: row.estUnitCostRevised ?? row.estUnitCostOriginal,
+      }
+    : { qty: row.qtyOriginal, estUnitCost: row.estUnitCostOriginal };
 }
 
 /** The estimated cost of one take-off line — `qty × estUnitCost`, or 0 if either is missing. */

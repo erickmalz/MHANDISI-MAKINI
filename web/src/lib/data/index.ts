@@ -13,7 +13,11 @@ import "server-only";
  * structure writes (Tasks, Material Take-Off). Slice 2.6 adds the Purchase
  * Order write lifecycle.
  */
-export { listProjects, getProjectOverview } from "./projects";
+export {
+  listProjects,
+  getProjectOverview,
+  getAccumulatedMaterialVariance,
+} from "./projects";
 export {
   listPurchaseOrders,
   getPurchaseOrder,
@@ -60,6 +64,7 @@ export {
   createTask,
   updateTask,
   deleteTask,
+  type EditableTakeOffLine,
 } from "./tasks";
 export {
   getDocumentProfile,
