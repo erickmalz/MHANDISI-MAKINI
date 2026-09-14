@@ -124,3 +124,16 @@ export {
   deleteStageTemplate,
   createTemplateFromProject,
 } from "./stage-templates";
+export {
+  listVariationsForStage,
+  getVariation,
+  getVariationDraftInput,
+  createVariationDraft,
+  updateVariationDraft,
+  deleteVariationDraft,
+  approveVariation,
+  rejectVariation,
+  cancelVariation,
+  linkVariationsToFundingRequest,
+  type ApproveVariationResult,
+} from "./variations";

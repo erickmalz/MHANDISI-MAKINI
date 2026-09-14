@@ -53,6 +53,7 @@ export function FundingRequestForm({
   initial,
   submitLabel,
   cancelHref,
+  variationLinks,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   /** Present on the create form — the engineer picks the stage to fund. */
@@ -67,6 +68,12 @@ export function FundingRequestForm({
   };
   submitLabel: string;
   cancelHref: string;
+  /**
+   * Approved Variations this Additional Funding Request is being raised for
+   * (Phase 3 ticket 01 §4) — posted as a hidden field and linked, purely
+   * informationally, once the draft is saved. Never required.
+   */
+  variationLinks?: { id: string; displayNumber: string | null; description: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
@@ -119,6 +126,28 @@ export function FundingRequestForm({
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       <input type="hidden" name="lines" value={JSON.stringify(serialized)} />
+      {variationLinks && variationLinks.length > 0 && (
+        <input
+          type="hidden"
+          name="variationIds"
+          value={JSON.stringify(variationLinks.map((v) => v.id))}
+        />
+      )}
+
+      {variationLinks && variationLinks.length > 0 && (
+        <Card>
+          <p className="text-sm font-bold text-card-foreground">
+            Raised for {variationLinks.length === 1 ? "this Variation" : "these Variations"}
+          </p>
+          <ul className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
+            {variationLinks.map((v) => (
+              <li key={v.id}>
+                {v.displayNumber ?? "Draft"} — {v.description}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {fixedStageName ? (
         <Card>

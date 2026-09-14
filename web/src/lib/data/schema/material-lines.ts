@@ -4,6 +4,14 @@
  * the Approved-Estimate revision chain (§17) and the actual-cost side arrive in
  * a later slice.
  *
+ * `variation_id` (Phase 3 ticket 01 §3) tags a row **appended** by an approved
+ * Variation's material impact, rather than mutating an existing take-off line —
+ * Material Lines have no per-line original/revised split, so this is how a
+ * Variation's material effect is recorded without touching what the estimate
+ * already said. `NULL` for every ordinary take-off line. `ON DELETE NO ACTION`:
+ * a Variation is never deleted (only cancelled — see `schema/variations.ts`),
+ * same posture as `funding_requests.supersedes_id`'s self-reference.
+ *
  * RLS is applied by `app.enable_standard_rls('material_lines')` in
  * the RLS block at the end of migration `0002_domain_structure`.
  */
@@ -20,6 +28,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { tasks } from "./tasks";
+import { variations } from "./variations";
 
 export const materialLines = pgTable(
   "material_lines",
@@ -31,6 +40,8 @@ export const materialLines = pgTable(
     // `tasks (id, account_id)` below.
     accountId: uuid("account_id").notNull(),
     taskId: uuid("task_id").notNull(),
+    // Nullable — set only on a row an approved Variation appended (ticket 01 §3).
+    variationId: uuid("variation_id"),
 
     item: text("item").notNull(),
     description: text("description"),
@@ -54,5 +65,10 @@ export const materialLines = pgTable(
       columns: [t.taskId, t.accountId],
       foreignColumns: [tasks.id, tasks.accountId],
     }).onDelete("cascade"),
+    foreignKey({
+      name: "material_lines_variation_id_account_id_fk",
+      columns: [t.variationId, t.accountId],
+      foreignColumns: [variations.id, variations.accountId],
+    }).onDelete("no action"),
   ],
 );

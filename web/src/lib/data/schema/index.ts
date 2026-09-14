@@ -40,3 +40,7 @@ export * from "./attachments";
 
 // Operational Control Slice 6 — migration `0007_stage_templates`.
 export * from "./stage-templates";
+
+// Phase 3 Slice 3.1 — migration `0008_variation_module`.
+export * from "./variations";
+export * from "./additional-funding-request-variations";

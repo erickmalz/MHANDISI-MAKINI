@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createFundingRequestAction } from "@/app/actions/funding";
-import { getProjectOverview } from "@/lib/data";
+import { getProjectOverview, getVariation } from "@/lib/data";
 import { FundingRequestForm } from "../../../_components/FundingRequestForm";
 
 export default async function NewFundingRequestPage({
@@ -11,11 +11,18 @@ export default async function NewFundingRequestPage({
   searchParams,
 }: PageProps<"/projects/[id]/funding/new">) {
   const { id } = await params;
-  const { kind } = await searchParams;
+  const { kind, variationId } = await searchParams;
   const project = await getProjectOverview(id);
   if (!project) notFound();
 
   const isAdditional = kind === "additional";
+
+  // Opened from an Approved Variation's "Raise Additional Funding Request"
+  // action (ticket 01 §4) — pre-links it, purely informationally, once saved.
+  const variationIds = (Array.isArray(variationId) ? variationId : variationId ? [variationId] : []);
+  const linkedVariations = (
+    await Promise.all(variationIds.map((vid) => getVariation(vid)))
+  ).filter((v): v is NonNullable<typeof v> => v != null && v.status === "approved");
 
   const fundableStages = project.stages.filter(
     (s) => s.status !== "Completed" && s.status !== "Cancelled",
@@ -60,9 +67,16 @@ export default async function NewFundingRequestPage({
           seq: s.seq,
           status: s.status,
         }))}
-        defaultStageId={project.currentStageId ?? undefined}
+        defaultStageId={
+          linkedVariations[0]?.stageId ?? project.currentStageId ?? undefined
+        }
         submitLabel="Save draft"
         cancelHref={`/projects/${id}/funding`}
+        variationLinks={linkedVariations.map((v) => ({
+          id: v.id,
+          displayNumber: v.displayNumber,
+          description: v.description,
+        }))}
       />
     </main>
   );
