@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ClockCounterClockwise,
   MapPin,
   Package,
   PencilSimple,
@@ -90,6 +91,13 @@ export default async function ProjectOverviewPage({
             >
               <Receipt size={20} aria-hidden="true" />
               Funding requests
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/activity`}
+            >
+              <ClockCounterClockwise size={20} aria-hidden="true" />
+              Activity history
             </Button>
             <Button
               variant="primary"
