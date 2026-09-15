@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ChartBar,
   MapPin,
   Package,
   PencilSimple,
@@ -90,6 +91,13 @@ export default async function ProjectOverviewPage({
             >
               <Receipt size={20} aria-hidden="true" />
               Funding requests
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/reports`}
+            >
+              <ChartBar size={20} aria-hidden="true" />
+              Reports
             </Button>
             <Button
               variant="primary"
