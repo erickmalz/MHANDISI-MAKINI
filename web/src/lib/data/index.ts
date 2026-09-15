@@ -160,3 +160,4 @@ export {
   type CloseStageResult,
 } from "./stage-closeout";
 export { getStageReconciliationReport } from "./reconciliation";
+export { getProjectActivity, type ActivityEvent, type ActivityRecordType } from "./activity";
