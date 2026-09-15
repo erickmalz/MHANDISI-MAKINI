@@ -73,8 +73,15 @@ enum, and `document_number_type` gaining `stage_closeout_report` /
 `project_closeout_report`. RLS block hand-appended for all four tables.
 
 `npx tsc --noEmit` and `npx eslint .` both pass clean on the fully-integrated
-tree (post-merge, pre-push). Pushed to `origin/phase4-site-history-reporting`
-— PR #5 — for CI verification (`db:migrate`, isolation suite, `build`).
+tree (post-merge, pre-push).
+
+**Verified 2026-09-15** — CI run `35028451814` on PR #5 green: `lint`,
+`typecheck`, migrations (incl. `0010`), the Testcontainers isolation suite,
+and `npm run build` all ✓. **This closes Phase 4's build order — all 5
+slices done.** Every ticket (01–07) plus every slice (4.1–4.5) is Built +
+merged + CI-verified. Phase 4 ("Site History & Reporting") is complete —
+the guidelines doc's full recommended feature set (§57–§60) is now
+delivered.
 
 ## Out of scope for this build
 

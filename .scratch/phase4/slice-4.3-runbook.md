@@ -1,6 +1,6 @@
 # Slice 4.3 — Project Closeout — runbook
 
-**Built — pending integration + CI verification**
+**Verified 2026-09-15** — CI run `35028451814` on PR #5 green: `lint`, `typecheck`, migrations (incl. `0010`), the isolation suite, and `build` all ✓.
 
 Implements ticket 04 (`.scratch/phase4/issues/04-project-closeout.md`) in
 full, including its "Correction found at build-planning time" note:

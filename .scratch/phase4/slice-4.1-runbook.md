@@ -1,6 +1,7 @@
 # Slice 4.1 — Site Diary + Progress Photos — runbook
 
-> **Built — pending integration + CI verification.** `npm run lint` and
+> **Verified 2026-09-15** — CI run `35028451814` on PR #5 green: `lint`, `typecheck`, migrations (incl. `0010`), the isolation suite, and `build` all ✓.
+> `npm run lint` and
 > `npm run typecheck` both clean in WSL (see "Verify" below). No migration
 > generated — schema `.ts` only, per this slice's hard constraint; the
 > integrator generates and hand-merges the RLS block centrally after every

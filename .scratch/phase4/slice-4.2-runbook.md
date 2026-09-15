@@ -1,6 +1,6 @@
 # Slice 4.2 — Stage Closeout Report — runbook
 
-> **Built — pending integration + CI verification**
+> **Verified 2026-09-15** — CI run `35028451814` on PR #5 green: `lint`, `typecheck`, migrations (incl. `0010`), the isolation suite, and `build` all ✓.
 
 ## What changed
 

@@ -1,6 +1,7 @@
 # Slice 4.4 — Comprehensive Activity History — runbook
 
-> **Built — pending integration + CI verification.** Typecheck
+> **Verified 2026-09-15** — CI run `35028451814` on PR #5 green: `lint`, `typecheck`, migrations (incl. `0010`), the isolation suite, and `build` all ✓.
+> Typecheck
 > (`npm run typecheck`) and lint (`npm run lint`, plus a targeted
 > `npx eslint` on the changed files) are clean in this worktree. Not yet run
 > through CI on a PR — this worktree is not pushed.
