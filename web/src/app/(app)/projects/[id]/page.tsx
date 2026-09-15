@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ClockCounterClockwise,
+  ChartBar,
   MapPin,
   Package,
   PencilSimple,
@@ -98,6 +99,13 @@ export default async function ProjectOverviewPage({
             >
               <ClockCounterClockwise size={20} aria-hidden="true" />
               Activity history
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/reports`}
+            >
+              <ChartBar size={20} aria-hidden="true" />
+              Reports
             </Button>
             <Button
               variant="primary"
