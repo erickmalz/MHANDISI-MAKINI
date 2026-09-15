@@ -99,7 +99,50 @@ export interface PurchaseOrderSnapshot extends DocumentSnapshotBase {
   expectedDeliveryOn?: string;
 }
 
+/**
+ * The Project Closeout Report (Phase 4 ticket 04) — a project-wide
+ * reconciliation frozen at `completeProject`, guidelines §37's field list.
+ * Assembled by **summing already-computed per-stage figures**
+ * (`@/lib/finance` applied to the project's stages' `StageFinancials`, added
+ * elementwise — see `@/lib/data/project-closeout.ts`), not a new project-wide
+ * calculation engine.
+ *
+ * The base `sections`/`total` fields (designed for a priced line-item
+ * document) are repurposed here for the four genuinely itemised-and-summed
+ * groups this report has — Approved Variations, Supplier Balances,
+ * Subcontractor Balances, Outstanding Documents — via the same generic
+ * `SectionTable` the other three documents already render with; `total` is
+ * `finalProjectVariance`. `stageName` (singular, designed for a stage-scoped
+ * document) holds a short "{N} stages" summary instead — there is no single
+ * stage to name at project scope.
+ *
+ * The remaining single derived figures (not itemised lists, so not a good
+ * fit for `sections`) are their own typed fields below.
+ */
+export interface ProjectCloseoutReportSnapshot extends DocumentSnapshotBase {
+  kind: "project_closeout_report";
+  stageCount: number;
+  /** Σ `clientDeposits` across every stage — guidelines §37 "Total client funding". */
+  totalClientFunding: number;
+  /** `availableFloat` applied to the project-wide summed figures — "Remaining client float". */
+  remainingClientFloat: number;
+  /** Σ (`openPurchaseCommitments` + `paidPurchases`) — "Total material commitments" (ordered, open + paid). */
+  totalMaterialCommitments: number;
+  /** Σ `paidPurchases` — "Total actual material cost". */
+  totalActualMaterialCost: number;
+  /** Σ `labourAgreementTotal` — "Total labour agreements". */
+  totalLabourAgreements: number;
+  /** Σ `labourPayments` — "Total labour paid". */
+  totalLabourPaid: number;
+  /** Σ `feeInvoiced` — "Total fees" (billed). Kept alongside `totalFeesReceived` for clarity. */
+  totalFeesInvoiced: number;
+  totalFeesReceived: number;
+  /** `materialVariance` + `labourVariance` on the project-wide summed figures — "Final project variance". Mirrors `total`. */
+  finalProjectVariance: number;
+}
+
 export type DocumentSnapshot =
   | FundingRequestSnapshot
   | FeeInvoiceSnapshot
-  | PurchaseOrderSnapshot;
+  | PurchaseOrderSnapshot
+  | ProjectCloseoutReportSnapshot;

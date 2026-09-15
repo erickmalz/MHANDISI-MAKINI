@@ -47,3 +47,7 @@ export * from "./additional-funding-request-variations";
 
 // Phase 3 Slice 3.3 — migration `0009_material_stock_movements`.
 export * from "./material-stock-movements";
+
+// Phase 4 Slice 4.3 — migration number TBD by the integrator (next free slot
+// after whichever of 4.1/4.2 lands first; see `.scratch/phase4/status.md`).
+export * from "./project-closeouts";
