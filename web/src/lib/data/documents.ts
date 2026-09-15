@@ -12,6 +12,7 @@ import {
   projectCloseouts,
   projects,
   purchaseOrders,
+  stageCloseouts,
   stages,
 } from "./schema";
 import type {
@@ -19,6 +20,7 @@ import type {
   FundingRequestSnapshot,
   ProjectCloseoutReportSnapshot,
   PurchaseOrderSnapshot,
+  StageCloseoutReportSnapshot,
 } from "./schema/snapshot";
 import { withAccount, type AccountTx } from "./with-account";
 
@@ -81,6 +83,14 @@ export interface PurchaseOrderDocument {
   profile: DocumentProfile;
 }
 
+export interface StageCloseoutReportDocument {
+  kind: "stage_closeout_report";
+  projectId: string;
+  snapshot: StageCloseoutReportSnapshot;
+  stamp: string | null;
+  profile: DocumentProfile;
+}
+
 export interface ProjectCloseoutReportDocument {
   kind: "project_closeout_report";
   projectId: string;
@@ -89,11 +99,12 @@ export interface ProjectCloseoutReportDocument {
   profile: DocumentProfile;
 }
 
-/** Any of the four — the templates narrow on `snapshot.kind`. */
+/** Any of the five — the templates narrow on `snapshot.kind`. */
 export type DocumentInput =
   | FundingRequestDocument
   | FeeInvoiceDocument
   | PurchaseOrderDocument
+  | StageCloseoutReportDocument
   | ProjectCloseoutReportDocument;
 
 async function readProfile(tx: AccountTx): Promise<DocumentProfile | null> {
@@ -233,6 +244,40 @@ export async function getPurchaseOrderDocument(
       projectId: row.projectId,
       snapshot: row.documentSnapshot as PurchaseOrderSnapshot,
       stamp,
+      profile,
+    };
+  });
+}
+
+/**
+ * A closed Stage's frozen Report, or `null` (missing / not yet closed /
+ * cross-account, or — for a Stage closed before this feature shipped — no
+ * `stage_closeouts` row at all). No lifecycle stamp: a Stage Closeout Report
+ * has no supersede/cancel/paid state to reflect (Phase 4 ticket 03).
+ */
+export async function getStageCloseoutReportDocument(
+  stageId: string,
+): Promise<StageCloseoutReportDocument | null> {
+  return withAccount(async (tx) => {
+    const [row] = await tx
+      .select({
+        documentSnapshot: stageCloseouts.documentSnapshot,
+        projectId: stages.projectId,
+      })
+      .from(stageCloseouts)
+      .innerJoin(stages, eq(stages.id, stageCloseouts.stageId))
+      .where(eq(stageCloseouts.stageId, stageId))
+      .limit(1);
+    if (!row) return null;
+
+    const profile = await readProfile(tx);
+    if (!profile) return null;
+
+    return {
+      kind: "stage_closeout_report",
+      projectId: row.projectId,
+      snapshot: row.documentSnapshot as StageCloseoutReportSnapshot,
+      stamp: null,
       profile,
     };
   });

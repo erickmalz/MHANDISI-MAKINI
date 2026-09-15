@@ -72,12 +72,14 @@ export {
   getFeeInvoiceDocument,
   getPurchaseOrderDocument,
   getProjectCloseoutReportDocument,
+  getStageCloseoutReportDocument,
   type DocumentProfile,
   type DocumentInput,
   type FundingRequestDocument,
   type FeeInvoiceDocument,
   type PurchaseOrderDocument,
   type ProjectCloseoutReportDocument,
+  type StageCloseoutReportDocument,
 } from "./documents";
 export {
   getAccountProfile,
@@ -159,6 +161,7 @@ export {
   getStageCloseoutGates,
   closeStage,
   resolveSurplusMaterials,
+  getStageCloseoutReportSummary,
   type CloseStageResult,
 } from "./stage-closeout";
 export { getStageReconciliationReport } from "./reconciliation";

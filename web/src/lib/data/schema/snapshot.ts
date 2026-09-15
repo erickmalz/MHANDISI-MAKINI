@@ -100,6 +100,102 @@ export interface PurchaseOrderSnapshot extends DocumentSnapshotBase {
 }
 
 /**
+ * One material item's on-hand balance in the project-wide Material Stock
+ * ledger (`src/lib/data/material-stock.ts`, Phase 3 ticket 06), frozen at the
+ * moment this Stage closed — before any post-closeout "Carry Forward /
+ * Written Off" resolution touches the ledger. Same shape as
+ * `StockBalance`, kept independent here since the frozen copy must never
+ * change when the live ledger later does.
+ */
+export interface StageCloseoutMaterialStockLine {
+  itemKey: string;
+  unit: string;
+  qty: number;
+}
+
+/**
+ * The Stage Closeout Report (guidelines §38, §50; Phase 4 ticket 03,
+ * `.scratch/phase4/issues/03-stage-closeout-report.md`). Frozen inside the
+ * existing `closeStage` transaction (`src/lib/data/stage-closeout.ts`) — the
+ * same atomic moment `stages.status` flips to `completed` — from figures the
+ * Stage Closeout screen already computes and shows read-only before the
+ * Engineer clicks Close Stage: `@/lib/finance`'s Budget Variance figures
+ * (Phase 3 ticket 03), the Supervisor Fee Position, the Client Funds
+ * forecast, and the project-wide Material Stock surplus (Phase 3 ticket 06).
+ *
+ * `counterpartyName` (from `DocumentSnapshotBase`) holds the Project's
+ * client name — this report has no Client/Supplier party the way a Funding
+ * Request or Purchase Order does, but it is still a record "a client or the
+ * supervisor's own records might reference later" (ticket 03's own
+ * reasoning), so the client is named the same way every other document
+ * names its counterparty. `sections`/`total` (also from the base) carry the
+ * Material/Labour Budget Variance breakdown, mirroring the on-screen
+ * `BudgetVarianceCard` (`total` = the Combined Budget Variance). `notes`
+ * (base, optional) freezes the Stage's own free-text `notes` column — the
+ * closest live field to §38's "unresolved notes" line; there is no separate
+ * notes-taking step in the Stage Closeout workflow.
+ *
+ * The `*Reconciled` booleans match §50's `stage_closeouts` column list
+ * verbatim, alongside the actual figures behind each one (ticket 03's answer:
+ * "plus the actual figures, not just booleans"). `materialsReconciled` /
+ * `labourReconciled` are always `true` by construction — two of Stage
+ * Closeout's four hard gates (no `ordered` Purchase Order; zero Open Labour
+ * Commitments, `src/lib/stage-closeout.ts`) already guarantee this for any
+ * Stage that reaches `completed`, so `closeStage` writes the boolean rather
+ * than re-deriving it. `feeReconciled` / `clientFundsReconciled` are **not**
+ * gates (Phase 1 decision 03: fee outstanding never blocks closeout) and so
+ * reflect the actual state at close, which may be `false`.
+ * `documentsReconciled` is always `true` — the Documents group on the
+ * Closeout screen is purely informational with no live check behind it (every
+ * Issued record is already immutable by construction); recorded as a flag
+ * for §50 symmetry, not because anything is being verified.
+ */
+export interface StageCloseoutReportSnapshot extends DocumentSnapshotBase {
+  kind: "stage_closeout_report";
+
+  /**
+   * The Financial Reconciliation Engine's ("Run Financial Check", Phase 3
+   * ticket 04) rollup at the moment of closing — `critical` if any check was
+   * Critical, else `warning` if any was Warning, else `passed`. Purely
+   * informational (guidelines §34: "informational, not an accounting
+   * certification"); never a closeout gate.
+   */
+  financialCheckStatus: "passed" | "warning" | "critical";
+
+  materialsReconciled: boolean;
+  labourReconciled: boolean;
+  documentsReconciled: boolean;
+  feeReconciled: boolean;
+  clientFundsReconciled: boolean;
+
+  /** Σ Approved Estimate (material + labour) for the stage — the Budget Variance card's "Estimated"/"Agreement" pair, combined. */
+  stageBudget: number;
+  /** Σ actual spend (paid purchases + labour payments) for the stage. */
+  actualCost: number;
+
+  materialEstimated: number;
+  materialActual: number;
+  materialVariance: number;
+  /** Σ Material Variance across every stage of the *project* (`@/lib/data/projects`'s `accumulatedMaterialVarianceTx`) — the Budget Variance card's own second figure, frozen alongside the stage-level one. */
+  accumulatedMaterialVariance: number;
+
+  labourAgreement: number;
+  labourActual: number;
+  labourVariance: number;
+
+  feeInvoiced: number;
+  feeReceived: number;
+  feeOutstanding: number;
+
+  clientDeposits: number;
+  /** Positive = a shortfall was still open at close; zero/negative = funding was adequate (`@/lib/finance`'s `forecastFundingRequirement`). */
+  forecastFundingRequirement: number;
+
+  /** Project-wide on-site surplus at the moment of closing, not yet resolved to Carried Forward / Written Off. */
+  materialStockSurplus: StageCloseoutMaterialStockLine[];
+}
+
+/**
  * The Project Closeout Report (Phase 4 ticket 04) — a project-wide
  * reconciliation frozen at `completeProject`, guidelines §37's field list.
  * Assembled by **summing already-computed per-stage figures**
@@ -145,4 +241,5 @@ export type DocumentSnapshot =
   | FundingRequestSnapshot
   | FeeInvoiceSnapshot
   | PurchaseOrderSnapshot
+  | StageCloseoutReportSnapshot
   | ProjectCloseoutReportSnapshot;

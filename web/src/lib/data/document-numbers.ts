@@ -24,6 +24,7 @@ export async function claimDocumentNumber(
     | "fee_invoice"
     | "purchase_order"
     | "variation"
+    | "stage_closeout_report"
     | "project_closeout_report",
 ): Promise<number> {
   const { rows } = await tx.execute<{ value: number }>(sql`

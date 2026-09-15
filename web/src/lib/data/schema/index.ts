@@ -52,5 +52,8 @@ export * from "./material-stock-movements";
 export * from "./site-diary-entries";
 export * from "./photos";
 
+// Phase 4 Slice 4.2 — Stage Closeout Report.
+export * from "./stage-closeouts";
+
 // Phase 4 Slice 4.3 — Project Closeout.
 export * from "./project-closeouts";
