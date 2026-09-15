@@ -6,6 +6,7 @@ import { PRINT_CSS } from "../print-css";
 import { FeeInvoiceDoc } from "./FeeInvoiceDoc";
 import { FundingRequestDoc } from "./FundingRequestDoc";
 import { PurchaseOrderDoc } from "./PurchaseOrderDoc";
+import { StageCloseoutReportDoc } from "./StageCloseoutReportDoc";
 
 function pickTemplate(doc: DocumentInput): ReactElement {
   switch (doc.kind) {
@@ -15,6 +16,8 @@ function pickTemplate(doc: DocumentInput): ReactElement {
       return <FeeInvoiceDoc doc={doc} />;
     case "purchase_order":
       return <PurchaseOrderDoc doc={doc} />;
+    case "stage_closeout_report":
+      return <StageCloseoutReportDoc doc={doc} />;
   }
 }
 

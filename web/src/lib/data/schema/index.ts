@@ -47,3 +47,7 @@ export * from "./additional-funding-request-variations";
 
 // Phase 3 Slice 3.3 — migration `0009_material_stock_movements`.
 export * from "./material-stock-movements";
+
+// Phase 4 Slice 4.2 — Stage Closeout Report (migration TBD; generated at
+// Phase 4 integration).
+export * from "./stage-closeouts";

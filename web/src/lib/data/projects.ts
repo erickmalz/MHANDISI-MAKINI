@@ -128,13 +128,19 @@ export async function getProjectOverview(
  * tracked balance (`CONTEXT.md`) — an underspend against the estimate simply
  * shows up here as reporting headroom, not a posted ledger event. One SQL
  * aggregate rather than looping `computeStageFinancials` per stage.
+ *
+ * `tx`-scoped so a caller already inside its own transaction (Phase 4 Slice
+ * 4.2's `closeStage`, freezing this same figure into the Stage Closeout
+ * Report snapshot) can call it directly, same posture as
+ * `computeStageFinancials` — avoids nesting a second `withAccount`/
+ * `db.transaction()` inside the caller's own.
  */
-export async function getAccumulatedMaterialVariance(
+export async function accumulatedMaterialVarianceTx(
+  tx: AccountTx,
   projectId: string,
 ): Promise<number> {
-  return withAccount(async (tx) => {
-    const row = (
-      await tx.execute<{ material_estimated: string; paid_purchases: string }>(sql`
+  const row = (
+    await tx.execute<{ material_estimated: string; paid_purchases: string }>(sql`
         SELECT
           COALESCE((
             SELECT SUM(
@@ -160,9 +166,13 @@ export async function getAccumulatedMaterialVariance(
               AND p.voided_at IS NULL
           ), 0) AS paid_purchases
       `)
-    ).rows[0];
-    return (
-      Number(row?.material_estimated ?? 0) - Number(row?.paid_purchases ?? 0)
-    );
-  });
+  ).rows[0];
+  return Number(row?.material_estimated ?? 0) - Number(row?.paid_purchases ?? 0);
+}
+
+/** `withAccount`-wrapped read for screens — wraps `accumulatedMaterialVarianceTx`. */
+export async function getAccumulatedMaterialVariance(
+  projectId: string,
+): Promise<number> {
+  return withAccount((tx) => accumulatedMaterialVarianceTx(tx, projectId));
 }
