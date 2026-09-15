@@ -9,16 +9,21 @@ import {
 import {
   getAccumulatedMaterialVariance,
   getStageDetail,
+  listPhotos,
+  listSiteDiaryEntries,
   listVariationsForStage,
 } from "@/lib/data";
 import { estimatedMaterialCost, taskStatusLabel } from "@/lib/tasks";
 import { stageStatusLabel } from "@/lib/project-view";
+import { deletePhotoAction, uploadStagePhotoAction } from "@/app/actions/photos";
+import { PhotoStrip } from "@/components/photos/PhotoStrip";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { VariationStatusBadge } from "../../variations/_components/VariationStatusBadge";
 import { BudgetVarianceCard } from "./_components/BudgetVarianceCard";
+import { SiteDiarySection } from "./_components/SiteDiarySection";
 
 export default async function StageDetailPage({
   params,
@@ -28,10 +33,20 @@ export default async function StageDetailPage({
   const stage = await getStageDetail(stageId);
   if (!stage || stage.projectId !== id) notFound();
 
-  const [variations, accumulatedMaterialVariance] = await Promise.all([
-    listVariationsForStage(stageId),
-    getAccumulatedMaterialVariance(id),
-  ]);
+  const [variations, accumulatedMaterialVariance, stagePhotos, diaryEntries] =
+    await Promise.all([
+      listVariationsForStage(stageId),
+      getAccumulatedMaterialVariance(id),
+      listPhotos("stage", stageId),
+      listSiteDiaryEntries(stageId),
+    ]);
+  const diaryPhotosByEntry = Object.fromEntries(
+    await Promise.all(
+      diaryEntries.map(
+        async (entry) => [entry.id, await listPhotos("siteDiaryEntry", entry.id)] as const,
+      ),
+    ),
+  );
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -217,6 +232,26 @@ export default async function StageDetailPage({
           ))}
         </ul>
       )}
+
+      <div className="mt-10">
+        <h2 className="mb-1 text-xl font-bold text-foreground">Stage photos</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          General progress photos for this stage, not tied to one task, delivery, or diary entry.
+        </p>
+        <PhotoStrip
+          photos={stagePhotos}
+          uploadAction={uploadStagePhotoAction.bind(null, id, stageId)}
+          deleteAction={deletePhotoAction.bind(null, id, stageId)}
+          emptyLabel="No stage photos yet."
+        />
+      </div>
+
+      <SiteDiarySection
+        projectId={id}
+        stageId={stageId}
+        entries={diaryEntries}
+        photosByEntry={diaryPhotosByEntry}
+      />
     </main>
   );
 }
