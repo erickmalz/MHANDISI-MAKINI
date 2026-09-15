@@ -19,7 +19,12 @@ export async function claimDocumentNumber(
   tx: AccountTx,
   accountId: string,
   projectId: string,
-  type: "funding_request" | "fee_invoice" | "purchase_order" | "variation",
+  type:
+    | "funding_request"
+    | "fee_invoice"
+    | "purchase_order"
+    | "variation"
+    | "project_closeout_report",
 ): Promise<number> {
   const { rows } = await tx.execute<{ value: number }>(sql`
     INSERT INTO document_number_sequences (account_id, project_id, type, next_value)

@@ -71,11 +71,13 @@ export {
   getFundingRequestDocument,
   getFeeInvoiceDocument,
   getPurchaseOrderDocument,
+  getProjectCloseoutReportDocument,
   type DocumentProfile,
   type DocumentInput,
   type FundingRequestDocument,
   type FeeInvoiceDocument,
   type PurchaseOrderDocument,
+  type ProjectCloseoutReportDocument,
 } from "./documents";
 export {
   getAccountProfile,
@@ -198,3 +200,10 @@ export {
   type PhotoFile,
   type SetPhotoInput,
 } from "./photos";
+export {
+  getProjectCloseoutGates,
+  completeProject,
+  archiveProject,
+  type CompleteProjectResult,
+  type ArchiveProjectResult,
+} from "./project-closeout";

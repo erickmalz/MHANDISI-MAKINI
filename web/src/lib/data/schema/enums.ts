@@ -27,10 +27,18 @@ export const paymentMethod = pgEnum("payment_method", [
  * per type — `FR-{project}-001`, `PO-{project}-001`, `FI-{project}-001`,
  * `VO-{project}-001` — and the next value is claimed inside the same
  * transaction that Issues (or, for a Variation, Approves) the record.
+ *
+ * `project_closeout_report` added by Phase 4 Slice 4.3 (ticket 04) — minted
+ * once, inside the `completeProject` transaction, for the frozen
+ * `PCR-{project}-001` closeout report number. `stage_closeout_report`
+ * (Slice 4.2, ticket 03) is a sibling addition built concurrently in a
+ * separate worktree — not present here; the integrator adds it alongside
+ * this value, additively, per the build brief.
  */
 export const documentNumberType = pgEnum("document_number_type", [
   "funding_request",
   "purchase_order",
   "fee_invoice",
   "variation",
+  "project_closeout_report",
 ]);
