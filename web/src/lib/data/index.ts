@@ -160,3 +160,20 @@ export {
   type CloseStageResult,
 } from "./stage-closeout";
 export { getStageReconciliationReport } from "./reconciliation";
+
+// Phase 4 Slice 4.1 — Site Diary + Progress Photos.
+export {
+  listSiteDiaryEntries,
+  getSiteDiaryEntry,
+  createSiteDiaryEntry,
+  updateSiteDiaryEntry,
+  deleteSiteDiaryEntry,
+} from "./site-diary";
+export {
+  listPhotos,
+  getPhotoFile,
+  setPhoto,
+  deletePhoto,
+  type PhotoFile,
+  type SetPhotoInput,
+} from "./photos";
