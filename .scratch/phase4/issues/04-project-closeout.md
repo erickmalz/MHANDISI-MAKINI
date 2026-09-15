@@ -53,12 +53,30 @@ Statement simply reads as "fully settled" if it is.
 
 ### Consequences for the spec
 
-- New `projects.status` enum column + migration.
+- **Correction found at build-planning time**: `projects.status`
+  (`active | on_hold | completed | archived`) and `projects.completed_on`
+  already exist — landed with Phase 2's structure migration, not Phase 4.
+  No new column or migration for the status field itself. What's actually
+  missing is the *gate*: `ProjectForm.tsx` currently lets the Engineer set
+  status straight to `completed`/`archived` from a plain dropdown with no
+  reconciliation, no report, no check that every Stage is closed — the
+  same "raw edit field exists alongside a later, proper gated action" shape
+  Stage status already has (`StageForm.tsx`'s dropdown vs. `closeStage`).
+  This ticket adds the gated `completeProject`/`archiveProject` actions as
+  the sanctioned path (mirroring Close Stage); it does not remove or lock
+  the raw `ProjectForm` dropdown, consistent with Phase 3 leaving
+  `StageForm`'s dropdown alone once `closeStage` shipped — reopening that
+  pattern is out of scope for this ticket.
 - New `completeProject` Server Action: validates every stage is
   `completed`, then assembles and freezes the snapshot in one transaction
   — same shape of change as `closeStage` gained in ticket 03.
 - Fifth `DocumentInput` kind + HTML template, reusing `web/src/lib/documents/`.
 - `archiveProject` is a second, much smaller action gated only on
   `status = 'completed'`.
-- Depends on ticket 03 for the rendering-module extension pattern to
-  already exist (build order: 03 before 04, or built together).
+- Migration needed only for the `project_closeout_report` snapshot storage
+  (a `document_snapshot`-shaped column/table, same build-time DDL choice as
+  ticket 03) — not for `status` itself.
+- No longer strictly build-ordered after ticket 03 — both tickets add an
+  independent, additive `DocumentInput` variant to the same existing
+  three-kind union/switch; they can be built in parallel and integrated
+  together (both are new cases, not edits to each other's code).
