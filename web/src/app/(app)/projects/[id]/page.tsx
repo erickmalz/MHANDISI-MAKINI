@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   MapPin,
+  Package,
   PencilSimple,
   Plus,
   Receipt,
@@ -69,6 +70,13 @@ export default async function ProjectOverviewPage({
               <Stack size={16} aria-hidden="true" />
               Save as template
             </Link>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/material-stock`}
+            >
+              <Package size={20} aria-hidden="true" />
+              Material stock
+            </Button>
             <Button
               variant="secondary"
               href={`/projects/${project.id}/procurement`}

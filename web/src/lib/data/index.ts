@@ -13,7 +13,11 @@ import "server-only";
  * structure writes (Tasks, Material Take-Off). Slice 2.6 adds the Purchase
  * Order write lifecycle.
  */
-export { listProjects, getProjectOverview } from "./projects";
+export {
+  listProjects,
+  getProjectOverview,
+  getAccumulatedMaterialVariance,
+} from "./projects";
 export {
   listPurchaseOrders,
   getPurchaseOrder,
@@ -60,6 +64,7 @@ export {
   createTask,
   updateTask,
   deleteTask,
+  type EditableTakeOffLine,
 } from "./tasks";
 export {
   getDocumentProfile,
@@ -124,3 +129,34 @@ export {
   deleteStageTemplate,
   createTemplateFromProject,
 } from "./stage-templates";
+export {
+  listVariationsForStage,
+  getVariation,
+  getVariationDraftInput,
+  createVariationDraft,
+  updateVariationDraft,
+  deleteVariationDraft,
+  approveVariation,
+  rejectVariation,
+  cancelVariation,
+  linkVariationsToFundingRequest,
+  type ApproveVariationResult,
+} from "./variations";
+export {
+  getStockBalances,
+  listStockMovements,
+  listKnownMaterialItems,
+  getStockBalance,
+  carryForwardSurplus,
+  writeOffStock,
+  type StockLine,
+  type StockBalance,
+  type StockMovement,
+} from "./material-stock";
+export {
+  getStageCloseoutGates,
+  closeStage,
+  resolveSurplusMaterials,
+  type CloseStageResult,
+} from "./stage-closeout";
+export { getStageReconciliationReport } from "./reconciliation";

@@ -3,7 +3,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { deleteTaskAction, updateTaskAction } from "@/app/actions/tasks";
-import { getTaskInput, listSubcontractors } from "@/lib/data";
+import {
+  getStockBalances,
+  getTaskInput,
+  listKnownMaterialItems,
+  listSubcontractors,
+} from "@/lib/data";
 import { TaskForm } from "../../../../_components/TaskForm";
 
 export default async function EditTaskPage({
@@ -16,6 +21,11 @@ export default async function EditTaskPage({
     listSubcontractors(),
   ]);
   if (!task || task.projectId !== id) notFound();
+
+  const [stockBalances, knownItems] = await Promise.all([
+    getStockBalances(id),
+    listKnownMaterialItems(),
+  ]);
 
   // Active subcontractors, plus the one currently assigned even if it is now
   // inactive — so the picker can always show the task's real assignment.
@@ -45,6 +55,9 @@ export default async function EditTaskPage({
         cancelHref={back}
         labourOriginalAmount={task.labourOriginalAmount}
         budgetLocked={task.budgetLocked}
+        variationMaterialTotal={task.variationMaterialTotal}
+        stockBalances={stockBalances}
+        knownItems={knownItems}
       />
 
       <div className="mt-8 border-t border-border pt-6">

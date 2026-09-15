@@ -7,6 +7,7 @@ import {
   createFundingRequestDraft,
   deleteFundingRequestDraft,
   issueFundingRequest,
+  linkVariationsToFundingRequest,
   recordDeposit,
   supersedeFundingRequest,
   updateFundingRequestDraft,
@@ -48,6 +49,20 @@ function readDraft(formData: FormData) {
   };
 }
 
+/**
+ * The hidden `variationIds` JSON payload the create form posts when it was
+ * opened from an Approved Variation's "Raise Additional Funding Request"
+ * action (Phase 3 ticket 01 §4) — a purely informational link, never required.
+ */
+function readVariationIds(formData: FormData): string[] {
+  try {
+    const parsed = JSON.parse(String(formData.get("variationIds") ?? "[]"));
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function createFundingRequestAction(
   projectId: string,
   kind: "base" | "additional",
@@ -67,6 +82,15 @@ export async function createFundingRequestAction(
     return { error: "Could not save the draft. Try again." };
   }
   if (!frId) return { error: "That stage could not be found." };
+
+  const variationIds = readVariationIds(formData);
+  if (kind === "additional" && variationIds.length > 0) {
+    try {
+      await linkVariationsToFundingRequest(frId, variationIds);
+    } catch {
+      // Purely informational — the draft itself already saved successfully.
+    }
+  }
 
   revalidateFunding(projectId);
   redirect(`/projects/${projectId}/funding/${frId}`);

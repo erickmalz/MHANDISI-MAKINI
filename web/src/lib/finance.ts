@@ -85,6 +85,30 @@ export function financialHealth(f: StageFinancials): FinancialHealth {
   return "amber";
 }
 
+/**
+ * Material Variance (Phase 3 ticket 03 §3, `CONTEXT.md`): Total Estimated
+ * Material Cost − Total Actual Material Cost, at the Stage level — no
+ * per-line matching against Purchase Orders (there is no stable key between
+ * a free-text take-off line and a free-text PO line). Positive = saving.
+ */
+export function materialVariance(f: StageFinancials): number {
+  return f.materialEstimated - f.paidPurchases;
+}
+
+/**
+ * Labour Variance — the labour-side counterpart, same granularity: the
+ * stage's current labour agreement total against what has actually been
+ * paid. Positive = saving.
+ */
+export function labourVariance(f: StageFinancials): number {
+  return f.labourAgreementTotal - f.labourPayments;
+}
+
+/** The combined figure the Budget Variance card totals (ticket 03 §4). */
+export function budgetVarianceTotal(f: StageFinancials): number {
+  return materialVariance(f) + labourVariance(f);
+}
+
 export function formatTZS(amount: number): string {
   const sign = amount < 0 ? "-" : "";
   return `${sign}TZS ${Math.abs(Math.round(amount)).toLocaleString("en-US")}`;
