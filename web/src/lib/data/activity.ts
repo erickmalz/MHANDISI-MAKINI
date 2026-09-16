@@ -723,19 +723,21 @@ export async function getProjectActivity(
 ): Promise<ActivityEvent[]> {
   return withAccount(async (tx) => {
     const stageId = options?.stageId;
-    const groups = await Promise.all([
-      stageEvents(tx, projectId, stageId),
-      taskEvents(tx, projectId, stageId),
-      variationEvents(tx, projectId, stageId),
-      purchaseOrderEvents(tx, projectId, stageId),
-      deliveryEvents(tx, projectId, stageId),
-      paymentEvents(tx, projectId, stageId),
-      labourPaymentEvents(tx, projectId, stageId),
-      fundingRequestEvents(tx, projectId, stageId),
-      depositEvents(tx, projectId, stageId),
-    ]);
+    // Sequential, not Promise.all — every call shares one Postgres client
+    // (`tx`, from `withAccount`'s single transaction), and node-postgres does
+    // not support overlapping concurrent queries on one client.
+    const events = [
+      ...(await stageEvents(tx, projectId, stageId)),
+      ...(await taskEvents(tx, projectId, stageId)),
+      ...(await variationEvents(tx, projectId, stageId)),
+      ...(await purchaseOrderEvents(tx, projectId, stageId)),
+      ...(await deliveryEvents(tx, projectId, stageId)),
+      ...(await paymentEvents(tx, projectId, stageId)),
+      ...(await labourPaymentEvents(tx, projectId, stageId)),
+      ...(await fundingRequestEvents(tx, projectId, stageId)),
+      ...(await depositEvents(tx, projectId, stageId)),
+    ];
 
-    const events = groups.flat();
     events.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
     return events;
   });

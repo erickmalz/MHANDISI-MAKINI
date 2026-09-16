@@ -333,13 +333,13 @@ async function assembleCloseoutSnapshot(
   const totals = sumFinancials(stageFinancials);
   const finalProjectVariance = materialVariance(totals) + labourVariance(totals);
 
-  const [approvedVariationLines, supplierBalances, subcontractorBalances, outstandingLines] =
-    await Promise.all([
-      getApprovedVariationLines(tx, project.id),
-      getProjectSupplierBalances(tx, project.id),
-      getProjectSubcontractorBalances(tx, project.id),
-      getOutstandingDocumentLines(tx, project.id),
-    ]);
+  // Sequential, not Promise.all — every call shares the one Postgres client
+  // `tx` (this transaction), and node-postgres does not support overlapping
+  // concurrent queries on one client (same issue fixed in activity.ts).
+  const approvedVariationLines = await getApprovedVariationLines(tx, project.id);
+  const supplierBalances = await getProjectSupplierBalances(tx, project.id);
+  const subcontractorBalances = await getProjectSubcontractorBalances(tx, project.id);
+  const outstandingLines = await getOutstandingDocumentLines(tx, project.id);
 
   const sections: DocumentSnapshotSection[] = [
     section("Approved Variations", approvedVariationLines),
