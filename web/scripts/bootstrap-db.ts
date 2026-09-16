@@ -6,6 +6,13 @@
  *
  * As a script: `SUPERUSER_DATABASE_URL=postgres://postgres:...@host/postgres \
  *   npx tsx scripts/bootstrap-db.ts`
+ *
+ * Against a Supabase project (ADR 0006), pass its direct connection string,
+ * or (if your network can't reach that — it's IPv6-only) its Session pooler
+ * string, as `SUPERUSER_DATABASE_URL` — never the Transaction pooler (port
+ * 6543) — and set `BOOTSTRAP_DATABASE_NAME=postgres` — Supabase projects are
+ * single-database, so this targets the project's existing `postgres`
+ * database instead of creating a local-style `mhandisi` one.
  */
 import "dotenv/config";
 
@@ -51,11 +58,26 @@ export async function bootstrapDatabase(opts: BootstrapOptions): Promise<void> {
       );
     }
 
+    // On a real superuser (local Docker, CI) this is a harmless no-op. On a
+    // managed host whose "superuser" connection role is actually a
+    // CREATEROLE-only role pre-PG16 (e.g. Supabase's `postgres`), creating a
+    // role does not by itself grant membership in it — so without this,
+    // the OWNER TO / CREATE DATABASE ... OWNER steps below fail with
+    // "must be able to SET ROLE".
+    await su.query("GRANT mhandisi_owner TO CURRENT_USER");
+
     const dbExists =
       ((await su.query("SELECT 1 FROM pg_database WHERE datname = $1", [database]))
         .rowCount ?? 0) > 0;
     if (!dbExists) {
       await su.query(`CREATE DATABASE ${database} OWNER mhandisi_owner`);
+    } else {
+      // A freshly created database already grants its OWNER database-level
+      // CREATE implicitly. A pre-existing one (Supabase's default `postgres`
+      // database, which we deliberately don't recreate) does not — without
+      // this, drizzle-kit's own `CREATE SCHEMA IF NOT EXISTS "drizzle"`
+      // bookkeeping schema fails with "permission denied for database".
+      await su.query(`GRANT CREATE ON DATABASE ${database} TO mhandisi_owner`);
     }
   } finally {
     await su.end();
@@ -89,7 +111,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error("SUPERUSER_DATABASE_URL is not set.");
     process.exit(1);
   }
-  bootstrapDatabase({ superuserUrl })
+  bootstrapDatabase({
+    superuserUrl,
+    database: process.env.BOOTSTRAP_DATABASE_NAME,
+  })
     .then(() => console.info("Database bootstrapped."))
     .catch((error) => {
       console.error(error);

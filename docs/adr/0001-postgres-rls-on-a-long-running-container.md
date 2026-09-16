@@ -1,8 +1,17 @@
 ---
-status: accepted
+status: superseded by ADR 0006 (data-store-category clause only)
 ---
 
 # Standard co-located PostgreSQL with row-level security, on one long-running container
+
+> **2026-09-16: the "standard Postgres must be self-hosted, not a BaaS" clause
+> is superseded by
+> [ADR 0006](./0006-supabase-postgres-supersedes-adr-0001.md)** — the database
+> moved to a Supabase project's Postgres, reached over a direct connection.
+> The role split, the RLS mechanism, and the portability requirement recorded
+> below are unchanged and still binding; only the self-hosting-vs-BaaS choice
+> reopened. The app's hosting model (one long-running container, not
+> serverless) is also unchanged.
 
 ## Context and decision
 
