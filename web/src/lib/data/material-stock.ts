@@ -80,27 +80,39 @@ async function balanceFor(
  * Every material with a positive on-hand balance in a project — the "Material
  * Stock" screen and the Material Take-Off form's "On site: {qty} {unit}"
  * lookup both read this.
+ *
+ * `tx`-scoped so a caller already inside its own transaction (Phase 4 Slice
+ * 4.2's `closeStage`, freezing this same balance into the Stage Closeout
+ * Report snapshot) can call it directly, same posture as
+ * `computeStageFinancials` — avoids nesting a second `withAccount`/
+ * `db.transaction()` inside the caller's own.
  */
+export async function stockBalancesTx(
+  tx: AccountTx,
+  projectId: string,
+): Promise<StockBalance[]> {
+  const { rows } = await tx.execute<{
+    itemKey: string;
+    unit: string;
+    balance: string;
+  }>(sql`
+    SELECT item_key AS "itemKey", unit, SUM(qty) AS balance
+    FROM material_stock_movements
+    WHERE project_id = ${projectId}
+    GROUP BY item_key, unit
+    HAVING SUM(qty) > 0
+    ORDER BY item_key ASC
+  `);
+  return rows.map((r) => ({
+    itemKey: r.itemKey,
+    unit: r.unit,
+    qty: Number(r.balance),
+  }));
+}
+
+/** `withAccount`-wrapped read for screens — wraps `stockBalancesTx`. */
 export async function getStockBalances(projectId: string): Promise<StockBalance[]> {
-  return withAccount(async (tx) => {
-    const { rows } = await tx.execute<{
-      itemKey: string;
-      unit: string;
-      balance: string;
-    }>(sql`
-      SELECT item_key AS "itemKey", unit, SUM(qty) AS balance
-      FROM material_stock_movements
-      WHERE project_id = ${projectId}
-      GROUP BY item_key, unit
-      HAVING SUM(qty) > 0
-      ORDER BY item_key ASC
-    `);
-    return rows.map((r) => ({
-      itemKey: r.itemKey,
-      unit: r.unit,
-      qty: Number(r.balance),
-    }));
-  });
+  return withAccount((tx) => stockBalancesTx(tx, projectId));
 }
 
 /** The most recent movements in a project, newest first — the ledger's audit trail. */

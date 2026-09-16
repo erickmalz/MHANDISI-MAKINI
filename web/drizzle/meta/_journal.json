@@ -71,6 +71,13 @@
       "when": 1789424679131,
       "tag": "0009_material_stock_movements",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789509386626,
+      "tag": "0010_phase4_site_history_reporting",
+      "breakpoints": true
     }
   ]
 }

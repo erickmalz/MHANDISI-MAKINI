@@ -9,13 +9,18 @@ import {
   auth_user,
   feeInvoices,
   fundingRequests,
+  projectCloseouts,
+  projects,
   purchaseOrders,
+  stageCloseouts,
   stages,
 } from "./schema";
 import type {
   FeeInvoiceSnapshot,
   FundingRequestSnapshot,
+  ProjectCloseoutReportSnapshot,
   PurchaseOrderSnapshot,
+  StageCloseoutReportSnapshot,
 } from "./schema/snapshot";
 import { withAccount, type AccountTx } from "./with-account";
 
@@ -78,11 +83,29 @@ export interface PurchaseOrderDocument {
   profile: DocumentProfile;
 }
 
-/** Any of the three — the templates narrow on `snapshot.kind`. */
+export interface StageCloseoutReportDocument {
+  kind: "stage_closeout_report";
+  projectId: string;
+  snapshot: StageCloseoutReportSnapshot;
+  stamp: string | null;
+  profile: DocumentProfile;
+}
+
+export interface ProjectCloseoutReportDocument {
+  kind: "project_closeout_report";
+  projectId: string;
+  snapshot: ProjectCloseoutReportSnapshot;
+  stamp: string | null;
+  profile: DocumentProfile;
+}
+
+/** Any of the five — the templates narrow on `snapshot.kind`. */
 export type DocumentInput =
   | FundingRequestDocument
   | FeeInvoiceDocument
-  | PurchaseOrderDocument;
+  | PurchaseOrderDocument
+  | StageCloseoutReportDocument
+  | ProjectCloseoutReportDocument;
 
 async function readProfile(tx: AccountTx): Promise<DocumentProfile | null> {
   const [row] = await tx
@@ -220,6 +243,80 @@ export async function getPurchaseOrderDocument(
       kind: "purchase_order",
       projectId: row.projectId,
       snapshot: row.documentSnapshot as PurchaseOrderSnapshot,
+      stamp,
+      profile,
+    };
+  });
+}
+
+/**
+ * A closed Stage's frozen Report, or `null` (missing / not yet closed /
+ * cross-account, or — for a Stage closed before this feature shipped — no
+ * `stage_closeouts` row at all). No lifecycle stamp: a Stage Closeout Report
+ * has no supersede/cancel/paid state to reflect (Phase 4 ticket 03).
+ */
+export async function getStageCloseoutReportDocument(
+  stageId: string,
+): Promise<StageCloseoutReportDocument | null> {
+  return withAccount(async (tx) => {
+    const [row] = await tx
+      .select({
+        documentSnapshot: stageCloseouts.documentSnapshot,
+        projectId: stages.projectId,
+      })
+      .from(stageCloseouts)
+      .innerJoin(stages, eq(stages.id, stageCloseouts.stageId))
+      .where(eq(stageCloseouts.stageId, stageId))
+      .limit(1);
+    if (!row) return null;
+
+    const profile = await readProfile(tx);
+    if (!profile) return null;
+
+    return {
+      kind: "stage_closeout_report",
+      projectId: row.projectId,
+      snapshot: row.documentSnapshot as StageCloseoutReportSnapshot,
+      stamp: null,
+      profile,
+    };
+  });
+}
+
+/**
+ * A Project's frozen Closeout Report, or `null` (missing / not yet completed
+ * / cross-account). Keyed by `projectId` directly — unlike the stage-scoped
+ * documents above, there is exactly one closeout per project (`UNIQUE
+ * (project_id)` on `project_closeouts`), so the route already has the only id
+ * it needs from `/projects/[id]/closeout/document.pdf`.
+ */
+export async function getProjectCloseoutReportDocument(
+  projectId: string,
+): Promise<ProjectCloseoutReportDocument | null> {
+  return withAccount(async (tx) => {
+    const [row] = await tx
+      .select({
+        documentSnapshot: projectCloseouts.documentSnapshot,
+        projectStatus: projects.status,
+      })
+      .from(projectCloseouts)
+      .innerJoin(projects, eq(projects.id, projectCloseouts.projectId))
+      .where(eq(projectCloseouts.projectId, projectId))
+      .limit(1);
+    if (!row || !row.documentSnapshot) return null;
+
+    const profile = await readProfile(tx);
+    if (!profile) return null;
+
+    // Archiving happens after the report is frozen (the ticket's Answer: no
+    // new snapshot at Archive) — the stamp reflects that live status change,
+    // same posture as every other document's derived-not-frozen stamp.
+    const stamp = row.projectStatus === "archived" ? "ARCHIVED" : null;
+
+    return {
+      kind: "project_closeout_report",
+      projectId,
+      snapshot: row.documentSnapshot as ProjectCloseoutReportSnapshot,
       stamp,
       profile,
     };

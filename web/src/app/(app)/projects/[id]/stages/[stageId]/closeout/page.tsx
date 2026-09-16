@@ -12,6 +12,7 @@ import {
   getAccumulatedMaterialVariance,
   getProjectOverview,
   getStageCloseoutGates,
+  getStageCloseoutReportSummary,
   getStageDetail,
   getStockBalances,
 } from "@/lib/data";
@@ -26,6 +27,7 @@ import { CLOSEABLE_STAGE_STATUSES, canCloseStage } from "@/lib/stage-closeout";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
+import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { BudgetVarianceCard } from "../_components/BudgetVarianceCard";
 import { SurplusMaterialsForm } from "./_components/SurplusMaterialsForm";
 
@@ -50,10 +52,11 @@ export default async function StageCloseoutPage({
   ]);
   if (!stage || stage.projectId !== id || !gates) notFound();
 
-  const [accumulatedMaterialVariance, stock, project] = await Promise.all([
+  const [accumulatedMaterialVariance, stock, project, closeoutReport] = await Promise.all([
     getAccumulatedMaterialVariance(id),
     getStockBalances(id),
     getProjectOverview(id),
+    getStageCloseoutReportSummary(stageId),
   ]);
 
   const isClosed = stage.status === "completed";
@@ -110,6 +113,34 @@ export default async function StageCloseoutPage({
             or a superseding Funding Request on the next stage.
           </p>
         </Card>
+      )}
+
+      {isClosed && (
+        <div className="mb-6">
+          {closeoutReport ? (
+            <DocumentDownloads
+              title="Stage Closeout Report"
+              links={[
+                {
+                  label: `Stage Closeout Report ${closeoutReport.displayNumber}`,
+                  pdfHref: `/projects/${id}/stages/${stageId}/closeout/document.pdf`,
+                  jpgHref: `/projects/${id}/stages/${stageId}/closeout/document.jpg`,
+                },
+              ]}
+            />
+          ) : (
+            <Card className="border-border bg-muted">
+              <h2 className="text-xl font-bold text-card-foreground">
+                Stage Closeout Report
+              </h2>
+              <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Info size={18} aria-hidden="true" className="shrink-0" />
+                Report not available — this stage was closed before this
+                feature existed.
+              </p>
+            </Card>
+          )}
+        </div>
       )}
 
       {!isClosed && !closeableFromStatus && (

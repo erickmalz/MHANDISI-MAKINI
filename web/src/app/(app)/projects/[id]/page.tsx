@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ClockCounterClockwise,
+  ChartBar,
+  Flag,
   MapPin,
   Package,
   PencilSimple,
@@ -70,6 +73,13 @@ export default async function ProjectOverviewPage({
               <Stack size={16} aria-hidden="true" />
               Save as template
             </Link>
+            <Link
+              href={`/projects/${project.id}/closeout`}
+              className="inline-flex min-h-12 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              <Flag size={16} aria-hidden="true" />
+              Project closeout
+            </Link>
             <Button
               variant="secondary"
               href={`/projects/${project.id}/material-stock`}
@@ -90,6 +100,20 @@ export default async function ProjectOverviewPage({
             >
               <Receipt size={20} aria-hidden="true" />
               Funding requests
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/activity`}
+            >
+              <ClockCounterClockwise size={20} aria-hidden="true" />
+              Activity history
+            </Button>
+            <Button
+              variant="secondary"
+              href={`/projects/${project.id}/reports`}
+            >
+              <ChartBar size={20} aria-hidden="true" />
+              Reports
             </Button>
             <Button
               variant="primary"

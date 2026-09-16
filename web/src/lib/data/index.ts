@@ -71,11 +71,15 @@ export {
   getFundingRequestDocument,
   getFeeInvoiceDocument,
   getPurchaseOrderDocument,
+  getProjectCloseoutReportDocument,
+  getStageCloseoutReportDocument,
   type DocumentProfile,
   type DocumentInput,
   type FundingRequestDocument,
   type FeeInvoiceDocument,
   type PurchaseOrderDocument,
+  type ProjectCloseoutReportDocument,
+  type StageCloseoutReportDocument,
 } from "./documents";
 export {
   getAccountProfile,
@@ -157,6 +161,52 @@ export {
   getStageCloseoutGates,
   closeStage,
   resolveSurplusMaterials,
+  getStageCloseoutReportSummary,
   type CloseStageResult,
 } from "./stage-closeout";
 export { getStageReconciliationReport } from "./reconciliation";
+export { getProjectActivity, type ActivityEvent, type ActivityRecordType } from "./activity";
+export {
+  getProjectFinancialSummary,
+  getMaterialCostReport,
+  getProcurementReport,
+  getLabourReport,
+  getFundingReport,
+  getVariationReport,
+  type ProjectFinancialSummary,
+  type ProjectFinancialSummaryStageRow,
+  type MaterialCostReport,
+  type MaterialCostReportRow,
+  type ProcurementReport,
+  type ProcurementReportRow,
+  type LabourReport,
+  type LabourReportRow,
+  type FundingReport,
+  type FundingReportRow,
+  type VariationReport,
+  type VariationReportRow,
+} from "./reports";
+
+// Phase 4 Slice 4.1 — Site Diary + Progress Photos.
+export {
+  listSiteDiaryEntries,
+  getSiteDiaryEntry,
+  createSiteDiaryEntry,
+  updateSiteDiaryEntry,
+  deleteSiteDiaryEntry,
+} from "./site-diary";
+export {
+  listPhotos,
+  getPhotoFile,
+  setPhoto,
+  deletePhoto,
+  type PhotoFile,
+  type SetPhotoInput,
+} from "./photos";
+export {
+  getProjectCloseoutGates,
+  completeProject,
+  archiveProject,
+  type CompleteProjectResult,
+  type ArchiveProjectResult,
+} from "./project-closeout";
