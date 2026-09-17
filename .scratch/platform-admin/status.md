@@ -82,5 +82,24 @@ SELECT id FROM auth_user WHERE email = '<your email>';
 
 - `npm run typecheck` (`next typegen && tsc --noEmit`): **clean.**
 - `npm run lint`: **clean.**
-- `db:migrate` / `npm test` / `npm run build`: pending CI (branch
-  `platform-admin`, PR to follow).
+- **CI-verified**: PR #7 (`platform-admin` branch,
+  `https://github.com/erickmalz/MHANDISI-MAKINI/pull/7`), CI run
+  `35270856423` green — migrations (incl. `0011`), lint, typecheck, the
+  isolation suite, and `npm run build` all ✓.
+
+Two fixes landed on top of the initial build, both caught by CI rather than
+local checks (this branch was cut after fast-forwarding past the Fly.io
+Launch merge, PR #6, which local `tsc`/`eslint` had already run before):
+
+- `web/eslint.config.mjs` now excludes `dbsetup.js` (Fly.io's generated
+  CommonJS launch wrapper) from lint — pre-existing, unrelated to Platform
+  Admin.
+- `tests/isolation/conformance.test.ts` — the build-blocking RLS-conformance
+  sweep correctly flagged `platform_admins` as skipping standard tenant
+  isolation. Encoded it as a second, documented exception (alongside
+  `accounts`) with its own dedicated assertions, rather than weakening the
+  sweep.
+
+**This closes Platform Admin's build order.** All 3 tickets (01–03) plus
+the build are done, merged into CI-verified state on PR #7 — merge to
+`main` when ready.
