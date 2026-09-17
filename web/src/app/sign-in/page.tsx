@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { resolvePostSignInRedirect } from "@/app/actions/auth";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Field, controlClass } from "@/components/ui/Field";
@@ -38,7 +39,10 @@ export default function SignInPage() {
       setFormError("Email or password is incorrect.");
       return;
     }
-    router.replace("/");
+    // Platform Admins land on /admin instead of Choose Project
+    // (.scratch/platform-admin/ ticket 02).
+    const target = await resolvePostSignInRedirect();
+    router.replace(target);
     router.refresh();
   }
 

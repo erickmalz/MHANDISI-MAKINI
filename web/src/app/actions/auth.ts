@@ -7,7 +7,9 @@ import { sql } from "drizzle-orm";
 
 import { getAuth } from "@/lib/auth";
 import { signupSchema } from "@/lib/auth/password-schema";
+import { verifySession } from "@/lib/auth/session";
 import { db } from "@/lib/data/db";
+import { isPlatformAdmin } from "@/lib/data/platform-admin";
 import { ACCEPTED_LEGAL_VERSION } from "@/lib/legal";
 
 export type SignupState = {
@@ -63,4 +65,21 @@ export async function signup(
   }
 
   redirect("/");
+}
+
+/**
+ * Where the sign-in form (`src/app/sign-in/page.tsx`) sends a just-signed-in
+ * session (`.scratch/platform-admin/` ticket 02) — `/admin` for a Platform
+ * Admin, `/` (Choose Project) for everyone else, exactly as before this
+ * capability existed. Sign-in itself stays client-side (better-auth's own
+ * cookie-setting flow); this only decides the redirect target once that's
+ * done, re-verifying the session server-side rather than trusting the
+ * client's copy of it.
+ */
+export async function resolvePostSignInRedirect(): Promise<string> {
+  const result = await verifySession();
+  if (!result) return "/sign-in";
+
+  const admin = await isPlatformAdmin(result.user.id);
+  return admin ? "/admin" : "/";
 }
