@@ -17,13 +17,20 @@ import { startIsolationDb, type IsolationDb } from "./harness";
  *
  * A new table (or a new FK) that skips any of this fails here — that is the
  * point. `accounts` keeps its documented exception (ENABLE, not FORCE — ADR
- * 0004).
+ * 0004). `platform_admins` (`.scratch/platform-admin/` ticket 01) is a
+ * second, differently-shaped exception: no RLS at all, because a Platform
+ * Admin owns no Account and there is no `account_id` to scope by.
  */
 
 const AUTH_PREFIX = "auth_";
 const TENANT_TABLE = "accounts";
+const PLATFORM_ADMIN_TABLE = "platform_admins";
 // Tables that are not account-scoped and are exempt from the domain sweep.
-const NON_DOMAIN = new Set([TENANT_TABLE, "__drizzle_migrations"]);
+const NON_DOMAIN = new Set([
+  TENANT_TABLE,
+  PLATFORM_ADMIN_TABLE,
+  "__drizzle_migrations",
+]);
 
 function isDomainTable(name: string): boolean {
   return !name.startsWith(AUTH_PREFIX) && !NON_DOMAIN.has(name);
@@ -188,6 +195,42 @@ describe("schema conformance", () => {
        WHERE n.nspname = 'app' AND p.proname = 'enable_standard_rls'`,
     );
     expect(rows).toHaveLength(1);
+  });
+
+  it("platform_admins has no RLS and no account_id (Platform Admin owns no Account)", async () => {
+    const { rows: relRows } = await owner.query<{
+      relrowsecurity: boolean;
+      relforcerowsecurity: boolean;
+    }>(
+      `SELECT relrowsecurity, relforcerowsecurity
+       FROM pg_class WHERE oid = 'public.platform_admins'::regclass`,
+    );
+    expect(relRows[0]!.relrowsecurity).toBe(false);
+    expect(relRows[0]!.relforcerowsecurity).toBe(false);
+
+    const { rows: policyRows } = await owner.query(
+      `SELECT 1 FROM pg_policy WHERE polrelid = 'public.platform_admins'::regclass`,
+    );
+    expect(policyRows).toHaveLength(0);
+
+    const { rows: colRows } = await owner.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'platform_admins'
+         AND column_name = 'account_id'`,
+    );
+    expect(colRows).toHaveLength(0);
+  });
+
+  it("the Platform Admin SECURITY DEFINER functions exist", async () => {
+    const { rows } = await owner.query<{ proname: string }>(
+      `SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'app'
+         AND proname IN ('list_accounts_for_admin', 'schedule_account_deletion_for_admin')`,
+    );
+    expect(rows.map((r) => r.proname).sort()).toEqual([
+      "list_accounts_for_admin",
+      "schedule_account_deletion_for_admin",
+    ]);
   });
 
   it("uuid v7 helper produces a version-7 variant-2 uuid", async () => {
