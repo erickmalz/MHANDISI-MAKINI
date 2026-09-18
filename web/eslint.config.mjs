@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Fly.io's generated launch wrapper — plain CommonJS run directly via
+    // `node dbsetup.js`, not application source.
+    "dbsetup.js",
   ]),
 ]);
 

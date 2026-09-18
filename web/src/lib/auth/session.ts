@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getAuth } from "./index";
+import { isPlatformAdmin } from "@/lib/data/platform-admin";
 
 /**
  * The authoritative session check — the single funnel every Server Component,
@@ -53,4 +54,22 @@ export async function requireUsableSession(): Promise<UsableSession> {
     !user.emailVerified && daysSince(new Date(user.createdAt)) >= 7;
 
   return { session, user, emailGateActive };
+}
+
+/**
+ * Guards `/admin` (`.scratch/platform-admin/` ticket 02). Redirects to
+ * /sign-in without a session, and to `/` (no distinct 403/404 — same
+ * no-enumeration instinct as the sign-in form's generic error) when the
+ * session isn't a Platform Admin.
+ */
+export async function requirePlatformAdmin(): Promise<{
+  user: UsableSession["user"];
+}> {
+  const result = await verifySession();
+  if (!result) redirect("/sign-in");
+
+  const admin = await isPlatformAdmin(result.user.id);
+  if (!admin) redirect("/");
+
+  return { user: result.user };
 }

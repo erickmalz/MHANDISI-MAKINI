@@ -144,3 +144,7 @@ _Avoid_: User (say Engineer for the person and Account for their data), operator
 **Account**:
 One Engineer's isolated world of data — every Project of theirs and everything beneath it (Stages, Tasks, Purchase Orders, Funding Requests, Deposits, Fee Invoices, Alerts). An Account belongs to exactly one Engineer (1:1). Engineers never share an Account or a Project, and one Engineer's data is never visible to another.
 _Avoid_: Tenant (an implementation term — the mechanism is a shared database with an account key on every row), Organisation, Team, Workspace (an Account is one person, not a group)
+
+**Platform Admin**:
+The person who runs the MHANDISI MAKINI service itself — support and operations on the whole system, not on any one Engineer's work (`.scratch/platform-admin/map.md`). A Platform Admin does not own an Account and never appears inside Account-scoped data (Projects, Stages, Tasks, etc.). Distinct from Engineer even though both sign in through the same form.
+_Avoid_: Admin (bare — reads as an Account-level role, and none exists), Operator (already reserved as an avoid-term for Engineer, above), Superadmin/Root (implementation jargon, not how the product talks about the role)
