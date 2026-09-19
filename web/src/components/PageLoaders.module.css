@@ -1,0 +1,224 @@
+.surveyLoader,
+.foundationLoader {
+  display: flex;
+  min-height: 280px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mm-space-4);
+  font-family: var(--mm-font);
+}
+
+.surveyMark,
+.foundationMark {
+  position: relative;
+  display: grid;
+  width: 152px;
+  height: 152px;
+  place-items: center;
+}
+
+.symbol {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+
+.surveyOrbit,
+.surveyOrbitInner {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-radius: 50%;
+}
+
+.surveyOrbit {
+  border-top-color: var(--mm-yellow);
+  border-right-color: var(--mm-yellow);
+  animation: survey-orbit 1.8s linear infinite;
+}
+
+.surveyOrbitInner {
+  inset: 14px;
+  border-bottom-color: var(--mm-charcoal);
+  animation: survey-orbit 1.8s linear infinite reverse;
+}
+
+.surveyMark .symbol {
+  animation: survey-settle 1.8s ease-in-out infinite;
+}
+
+.darkLabel {
+  margin: 0;
+  font-size: var(--mm-size-label);
+  font-weight: var(--mm-weight-bold);
+  line-height: var(--mm-leading-body);
+}
+
+.foundationLoader {
+  overflow: hidden;
+  border-radius: var(--mm-radius);
+  background: var(--mm-charcoal);
+  padding: var(--mm-space-6);
+}
+
+.foundationMark {
+  overflow: hidden;
+  border-bottom: 2px solid var(--mm-yellow);
+}
+
+.foundationMark .symbol {
+  animation: foundation-settle 1.6s ease-in-out infinite;
+}
+
+.riseLine {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: var(--mm-yellow);
+  animation: foundation-line 1.6s ease-in-out infinite;
+}
+
+.riseLine:nth-child(1) {
+  bottom: 30px;
+  animation-delay: 0s;
+}
+
+.riseLine:nth-child(2) {
+  bottom: 58px;
+  animation-delay: 0.18s;
+}
+
+.riseLine:nth-child(3) {
+  bottom: 86px;
+  animation-delay: 0.36s;
+}
+
+.foundationProgress {
+  display: grid;
+  width: 152px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--mm-space-2);
+}
+
+.foundationProgress span {
+  height: 4px;
+  border-radius: var(--mm-radius-sm);
+  background: var(--mm-slate);
+  animation: foundation-progress 1.6s ease-in-out infinite;
+}
+
+.foundationProgress span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.foundationProgress span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.foundationProgress span:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+.darkLabel {
+  color: var(--mm-white);
+}
+
+@keyframes survey-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes survey-settle {
+  0%,
+  100% {
+    transform: scale(0.94);
+  }
+
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes foundation-line {
+  0%,
+  20% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  45%,
+  75% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+@keyframes foundation-settle {
+  0%,
+  100% {
+    transform: translateY(6px);
+  }
+
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes foundation-progress {
+  0%,
+  25% {
+    background: var(--mm-slate);
+  }
+
+  45%,
+  65% {
+    background: var(--mm-yellow);
+  }
+
+  85%,
+  100% {
+    background: var(--mm-slate);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surveyOrbit,
+  .surveyOrbitInner,
+  .surveyMark .symbol,
+  .foundationMark .symbol,
+  .riseLine,
+  .foundationProgress span {
+    animation: none;
+  }
+
+  .surveyOrbit {
+    border-color: var(--mm-border);
+    border-top-color: var(--mm-yellow);
+  }
+
+  .surveyOrbitInner {
+    border-bottom-color: var(--mm-charcoal);
+  }
+
+  .riseLine {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  .foundationProgress span:nth-child(2) {
+    background: var(--mm-yellow);
+  }
+}
