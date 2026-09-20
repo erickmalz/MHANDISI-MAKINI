@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { SupplierInput } from "@/lib/validation/registers";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * The Supplier Register form (Slice 2.4b), shared by the new + edit routes.
@@ -26,32 +27,33 @@ export function SupplierForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       <Card className="flex flex-col gap-4">
-        <Field label="Supplier name" required error={errors.name}>
+        <Field label={t("suppliers.form.name")} required error={errors.name}>
           <input name="name" defaultValue={initial?.name ?? ""} className={controlClass} />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Contact person" error={errors.contactPerson}>
+          <Field label={t("suppliers.form.contactPerson")} error={errors.contactPerson}>
             <input
               name="contactPerson"
               defaultValue={initial?.contactPerson ?? ""}
               className={controlClass}
             />
           </Field>
-          <Field label="Location" error={errors.location}>
+          <Field label={t("suppliers.form.location")} error={errors.location}>
             <input
               name="location"
               defaultValue={initial?.location ?? ""}
               className={controlClass}
             />
           </Field>
-          <Field label="Phone" error={errors.phone}>
+          <Field label={t("suppliers.form.phone")} error={errors.phone}>
             <input
               name="phone"
               type="tel"
@@ -59,7 +61,7 @@ export function SupplierForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Email" error={errors.email}>
+          <Field label={t("suppliers.form.email")} error={errors.email}>
             <input
               name="email"
               type="email"
@@ -72,8 +74,8 @@ export function SupplierForm({
 
       <Card className="flex flex-col gap-4">
         <Field
-          label="Payment terms"
-          hint="The default terms carried onto a new Purchase Order for this supplier."
+          label={t("suppliers.form.paymentTerms")}
+          hint={t("suppliers.form.paymentTermsHint")}
           error={errors.paymentTerms}
         >
           <input
@@ -82,17 +84,17 @@ export function SupplierForm({
             className={controlClass}
           />
         </Field>
-        <Field label="Status" error={errors.status}>
+        <Field label={t("suppliers.form.status")} error={errors.status}>
           <select
             name="status"
             defaultValue={initial?.status ?? "active"}
             className={`${controlClass} cursor-pointer`}
           >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive — hide from new orders</option>
+            <option value="active">{t("suppliers.form.active")}</option>
+            <option value="inactive">{t("suppliers.form.inactive")}</option>
           </select>
         </Field>
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("suppliers.form.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -103,19 +105,16 @@ export function SupplierForm({
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("suppliers.form.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("suppliers.form.cancel")}
+        </Button>
       </div>
     </form>
   );

@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * The supplier invoice / receipt / delivery note attachment on a Purchase
@@ -27,6 +29,7 @@ export function AttachmentCard({
   poId: string;
   attachment: { id: string; filename: string } | null;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(
     uploadPurchaseOrderAttachmentAction.bind(null, projectId, poId),
     {},
@@ -35,9 +38,9 @@ export function AttachmentCard({
   return (
     <Card className="flex flex-col gap-4">
       <div>
-        <h2 className="text-xl font-bold text-card-foreground">Attachment</h2>
+        <h2 className="text-xl font-bold text-card-foreground">{t("procurement.attachment.title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          The supplier&apos;s invoice, receipt, or delivery note for this order.
+          {t("procurement.attachment.body")}
         </p>
       </div>
 
@@ -55,7 +58,7 @@ export function AttachmentCard({
 
       <form action={formAction} className="flex flex-col gap-3" noValidate>
         <Field
-          label={attachment ? "Replace attachment" : "Upload attachment"}
+          label={attachment ? t("procurement.attachment.replace") : t("procurement.attachment.upload")}
           error={state.fieldErrors?.attachment}
         >
           <input
@@ -65,10 +68,14 @@ export function AttachmentCard({
             className={controlClass}
           />
         </Field>
-        {state.error && <p className="text-sm font-bold text-destructive">{state.error}</p>}
+        {state.error && <Notice tone="error">{state.error}</Notice>}
         <div>
           <Button variant="secondary" type="submit" disabled={pending}>
-            {pending ? "Uploading…" : attachment ? "Replace attachment" : "Upload attachment"}
+            {pending
+              ? t("procurement.attachment.uploading")
+              : attachment
+                ? t("procurement.attachment.replace")
+                : t("procurement.attachment.upload")}
           </Button>
         </div>
       </form>
@@ -76,7 +83,7 @@ export function AttachmentCard({
       {attachment && (
         <form action={removePurchaseOrderAttachmentAction.bind(null, projectId, poId)}>
           <Button variant="danger-quiet" type="submit">
-            Remove attachment
+            {t("procurement.attachment.remove")}
           </Button>
         </form>
       )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 import { Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/Button";
@@ -9,6 +8,9 @@ import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { StageTemplateStage } from "@/lib/stage-templates";
+import { Notice } from "@/components/ui/Notice";
+import { LineField } from "@/components/ui/LineField";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * The Stage Template editor (Operational Control decision 2, Slice 6) — a
@@ -37,6 +39,7 @@ export function StageTemplateForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -50,10 +53,10 @@ export function StageTemplateForm({
     .map((s) => ({
       name: s.name.trim(),
       tasks: s.tasks
-        .filter((t) => t.description.trim() !== "")
-        .map((t) => ({
-          description: t.description.trim(),
-          materialLines: t.materialLines
+        .filter((tk) => tk.description.trim() !== "")
+        .map((tk) => ({
+          description: tk.description.trim(),
+          materialLines: tk.materialLines
             .filter((l) => l.item.trim() !== "" && l.unit.trim() !== "")
             .map((l) => ({ item: l.item.trim(), unit: l.unit.trim() })),
         })),
@@ -68,19 +71,19 @@ export function StageTemplateForm({
       <input type="hidden" name="stages" value={JSON.stringify(serialized)} />
 
       <Card className="flex flex-col gap-4">
-        <Field label="Template name" required error={errors.name}>
+        <Field label={t("stageTemplates.form.name")} required error={errors.name}>
           <input
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={controlClass}
-            placeholder="e.g. Standard 3-bedroom house"
+            placeholder={t("stageTemplates.form.namePlaceholder")}
           />
         </Field>
       </Card>
 
       {errors.stages && (
-        <p className="text-sm font-bold text-destructive">{errors.stages}</p>
+        <Notice tone="error">{errors.stages}</Notice>
       )}
 
       <ul className="flex flex-col gap-4">
@@ -88,19 +91,19 @@ export function StageTemplateForm({
           <li key={si}>
             <Card className="flex flex-col gap-4">
               <div className="flex items-start gap-2">
-                <Field label={`Stage ${si + 1} name`} required>
+                <Field label={t("stageTemplates.form.stageName", { n: si + 1 })} required>
                   <input
                     value={stage.name}
                     onChange={(e) => updateStage(si, { name: e.target.value })}
                     className={controlClass}
-                    placeholder="e.g. Foundation"
+                    placeholder={t("stageTemplates.form.stagePlaceholder")}
                   />
                 </Field>
                 <button
                   type="button"
-                  aria-label={`Remove stage ${si + 1}`}
+                  aria-label={t("stageTemplates.form.removeStage", { n: si + 1 })}
                   onClick={() => setStages(stages.filter((_, i) => i !== si))}
-                  className="mt-7 cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
+                  className="mt-6 inline-flex min-h-12 min-w-12 cursor-pointer items-center justify-center text-muted-foreground hover:text-destructive rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                 >
                   <Trash size={16} aria-hidden="true" />
                 </button>
@@ -109,27 +112,29 @@ export function StageTemplateForm({
               <ul className="flex flex-col gap-3 border-l-2 border-border pl-4">
                 {stage.tasks.map((task, ti) => (
                   <li key={ti} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        aria-label={`Stage ${si + 1} task ${ti + 1} name`}
-                        value={task.description}
-                        onChange={(e) =>
-                          updateStage(si, {
-                            tasks: stage.tasks.map((t, i) =>
-                              i === ti ? { ...t, description: e.target.value } : t,
-                            ),
-                          })
-                        }
-                        className={controlClass}
-                        placeholder="Task name, e.g. Excavation"
-                      />
+                    <div className="flex items-end gap-2">
+                      <LineField label={t("stageTemplates.form.taskName")} className="flex-1">
+                        <input
+                          aria-label={t("stageTemplates.form.taskAria", { stage: si + 1, task: ti + 1 })}
+                          value={task.description}
+                          onChange={(e) =>
+                            updateStage(si, {
+                              tasks: stage.tasks.map((tk, i) =>
+                                i === ti ? { ...tk, description: e.target.value } : tk,
+                              ),
+                            })
+                          }
+                          className={controlClass}
+                          placeholder={t("stageTemplates.form.taskPlaceholder")}
+                        />
+                      </LineField>
                       <button
                         type="button"
-                        aria-label={`Remove task ${ti + 1}`}
+                        aria-label={t("stageTemplates.form.removeTask", { n: ti + 1 })}
                         onClick={() =>
                           updateStage(si, { tasks: stage.tasks.filter((_, i) => i !== ti) })
                         }
-                        className="shrink-0 cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
+                        className="shrink-0 inline-flex min-h-12 min-w-12 cursor-pointer items-center justify-center text-muted-foreground hover:text-destructive rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                       >
                         <Trash size={16} aria-hidden="true" />
                       </button>
@@ -137,63 +142,67 @@ export function StageTemplateForm({
 
                     <ul className="flex flex-col gap-2 pl-4">
                       {task.materialLines.map((line, li) => (
-                        <li key={li} className="flex items-center gap-2">
-                          <input
-                            aria-label={`Material ${li + 1} name`}
-                            value={line.item}
-                            onChange={(e) =>
-                              updateStage(si, {
-                                tasks: stage.tasks.map((t, i) =>
-                                  i === ti
-                                    ? {
-                                        ...t,
-                                        materialLines: t.materialLines.map((l, j) =>
-                                          j === li ? { ...l, item: e.target.value } : l,
-                                        ),
-                                      }
-                                    : t,
-                                ),
-                              })
-                            }
-                            className={`${controlClass} sm:col-span-2`}
-                            placeholder="Material, e.g. Cement"
-                          />
-                          <input
-                            aria-label={`Material ${li + 1} unit`}
-                            value={line.unit}
-                            onChange={(e) =>
-                              updateStage(si, {
-                                tasks: stage.tasks.map((t, i) =>
-                                  i === ti
-                                    ? {
-                                        ...t,
-                                        materialLines: t.materialLines.map((l, j) =>
-                                          j === li ? { ...l, unit: e.target.value } : l,
-                                        ),
-                                      }
-                                    : t,
-                                ),
-                              })
-                            }
-                            className={`${controlClass} max-w-28`}
-                            placeholder="Unit"
-                          />
+                        <li key={li} className="flex items-end gap-2">
+                          <LineField label={t("stageTemplates.form.material")} className="flex-1">
+                            <input
+                              aria-label={t("stageTemplates.form.materialAria", { n: li + 1 })}
+                              value={line.item}
+                              onChange={(e) =>
+                                updateStage(si, {
+                                  tasks: stage.tasks.map((tk, i) =>
+                                    i === ti
+                                      ? {
+                                          ...tk,
+                                          materialLines: tk.materialLines.map((l, j) =>
+                                            j === li ? { ...l, item: e.target.value } : l,
+                                          ),
+                                        }
+                                      : tk,
+                                  ),
+                                })
+                              }
+                              className={controlClass}
+                              placeholder={t("stageTemplates.form.materialPlaceholder")}
+                            />
+                          </LineField>
+                          <LineField label={t("stageTemplates.form.unit")} className="w-28 shrink-0">
+                            <input
+                              aria-label={t("stageTemplates.form.unitAria", { n: li + 1 })}
+                              value={line.unit}
+                              onChange={(e) =>
+                                updateStage(si, {
+                                  tasks: stage.tasks.map((tk, i) =>
+                                    i === ti
+                                      ? {
+                                          ...tk,
+                                          materialLines: tk.materialLines.map((l, j) =>
+                                            j === li ? { ...l, unit: e.target.value } : l,
+                                          ),
+                                        }
+                                      : tk,
+                                  ),
+                                })
+                              }
+                              className={controlClass}
+                              placeholder={t("stageTemplates.form.unitPlaceholder")}
+                            />
+                          </LineField>
                           <button
                             type="button"
-                            aria-label={`Remove material ${li + 1}`}
+                            aria-label={t("stageTemplates.form.removeMaterial", { n: li + 1 })}
                             onClick={() =>
                               updateStage(si, {
-                                tasks: stage.tasks.map((t, i) =>
+                                tasks: stage.tasks.map((tk, i) =>
                                   i === ti
                                     ? {
-                                        ...t,
-                                        materialLines: t.materialLines.filter((_, j) => j !== li),
+                                        ...tk,
+                                        materialLines: tk.materialLines.filter((_, j) => j !== li),
                                       }
-                                    : t,
+                                    : tk,
                                 ),
                               })
                             }
-                            className="shrink-0 cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
+                            className="shrink-0 inline-flex min-h-12 min-w-12 cursor-pointer items-center justify-center text-muted-foreground hover:text-destructive rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                           >
                             <Trash size={16} aria-hidden="true" />
                           </button>
@@ -204,17 +213,17 @@ export function StageTemplateForm({
                           type="button"
                           onClick={() =>
                             updateStage(si, {
-                              tasks: stage.tasks.map((t, i) =>
+                              tasks: stage.tasks.map((tk, i) =>
                                 i === ti
-                                  ? { ...t, materialLines: [...t.materialLines, emptyLine()] }
-                                  : t,
+                                  ? { ...tk, materialLines: [...tk.materialLines, emptyLine()] }
+                                  : tk,
                               ),
                             })
                           }
-                          className="inline-flex min-h-8 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
+                          className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
                         >
                           <Plus size={14} aria-hidden="true" />
-                          Add material
+                          {t("stageTemplates.form.addMaterial")}
                         </button>
                       </li>
                     </ul>
@@ -224,10 +233,10 @@ export function StageTemplateForm({
                   <button
                     type="button"
                     onClick={() => updateStage(si, { tasks: [...stage.tasks, emptyTask()] })}
-                    className="inline-flex min-h-10 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
+                    className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
                   >
                     <Plus size={16} aria-hidden="true" />
-                    Add task
+                    {t("stageTemplates.form.addTask")}
                   </button>
                 </li>
               </ul>
@@ -239,24 +248,21 @@ export function StageTemplateForm({
       <button
         type="button"
         onClick={() => setStages([...stages, emptyStage()])}
-        className="inline-flex min-h-12 w-fit cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
+        className="inline-flex min-h-12 w-fit cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
       >
         <Plus size={16} aria-hidden="true" />
-        Add stage
+        {t("stageTemplates.form.addStage")}
       </button>
 
-      {state.error && <p className="text-sm font-bold text-destructive">{state.error}</p>}
+      {state.error && <Notice tone="error">{state.error}</Notice>}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("stageTemplates.form.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("stageTemplates.form.cancel")}
+        </Button>
       </div>
     </form>
   );

@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { getSubcontractorStatement } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("subcontractors.statement.pageTitle");
 
 /**
  * The Subcontractor Statement (Operational Control decision 5) — an
@@ -18,58 +23,50 @@ export default async function SubcontractorStatementPage({
   params,
 }: PageProps<"/subcontractors/[id]">) {
   const { id } = await params;
-  const statement = await getSubcontractorStatement(id);
+  const [statement, t, locale] = await Promise.all([getSubcontractorStatement(id), getT(), getLocale()]);
   if (!statement) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/subcontractors"
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Subcontractor register
-      </Link>
-
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[1.75rem] font-bold text-foreground">{statement.name}</h1>
-          <p className="mt-1 text-muted-foreground">Statement of account, every project</p>
-        </div>
-        <Link
-          href={`/subcontractors/${id}/edit`}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Edit details
-        </Link>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("subcontractors.crumbProjects"), href: "/" }, { label: t("subcontractors.crumbRegister"), href: "/subcontractors" }]}
+        title={statement.name}
+        subtitle={t("subcontractors.statement.subtitle")}
+        actions={
+          <>
+            <Button variant="ghost" href={`/subcontractors/${id}/edit`}>
+              {t("subcontractors.statement.editDetails")}
+            </Button>
+          </>
+        }
+      />
 
       <Card className="mb-6 flex items-center justify-between">
-        <span className="text-lg font-bold text-card-foreground">Outstanding balance</span>
+        <span className="text-lg font-bold text-card-foreground">{t("subcontractors.statement.outstanding")}</span>
         <Money amount={statement.outstandingBalance} className="text-xl font-bold text-card-foreground" />
       </Card>
 
       <Card className="mb-6">
-        <h2 className="text-xl font-bold text-card-foreground">Agreed labour</h2>
+        <h2 className="text-xl font-bold text-card-foreground">{t("subcontractors.statement.agreedLabour")}</h2>
         {statement.tasks.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">Not assigned to any Task yet.</p>
+          <p className="mt-4 text-muted-foreground">{t("subcontractors.statement.noTasks")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
-            {statement.tasks.map((t) => (
+            {statement.tasks.map((task) => (
               <li
-                key={t.taskId}
+                key={task.taskId}
                 className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 last:border-0 last:pb-0"
               >
                 <Link
-                  href={`/projects/${t.projectId}/tasks/${t.taskId}/edit`}
+                  href={`/projects/${task.projectId}/tasks/${task.taskId}/edit`}
                   className="min-w-0 hover:underline"
                 >
-                  <span className="font-bold text-card-foreground">{t.description}</span>{" "}
+                  <span className="font-bold text-card-foreground">{task.description}</span>{" "}
                   <span className="text-sm text-muted-foreground">
-                    {t.projectName} — {t.stageName}
+                    {task.projectName} — {task.stageName}
                   </span>
                 </Link>
-                <Money amount={t.agreedAmount} className="font-bold text-card-foreground" />
+                <Money amount={task.agreedAmount} className="font-bold text-card-foreground" />
               </li>
             ))}
           </ul>
@@ -77,9 +74,9 @@ export default async function SubcontractorStatementPage({
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold text-card-foreground">Payments</h2>
+        <h2 className="text-xl font-bold text-card-foreground">{t("subcontractors.statement.payments")}</h2>
         {statement.payments.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">No payments recorded yet.</p>
+          <p className="mt-4 text-muted-foreground">{t("subcontractors.statement.noPayments")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.payments.map((p) => (
@@ -91,7 +88,7 @@ export default async function SubcontractorStatementPage({
                   href={`/projects/${p.projectId}/tasks/${p.taskId}/edit`}
                   className="min-w-0 hover:underline"
                 >
-                  <span className="text-sm text-muted-foreground">{formatDate(p.paidOn)}</span>{" "}
+                  <span className="text-sm text-muted-foreground">{formatDate(p.paidOn, locale)}</span>{" "}
                   <span className="font-bold text-card-foreground">{p.taskDescription}</span>{" "}
                   <span className="text-sm text-muted-foreground">— {p.projectName}</span>
                 </Link>
@@ -101,6 +98,6 @@ export default async function SubcontractorStatementPage({
           </ul>
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }

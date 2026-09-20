@@ -5,7 +5,7 @@ import { FoundationRiseLoader, SurveySweepLoader } from "@/components/PageLoader
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "Loading animation studies — Mhandisi Makini",
+  title: "Loading animation studies",
   description: "Two Mhandisi Makini page-loading animation concepts.",
 };
 

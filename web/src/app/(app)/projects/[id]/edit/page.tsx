@@ -1,39 +1,38 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { updateProjectAction } from "@/app/actions/projects";
 import { getProjectInput } from "@/lib/data";
+import { getT, pageTitle } from "@/lib/i18n/server";
 import { ProjectForm } from "../../_components/ProjectForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const generateMetadata = pageTitle("project.edit.pageTitle");
 
 export default async function EditProjectPage({
   params,
 }: PageProps<"/projects/[id]/edit">) {
   const { id } = await params;
+  const t = await getT();
   const project = await getProjectInput(id);
   if (!project) notFound();
 
   const { projectCode, ...initial } = project;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {initial.name}
-      </Link>
-
-      <h1 className="mb-6 text-[1.75rem] font-bold text-foreground">Edit project</h1>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("project.crumbs.overview"), href: `/projects/${id}` }]}
+        title={t("project.edit.title")}
+      />
 
       <ProjectForm
         action={updateProjectAction.bind(null, id)}
         initial={initial}
         projectCode={projectCode}
-        submitLabel="Save changes"
+        submitLabel={t("project.edit.submit")}
         cancelHref={`/projects/${id}`}
       />
-    </main>
+    </PageFrame>
   );
 }

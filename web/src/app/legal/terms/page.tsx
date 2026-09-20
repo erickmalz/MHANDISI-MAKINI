@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { TERMS_VERSION } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Terms of Service — Mhandisi Makini" };
+export const metadata: Metadata = { title: "Terms of service" };
 
 export default function TermsPage() {
   return (

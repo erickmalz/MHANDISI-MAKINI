@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { AccountProfileInput } from "@/lib/validation/account";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Name/phone edit, following `ProjectForm`'s shape (Slice 2.4a). Email is
@@ -21,23 +23,24 @@ export function AccountProfileForm({
   initial: AccountProfileInput;
   email: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(updateAccountProfileAction, {});
   const errors = state.fieldErrors ?? {};
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-foreground">Profile</h2>
+      <h2 className="text-lg font-bold text-foreground">{t("settings.profile.title")}</h2>
 
       <form action={formAction} className="flex flex-col gap-4" noValidate>
-        <Field label="Email" hint="Your sign-in email. Contact support to change it.">
+        <Field label={t("settings.profile.email")} hint={t("settings.profile.emailHint")}>
           <input value={email} disabled readOnly className={`${controlClass} opacity-70`} />
         </Field>
 
-        <Field label="Full name" required error={errors.fullName}>
+        <Field label={t("settings.profile.fullName")} required error={errors.fullName}>
           <input name="fullName" defaultValue={initial.fullName} className={controlClass} />
         </Field>
 
-        <Field label="Phone" required error={errors.phone}>
+        <Field label={t("settings.profile.phone")} required error={errors.phone}>
           <input
             name="phone"
             type="tel"
@@ -47,12 +50,12 @@ export function AccountProfileForm({
         </Field>
 
         {state.error && (
-          <p className="text-sm font-bold text-destructive">{state.error}</p>
+          <Notice tone="error">{state.error}</Notice>
         )}
 
         <div>
           <Button variant="primary" type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save changes"}
+            {pending ? t("settings.profile.saving") : t("settings.profile.save")}
           </Button>
         </div>
       </form>

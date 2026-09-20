@@ -1,9 +1,16 @@
 import "server-only";
 
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
-import { currentTakeOffFigures, type MaterialTakeOffLine, type Task } from "@/lib/tasks";
+import {
+  currentTakeOffFigures,
+  type LabourPayment,
+  type MaterialTakeOffLine,
+  type PaymentMethod,
+  type Task,
+} from "@/lib/tasks";
 import type { StageFinancials } from "@/lib/types";
+import type { LabourPaymentInput } from "@/lib/validation/labour-payments";
 import type { TakeOffLineInput, TaskInput } from "@/lib/validation/tasks";
 
 import { getCurrentAccountId } from "./account-context";
@@ -220,6 +227,14 @@ export async function getStageDetail(stageId: string): Promise<
  * trivial stage) — that gap must not leave a "completed" stage's budget still
  * editable, so `stages.status = 'completed'` locks it too, no new column.
  */
+const PAYMENT_METHOD_LABELS: Record<string, PaymentMethod> = {
+  bank_transfer: "Bank Transfer",
+  cash: "Cash",
+  mobile_money: "Mobile Money",
+  cheque: "Cheque",
+  other: "Other",
+};
+
 async function stageBudgetLocked(tx: AccountTx, stageId: string): Promise<boolean> {
   const { rows } = await tx.execute<{ locked: boolean }>(sql`
     SELECT (
@@ -259,6 +274,8 @@ export async function getTaskInput(taskId: string): Promise<
       lines: EditableTakeOffLine[];
       /** A task with any labour payment cannot be deleted — the history is kept. */
       hasLabourPayments: boolean;
+      /** Every Labour Payment against this task's agreement, oldest first. */
+      payments: LabourPayment[];
       /** The labour agreement as first set — `null` if none has ever been recorded. */
       labourOriginalAmount: number | null;
       /** Whether the Stage's Funding Request is issued/closed — see `stageBudgetLocked`. */
@@ -329,11 +346,11 @@ export async function getTaskInput(taskId: string): Promise<
         sql`${materialLines.taskId} = ${taskId} AND ${materialLines.variationId} IS NOT NULL`,
       );
 
-    const [payment] = await tx
-      .select({ id: labourPayments.id })
+    const paymentRows = await tx
+      .select()
       .from(labourPayments)
       .where(eq(labourPayments.taskId, taskId))
-      .limit(1);
+      .orderBy(asc(labourPayments.paidOn));
 
     const variationMaterialTotal = variationLineRows.reduce((sum, l) => {
       const { qty, estUnitCost } = currentTakeOffFigures({
@@ -378,7 +395,17 @@ export async function getTaskInput(taskId: string): Promise<
           estUnitCostOriginal,
         };
       }),
-      hasLabourPayments: Boolean(payment),
+      hasLabourPayments: paymentRows.length > 0,
+      payments: paymentRows.map((p) => ({
+        id: p.id,
+        paidOn: p.paidOn,
+        amount: p.amount,
+        method: PAYMENT_METHOD_LABELS[p.method] ?? "Other",
+        reference: p.reference,
+        notes: p.notes,
+        voidedAt: p.voidedAt ? p.voidedAt.toISOString() : null,
+        voidReason: p.voidReason,
+      })),
       labourOriginalAmount: row.labourOriginal,
       budgetLocked: await stageBudgetLocked(tx, row.stageId),
       variationMaterialTotal,
@@ -670,6 +697,74 @@ export async function deleteTask(taskId: string): Promise<boolean> {
       .delete(tasks)
       .where(eq(tasks.id, taskId))
       .returning({ id: tasks.id });
+    return res.length > 0;
+  });
+}
+
+// --- Labour payments -----------------------------------------------------
+
+export type LabourPaymentResult =
+  | { ok: true }
+  | { ok: false; reason: "not-found" | "no-agreement" };
+
+/**
+ * Append a Labour Payment against a Task's labour agreement. Append-only with
+ * reversal — a correction is a void plus a fresh record (mirrors the Purchase
+ * Order Supplier Payment write path, `recordPayment` in
+ * `@/lib/data/procurement`). Refused when the Task has no labour agreement
+ * amount yet (nothing to pay against).
+ */
+export async function recordLabourPayment(
+  taskId: string,
+  input: LabourPaymentInput,
+): Promise<LabourPaymentResult> {
+  const accountId = await getCurrentAccountId();
+  return withAccount(async (tx) => {
+    const [task] = await tx
+      .select({
+        labourOriginal: tasks.labourOriginal,
+        labourRevised: tasks.labourRevised,
+      })
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    if (!task) return { ok: false as const, reason: "not-found" as const };
+    if (task.labourOriginal == null && task.labourRevised == null) {
+      return { ok: false as const, reason: "no-agreement" as const };
+    }
+
+    await tx.insert(labourPayments).values({
+      accountId,
+      taskId,
+      paidOn: input.paidOn,
+      amount: input.amount,
+      method: input.method,
+      reference: input.reference ?? null,
+      notes: input.notes ?? null,
+    });
+
+    return { ok: true as const };
+  });
+}
+
+/** Void a Labour Payment (append-only with reversal). `false` when missing. */
+export async function voidLabourPayment(
+  taskId: string,
+  paymentId: string,
+  reason: string,
+): Promise<boolean> {
+  return withAccount(async (tx) => {
+    const res = await tx
+      .update(labourPayments)
+      .set({ voidedAt: new Date(), voidReason: reason, updatedAt: new Date() })
+      .where(
+        and(
+          eq(labourPayments.id, paymentId),
+          eq(labourPayments.taskId, taskId),
+          sql`${labourPayments.voidedAt} IS NULL`,
+        ),
+      )
+      .returning({ id: labourPayments.id });
     return res.length > 0;
   });
 }

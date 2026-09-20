@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   CheckCircle,
   Info,
   Warning,
@@ -11,6 +10,34 @@ import {
 import { getStageDetail, getStageReconciliationReport } from "@/lib/data";
 import type { ReconciliationCheck } from "@/lib/reconciliation";
 import { Card } from "@/components/ui/Card";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("financialCheck.pageTitle");
+
+/** The 18 checks the report can contain, by their stable `key`. Unknown keys fall back to the English label. */
+const CHECK_KEYS = [
+  "unallocated-deposit",
+  "labour-exceeds-agreement",
+  "float-negative",
+  "po-missing-receipt",
+  "po-missing-delivery-note",
+  "po-outstanding",
+  "material-not-ordered",
+  "funding-request-pending",
+  "additional-funding-required",
+  "fee-outstanding",
+  "float-below-upcoming-commitments",
+  "stage-complete-labour-outstanding",
+  "labour-final-payment-incomplete",
+  "over-payment-visibility",
+  "completed-task-labour-balance",
+  "duplicate-payment-reference",
+  "procurement-vs-material-requirement",
+  "stale-draft-variations",
+] as const;
+type CheckKey = (typeof CHECK_KEYS)[number];
 
 /**
  * "Run Financial Check" (guidelines §34; Phase 3 ticket 04) — a live audit
@@ -24,54 +51,46 @@ export default async function StageFinancialCheckPage({
 }: PageProps<"/projects/[id]/stages/[stageId]/financial-check">) {
   const { id, stageId } = await params;
 
-  const [stage, report] = await Promise.all([
+  const [stage, report, t] = await Promise.all([
     getStageDetail(stageId),
     getStageReconciliationReport(stageId),
+    getT(),
   ]);
   if (!stage || stage.projectId !== id || !report) notFound();
 
   const criticalChecks = report.checks.filter((c) => c.status === "critical");
   const warningChecks = report.checks.filter((c) => c.status === "warning");
   const passedChecks = report.checks.filter((c) => c.status === "passed");
+  // Check labels are translated here by their stable key; the findings text under
+  // each check is produced by the data layer and is not translated yet.
+  const checkLabel = (check: ReconciliationCheck) =>
+    (CHECK_KEYS as readonly string[]).includes(check.key)
+      ? t(`financialCheck.checks.${check.key as CheckKey}`)
+      : check.label;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/stages/${stageId}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {stage.name}
-      </Link>
-
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">
-          Stage {stage.seq} &middot; {stage.projectName}
-        </p>
-        <h1 className="text-[1.75rem] font-bold text-foreground">
-          Run Financial Check
-        </h1>
-        <p className="mt-2 max-w-prose text-muted-foreground">
-          A live audit against the guidelines&rsquo; recommended reconciliation
-          checks — computed fresh every time, nothing stored. This
-          complements the Alerts feed; it does not replace it.
-        </p>
-      </header>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("financialCheck.crumbOverview"), href: `/projects/${id}` }, { label: stage.name, href: `/projects/${id}/stages/${stageId}` }]}
+        title={t("financialCheck.title")}
+        subtitle={t("financialCheck.subtitle")}
+      />
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
-          label="Reconciliation Score"
+          label={t("financialCheck.tiles.score")}
           value={`${report.score}%`}
           tone={report.score >= 90 ? "green" : report.score >= 70 ? "amber" : "red"}
         />
-        <StatTile label="Passed" value={String(report.passed)} tone="green" />
-        <StatTile label="Warnings" value={String(report.warnings)} tone="amber" />
-        <StatTile label="Critical Issues" value={String(report.critical)} tone="red" />
+        <StatTile label={t("financialCheck.tiles.passed")} value={String(report.passed)} tone="green" />
+        <StatTile label={t("financialCheck.tiles.warnings")} value={String(report.warnings)} tone="amber" />
+        <StatTile label={t("financialCheck.tiles.critical")} value={String(report.critical)} tone="red" />
       </div>
 
       {criticalChecks.length > 0 && (
         <ChecksSection
-          title="Critical Issues"
+          title={t("financialCheck.sections.critical", { count: criticalChecks.length })}
+          labelOf={checkLabel}
           icon={WarningCircle}
           iconClassName="text-health-red"
           checks={criticalChecks}
@@ -80,7 +99,8 @@ export default async function StageFinancialCheckPage({
 
       {warningChecks.length > 0 && (
         <ChecksSection
-          title="Warnings"
+          title={t("financialCheck.sections.warnings", { count: warningChecks.length })}
+          labelOf={checkLabel}
           icon={Warning}
           iconClassName="text-health-amber"
           checks={warningChecks}
@@ -89,11 +109,11 @@ export default async function StageFinancialCheckPage({
 
       <Card className="mt-8">
         <h2 className="text-lg font-bold text-card-foreground">
-          Passed ({passedChecks.length})
+          {t("financialCheck.sections.passed", { count: passedChecks.length })}
         </h2>
         {passedChecks.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            Nothing passed cleanly this run.
+            {t("financialCheck.nothingPassed")}
           </p>
         ) : (
           <ul className="mt-3 flex flex-col gap-4">
@@ -105,7 +125,7 @@ export default async function StageFinancialCheckPage({
                     className="mt-0.5 shrink-0 text-health-green"
                     aria-hidden="true"
                   />
-                  {check.label}
+                  {checkLabel(check)}
                 </p>
                 {check.findings.length > 0 && (
                   <ul className="mt-1 ml-6 flex flex-col gap-1">
@@ -129,7 +149,7 @@ export default async function StageFinancialCheckPage({
           </ul>
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }
 
@@ -149,7 +169,7 @@ function StatTile({
   }[tone];
   return (
     <div className={`rounded-lg p-4 ${toneClass}`}>
-      <p className="text-xs font-bold uppercase tracking-wide opacity-80">
+      <p className="text-sm font-bold">
         {label}
       </p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
@@ -162,8 +182,10 @@ function ChecksSection({
   icon: Icon,
   iconClassName,
   checks,
+  labelOf,
 }: {
   title: string;
+  labelOf: (check: ReconciliationCheck) => string;
   icon: typeof WarningCircle;
   iconClassName: string;
   checks: ReconciliationCheck[];
@@ -171,7 +193,7 @@ function ChecksSection({
   return (
     <Card className="mb-6">
       <h2 className="text-lg font-bold text-card-foreground">
-        {title} ({checks.length})
+        {title}
       </h2>
       <ul className="mt-3 flex flex-col gap-4">
         {checks.map((check) => (
@@ -182,7 +204,7 @@ function ChecksSection({
                 className={`mt-0.5 shrink-0 ${iconClassName}`}
                 aria-hidden="true"
               />
-              {check.label}
+              {labelOf(check)}
             </p>
             <ul className="mt-1 ml-6 flex flex-col gap-1">
               {check.findings

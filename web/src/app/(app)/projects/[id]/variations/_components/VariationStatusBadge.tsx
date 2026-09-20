@@ -1,20 +1,21 @@
+"use client";
+
 import {
   CheckCircle,
   PencilSimpleLine,
   Prohibit,
   XCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { StatusBadge, type BadgeIcon, type StatusTone } from "@/components/ui/StatusBadge";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
 import type { VariationStatus } from "@/lib/variations";
-import { variationStatusLabel } from "@/lib/variations";
 
-const STATUS_CONFIG: Record<
-  VariationStatus,
-  { text: string; bg: string; Icon: typeof CheckCircle }
-> = {
-  draft: { text: "text-muted-foreground", bg: "bg-muted", Icon: PencilSimpleLine },
-  approved: { text: "text-health-green", bg: "bg-health-green-bg", Icon: CheckCircle },
-  rejected: { text: "text-health-red", bg: "bg-health-red-bg", Icon: XCircle },
-  cancelled: { text: "text-muted-foreground", bg: "bg-muted", Icon: Prohibit },
+const STATUS_CONFIG: Record<VariationStatus, { tone: StatusTone; Icon: BadgeIcon; label: MessageKey }> = {
+  draft: { tone: "neutral", Icon: PencilSimpleLine, label: "variations.status.draft" },
+  approved: { tone: "success", Icon: CheckCircle, label: "variations.status.approved" },
+  rejected: { tone: "danger", Icon: XCircle, label: "variations.status.rejected" },
+  cancelled: { tone: "neutral", Icon: Prohibit, label: "variations.status.cancelled" },
 };
 
 export function VariationStatusBadge({
@@ -24,16 +25,11 @@ export function VariationStatusBadge({
   status: VariationStatus;
   size?: "sm" | "md";
 }) {
-  const { text, bg, Icon } = STATUS_CONFIG[status];
-  const padding = size === "sm" ? "px-2 py-1 text-xs" : "px-2 py-1 text-sm";
-  const iconSize = size === "sm" ? 14 : 16;
-
+  const t = useT();
+  const { tone, Icon, label } = STATUS_CONFIG[status];
   return (
-    <span
-      className={`inline-flex items-center gap-2 rounded font-bold ${padding} ${text} ${bg}`}
-    >
-      <Icon size={iconSize} aria-hidden="true" />
-      {variationStatusLabel(status)}
-    </span>
+    <StatusBadge tone={tone} icon={Icon} size={size}>
+      {t(label)}
+    </StatusBadge>
   );
 }

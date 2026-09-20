@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import {
   approveVariationAction,
@@ -10,27 +8,30 @@ import {
 } from "@/app/actions/variations";
 import { getVariation } from "@/lib/data";
 import { VariationDetail } from "./_components/VariationDetail";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("variations.pageTitle");
 
 export default async function VariationDetailPage({
   params,
 }: PageProps<"/projects/[id]/variations/[variationId]">) {
   const { id, variationId } = await params;
+  const t = await getT();
   const variation = await getVariation(variationId);
   if (!variation || variation.projectId !== id) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/stages/${variation.stageId}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {variation.stageName}
-      </Link>
-
-      <h1 className="mb-6 text-[1.75rem] font-bold text-foreground">
-        Variation {variation.displayNumber ?? "(Draft)"}
-      </h1>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("variations.crumbOverview"), href: `/projects/${id}` }]}
+        title={
+          variation.displayNumber
+            ? t("variations.detailTitle", { number: variation.displayNumber })
+            : t("variations.detailTitleDraft")
+        }
+      />
 
       <VariationDetail
         projectId={id}
@@ -45,6 +46,6 @@ export default async function VariationDetailPage({
           variation.id,
         )}
       />
-    </main>
+    </PageFrame>
   );
 }

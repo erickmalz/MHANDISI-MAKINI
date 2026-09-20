@@ -1,30 +1,27 @@
-import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createSupplierAction } from "@/app/actions/suppliers";
 import { SupplierForm } from "../_components/SupplierForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
 
-export default function NewSupplierPage() {
+export const generateMetadata = pageTitle("suppliers.new.pageTitle");
+
+export default async function NewSupplierPage() {
+  const t = await getT();
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/suppliers"
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Supplier register
-      </Link>
-
-      <h1 className="mb-1 text-[1.75rem] font-bold text-foreground">Add supplier</h1>
-      <p className="mb-6 text-muted-foreground">
-        Only the name is required. Everything else can be filled in later.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("suppliers.crumbProjects"), href: "/" }, { label: t("suppliers.crumbRegister"), href: "/suppliers" }]}
+        title={t("suppliers.new.title")}
+        subtitle={t("suppliers.new.subtitle")}
+      />
 
       <SupplierForm
         action={createSupplierAction}
-        submitLabel="Add supplier"
+        submitLabel={t("suppliers.new.submit")}
         cancelHref="/suppliers"
       />
-    </main>
+    </PageFrame>
   );
 }

@@ -14,6 +14,7 @@ const PUBLIC_PREFIXES = [
   "/verify-email",
   "/reset-password",
   "/legal",
+  "/loading-studies",
 ];
 
 function isPublic(pathname: string): boolean {

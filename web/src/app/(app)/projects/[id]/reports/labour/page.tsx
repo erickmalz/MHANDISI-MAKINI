@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { getLabourReport } from "@/lib/data";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataTable } from "@/components/ui/DataTable";
+import { getT, pageTitle } from "@/lib/i18n/server";
+import { TASK_STATUS_LABEL } from "../../../_components/status-labels";
+
+export const generateMetadata = pageTitle("reports.labour.pageTitle");
 
 /**
  * Labour Report (guidelines §38, Phase 4 ticket 06) — every Task's
@@ -18,100 +24,132 @@ export default async function LabourReportPage({
   const { id } = await params;
   const report = await getLabourReport(id);
   if (!report) notFound();
+  const t = await getT();
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${report.projectId}/reports`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Reports
-      </Link>
-
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">{report.projectCode}</p>
-        <h1 className="text-[1.75rem] font-bold text-foreground">Labour Report</h1>
-        <p className="mt-1 text-muted-foreground">{report.projectName}</p>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
+        title={t("reports.labour.label")}
+      />
 
       <Card>
         {report.rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No Tasks recorded on this project yet.
+            {t("reports.labour.empty")}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-2 pr-4 font-bold">Task</th>
-                  <th className="py-2 pr-4 font-bold">Subcontractor</th>
-                  <th className="py-2 pr-4 font-bold">Stage</th>
-                  <th className="py-2 pr-4 text-right font-bold">Agreed</th>
-                  <th className="py-2 pr-4 text-right font-bold">Revised</th>
-                  <th className="py-2 pr-4 text-right font-bold">Paid</th>
-                  <th className="py-2 text-right font-bold">Outstanding</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.rows.map((r) => (
-                  <tr key={r.taskId} className="border-b border-border last:border-0">
-                    <td className="py-2 pr-4">
-                      <Link
-                        href={`/projects/${report.projectId}/tasks/${r.taskId}/edit`}
-                        className="font-bold text-card-foreground hover:underline"
-                      >
-                        {r.taskDescription}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">{r.status}</p>
-                    </td>
-                    <td className="py-2 pr-4 text-muted-foreground">
-                      {r.subcontractorName}
-                    </td>
-                    <td className="py-2 pr-4 text-muted-foreground">{r.stageName}</td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.agreed} className="text-card-foreground" />
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      {r.revised != null ? (
-                        <Money amount={r.revised} className="text-card-foreground" />
-                      ) : (
-                        <span className="text-muted-foreground">&mdash;</span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.paid} className="text-card-foreground" />
-                    </td>
-                    <td className="py-2 text-right">
-                      <Money amount={r.outstanding} className="font-bold text-card-foreground" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-border font-bold text-card-foreground">
-                  <td className="py-2 pr-4" colSpan={3}>
-                    Total
-                  </td>
-                  <td className="py-2 pr-4 text-right">
+          <DataTable
+            caption={t("reports.labour.caption")}
+            totalLabel={t("reports.total")}
+            rows={report.rows}
+            rowKey={(r) => r.taskId}
+            columns={[
+              {
+                key: "task",
+                header: t("reports.labour.columns.task"),
+                cell: (r) => (
+                  <>
+                    <Link
+                      href={`/projects/${report.projectId}/tasks/${r.taskId}/edit`}
+                      className="font-bold text-card-foreground hover:underline"
+                    >
+                      {r.taskDescription}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {TASK_STATUS_LABEL[r.status] ? t(TASK_STATUS_LABEL[r.status]) : r.status}
+                    </p>
+                  </>
+                ),
+              },
+              {
+                key: "subcontractor",
+                header: t("reports.labour.columns.subcontractor"),
+                className: "text-muted-foreground",
+                cell: (r) => (
+                  <>
+                    {r.subcontractorName}
+                  </>
+                ),
+              },
+              {
+                key: "stage",
+                header: t("reports.labour.columns.stage"),
+                className: "text-muted-foreground",
+                cell: (r) => (
+                  <>
+                    {r.stageName}
+                  </>
+                ),
+              },
+              {
+                key: "agreed",
+                header: t("reports.labour.columns.agreed"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.agreed} className="text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.agreed} />
-                  </td>
-                  <td className="py-2 pr-4 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "revised",
+                header: t("reports.labour.columns.revised"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    {r.revised != null ? (
+                      <Money amount={r.revised} className="text-card-foreground" />
+                    ) : (
+                      <span className="text-muted-foreground">&mdash;</span>
+                    )}
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.revised} />
-                  </td>
-                  <td className="py-2 pr-4 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "paid",
+                header: t("reports.labour.columns.paid"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.paid} className="text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.paid} />
-                  </td>
-                  <td className="py-2 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "outstanding",
+                header: t("reports.labour.columns.outstanding"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.outstanding} className="font-bold text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.outstanding} />
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                  </>
+                ),
+              },
+            ]}
+          />
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }

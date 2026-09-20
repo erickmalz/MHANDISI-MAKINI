@@ -6,7 +6,22 @@ import { Camera, Trash } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/Button";
 import { controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
-import { PHOTO_CATEGORIES, photoCategoryLabel, type PhotoMeta } from "@/lib/photos";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
+import { PHOTO_CATEGORIES, type PhotoCategory, type PhotoMeta } from "@/lib/photos";
+import { Notice } from "@/components/ui/Notice";
+
+const CATEGORY_KEYS: Record<PhotoCategory, MessageKey> = {
+  progress: "stages.photos.categories.progress",
+  material_delivery: "stages.photos.categories.materialDelivery",
+  issue: "stages.photos.categories.issue",
+  before: "stages.photos.categories.before",
+  after: "stages.photos.categories.after",
+  receipt: "stages.photos.categories.receipt",
+  delivery_note: "stages.photos.categories.deliveryNote",
+  variation: "stages.photos.categories.variation",
+  closeout: "stages.photos.categories.closeout",
+};
 
 /**
  * A thumbnail grid + upload form for one photo target (Phase 4 Slice 4.1,
@@ -22,19 +37,20 @@ export function PhotoStrip({
   photos,
   uploadAction,
   deleteAction,
-  emptyLabel = "No photos yet.",
+  emptyLabel,
 }: {
   photos: PhotoMeta[];
   uploadAction: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   deleteAction: (photoId: string) => Promise<void>;
   emptyLabel?: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(uploadAction, {});
 
   return (
     <div className="flex flex-col gap-3">
       {photos.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+        <p className="text-sm text-muted-foreground">{emptyLabel ?? t("stages.photos.empty")}</p>
       ) : (
         <ul className="flex flex-wrap gap-3">
           {photos.map((p) => (
@@ -43,23 +59,23 @@ export function PhotoStrip({
                 {/* eslint-disable-next-line @next/next/no-img-element -- raw bytea-backed bytes served by our own route, not an optimizable remote/static asset */}
                 <img
                   src={`/photos/${p.id}`}
-                  alt={p.caption ?? photoCategoryLabel(p.category)}
+                  alt={p.caption ?? t(CATEGORY_KEYS[p.category])}
                   className="h-28 w-28 rounded-lg border border-border object-cover"
                 />
               </a>
-              <span className="truncate text-xs font-bold text-muted-foreground">
-                {photoCategoryLabel(p.category)}
+              <span className="truncate text-sm font-bold text-muted-foreground">
+                {t(CATEGORY_KEYS[p.category])}
               </span>
               {p.caption && (
-                <span className="truncate text-xs text-muted-foreground">{p.caption}</span>
+                <span className="truncate text-sm text-muted-foreground">{p.caption}</span>
               )}
               <form action={deleteAction.bind(null, p.id)}>
                 <button
                   type="submit"
-                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
+                  className="inline-flex min-h-12 cursor-pointer items-center gap-1 px-2 text-sm font-semibold text-destructive hover:underline rounded-lg transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
                 >
                   <Trash size={12} aria-hidden="true" />
-                  Remove
+                  {t("stages.photos.remove")}
                 </button>
               </form>
             </li>
@@ -70,7 +86,7 @@ export function PhotoStrip({
       <form action={formAction} className="flex flex-col gap-3" noValidate>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-foreground">Photo</label>
+            <label className="text-sm font-bold text-foreground">{t("stages.photos.photo")}</label>
             <input
               type="file"
               name="photo"
@@ -79,52 +95,52 @@ export function PhotoStrip({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-foreground">Category</label>
+            <label className="text-sm font-bold text-foreground">{t("stages.photos.category")}</label>
             <select name="category" className={controlClass} defaultValue="progress">
               {PHOTO_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {photoCategoryLabel(c)}
+                  {t(CATEGORY_KEYS[c])}
                 </option>
               ))}
             </select>
           </div>
           <Button variant="secondary" type="submit" disabled={pending}>
             <Camera size={16} aria-hidden="true" />
-            {pending ? "Uploading…" : "Add photo"}
+            {pending ? t("stages.photos.uploading") : t("stages.photos.add")}
           </Button>
         </div>
 
         <details className="text-sm">
-          <summary className="cursor-pointer font-bold text-muted-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground">
-            Caption, GPS &amp; capture date (optional)
+          <summary className="cursor-pointer font-bold text-muted-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground">
+            {t("stages.photos.optional")}
           </summary>
           <div className="mt-3 flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-foreground">Caption</label>
+              <label className="text-sm font-bold text-foreground">{t("stages.photos.caption")}</label>
               <input type="text" name="caption" className={controlClass} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-foreground">GPS latitude</label>
+              <label className="text-sm font-bold text-foreground">{t("stages.photos.gpsLat")}</label>
               <input type="text" inputMode="decimal" name="gpsLat" className={controlClass} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-foreground">GPS longitude</label>
+              <label className="text-sm font-bold text-foreground">{t("stages.photos.gpsLng")}</label>
               <input type="text" inputMode="decimal" name="gpsLng" className={controlClass} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-foreground">Captured on</label>
+              <label className="text-sm font-bold text-foreground">{t("stages.photos.capturedOn")}</label>
               <input type="date" name="capturedOn" className={controlClass} />
             </div>
           </div>
         </details>
 
         {state.fieldErrors?.photo && (
-          <p className="text-sm font-bold text-destructive">{state.fieldErrors.photo}</p>
+          <Notice tone="error">{state.fieldErrors.photo}</Notice>
         )}
         {state.fieldErrors?.category && (
-          <p className="text-sm font-bold text-destructive">{state.fieldErrors.category}</p>
+          <Notice tone="error">{state.fieldErrors.category}</Notice>
         )}
-        {state.error && <p className="text-sm font-bold text-destructive">{state.error}</p>}
+        {state.error && <Notice tone="error">{state.error}</Notice>}
       </form>
     </div>
   );

@@ -1,39 +1,36 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { updateStageAction } from "@/app/actions/stages";
 import { getStageInput } from "@/lib/data";
+import { getT, pageTitle } from "@/lib/i18n/server";
 import { StageForm } from "../../../../_components/StageForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const generateMetadata = pageTitle("stages.edit.pageTitle");
 
 export default async function EditStagePage({
   params,
 }: PageProps<"/projects/[id]/stages/[stageId]/edit">) {
   const { id, stageId } = await params;
+  const t = await getT();
   const stage = await getStageInput(stageId);
   if (!stage || stage.projectId !== id) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Back to project
-      </Link>
-
-      <h1 className="mb-6 text-[1.75rem] font-bold text-foreground">
-        Edit stage — {stage.name}
-      </h1>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("stages.crumbs.overview"), href: `/projects/${id}` }, { label: stage.name, href: `/projects/${id}/stages/${stageId}` }]}
+        title={t("stages.edit.title", { name: stage.name })}
+      />
 
       <StageForm
         action={updateStageAction.bind(null, id, stageId)}
         initial={stage}
         seq={stage.seq}
-        submitLabel="Save changes"
+        submitLabel={t("stages.edit.submit")}
         cancelHref={`/projects/${id}`}
       />
-    </main>
+    </PageFrame>
   );
 }

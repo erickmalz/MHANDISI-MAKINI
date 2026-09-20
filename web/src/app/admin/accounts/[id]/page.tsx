@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +9,9 @@ import { Card } from "@/components/ui/Card";
 import { requirePlatformAdmin } from "@/lib/auth/session";
 import { getAccountForAdmin } from "@/lib/data/platform-admin";
 import { formatDate } from "@/lib/format";
+import { PageFrame } from "@/components/ui/PageFrame";
+
+export const metadata: Metadata = { title: "Account" };
 
 /**
  * The Account detail (`.scratch/platform-admin/` ticket 03) — the same
@@ -23,7 +27,7 @@ export default async function AdminAccountDetailPage({
   if (!account) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <PageFrame width="reading">
       <Link
         href="/admin"
         className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
@@ -76,7 +80,7 @@ export default async function AdminAccountDetailPage({
           </form>
         </Card>
       )}
-    </main>
+    </PageFrame>
   );
 }
 

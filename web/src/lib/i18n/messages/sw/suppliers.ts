@@ -1,0 +1,55 @@
+import type { suppliers as enSuppliers } from "../en/suppliers";
+import type { Widen } from "../../types";
+
+export const suppliers: Widen<typeof enSuppliers> = {
+  pageTitle: "Wasambazaji",
+  register: "Orodha ya wasambazaji",
+  crumbProjects: "Miradi",
+  crumbRegister: "Wasambazaji",
+  list: {
+    subtitle: "Biashara unazonunua vifaa kutoka kwao. Hutumika katika kila mradi.",
+    add: "Ongeza msambazaji",
+    empty: "Hakuna wasambazaji bado. Ongeza wa kwanza — unaweza pia kuongeza msambazaji unapoandaa oda ya ununuzi.",
+    inactive: "Haitumiki",
+    noContact: "Hakuna mawasiliano",
+    edit: "Hariri",
+    loading: "Inapakia wasambazaji",
+  },
+  new: {
+    pageTitle: "Msambazaji mpya",
+    title: "Ongeza msambazaji",
+    subtitle: "Jina pekee ndilo linalohitajika. Mengine yote unaweza kujaza baadaye.",
+    submit: "Ongeza msambazaji",
+  },
+  edit: {
+    pageTitle: "Hariri msambazaji",
+    title: "Hariri {name}",
+    submit: "Hifadhi mabadiliko",
+  },
+  statement: {
+    pageTitle: "Msambazaji",
+    subtitle: "Taarifa ya akaunti, kila mradi",
+    editDetails: "Hariri maelezo",
+    outstanding: "Salio lililobaki kulipwa",
+    orders: "Oda",
+    noOrders: "Hakuna Oda za ununuzi bado.",
+    payments: "Malipo",
+    noPayments: "Hakuna malipo yaliyorekodiwa bado.",
+    draft: "Rasimu",
+  },
+  form: {
+    name: "Jina la msambazaji",
+    contactPerson: "Mtu wa mawasiliano",
+    location: "Mahali",
+    phone: "Simu",
+    email: "Barua pepe",
+    paymentTerms: "Masharti ya malipo",
+    paymentTermsHint: "Masharti ya kawaida yanayohamishiwa kwenye Oda mpya ya ununuzi ya msambazaji huyu.",
+    status: "Hali",
+    active: "Inatumika",
+    inactive: "Haitumiki — ficha kwenye oda mpya",
+    notes: "Maelezo",
+    saving: "Inahifadhi…",
+    cancel: "Ghairi",
+  },
+};

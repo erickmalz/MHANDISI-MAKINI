@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClockCounterClockwise } from "@phosphor-icons/react/dist/ssr";
 
 import { getProjectActivity, getProjectOverview } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("activity.pageTitle");
 
 /**
  * Comprehensive Activity History (guidelines §40/§60 item 5; ticket 05,
@@ -26,36 +30,22 @@ export default async function ProjectActivityPage({
 
   const project = await getProjectOverview(id);
   if (!project) notFound();
+  const t = await getT();
+  const locale = await getLocale();
 
   const events = await getProjectActivity(id, { stageId });
   const stages = project.stages.slice().sort((a, b) => a.seq - b.seq);
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {project.name}
-      </Link>
-
-      <header className="mb-6">
-        <div className="flex items-center gap-2">
-          <ClockCounterClockwise size={24} className="text-muted-foreground" aria-hidden="true" />
-          <h1 className="text-[1.75rem] font-bold text-foreground">Activity history</h1>
-        </div>
-        <p className="mt-2 max-w-prose text-muted-foreground">
-          Every stage, task, variation, purchase order, funding request,
-          deposit, delivery, and payment event on this project, newest
-          first — assembled live from each record&rsquo;s own dates, nothing
-          stored separately.
-        </p>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        title={t("activity.pageTitle")}
+        subtitle={t("activity.subtitle")}
+      />
 
       {stages.length > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-2">
-          <FilterLink projectId={id} label="All stages" active={!stageId} />
+          <FilterLink projectId={id} label={t("activity.allStages")} active={!stageId} />
           {stages.map((s) => (
             <FilterLink
               key={s.id}
@@ -70,7 +60,7 @@ export default async function ProjectActivityPage({
 
       {events.length === 0 ? (
         <p className="rounded-lg border border-border bg-card p-4 text-muted-foreground">
-          Nothing recorded yet for this {stageId ? "stage" : "project"}.
+          {stageId ? t("activity.emptyStage") : t("activity.emptyProject")}
         </p>
       ) : (
         <Card>
@@ -82,13 +72,13 @@ export default async function ProjectActivityPage({
                     <p className="text-sm font-bold text-card-foreground group-hover:underline">
                       {event.summary}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">{event.stageName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{event.stageName}</p>
                   </div>
                   <time
                     dateTime={event.occurredAt}
-                    className="shrink-0 whitespace-nowrap text-xs text-muted-foreground"
+                    className="shrink-0 whitespace-nowrap text-sm text-muted-foreground"
                   >
-                    {formatDate(event.occurredAt)}
+                    {formatDate(event.occurredAt, locale)}
                   </time>
                 </Link>
               </li>
@@ -96,7 +86,7 @@ export default async function ProjectActivityPage({
           </ul>
         </Card>
       )}
-    </main>
+    </PageFrame>
   );
 }
 
@@ -117,7 +107,7 @@ function FilterLink({
   return (
     <Link
       href={href}
-      className={`inline-flex min-h-9 items-center rounded-lg border px-3 py-1 text-sm font-bold transition-colors ${
+      className={`inline-flex min-h-12 items-center rounded-lg border px-3 py-1 text-sm font-bold transition-colors ${
         active
           ? "border-foreground bg-foreground text-background"
           : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground"

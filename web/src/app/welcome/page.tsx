@@ -1,40 +1,39 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/Button";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Mhandisi Makini — Let's build together",
-  description: "Construction project management for the site engineer.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    // The tagline stays in English unless a translation is approved (brand guidelines).
+    title: { absolute: `${t("chrome.brand.name")} — ${t("chrome.brand.tagline")}` },
+    description: t("auth.welcome.description"),
+  };
+}
 
-export default function WelcomePage() {
+export default async function WelcomePage() {
+  const t = await getT();
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 text-center sm:px-6">
       <div className="flex w-full max-w-xl flex-col items-center">
-      <BrandLogo width={220} priority />
+        <div className="mb-6 flex w-full justify-end">
+          <LanguageSwitcher />
+        </div>
+        <BrandLogo width={220} priority />
 
-      <h1 className="mt-8 text-[2.25rem] font-bold leading-tight text-foreground">
-        A clearer view of your site
-      </h1>
-      <p className="mt-3 text-lg text-muted-foreground">
-        Construction project management for the site engineer. See where your
-        project&apos;s money stands, and what to do next.
-      </p>
+        <h1 className="mt-8 text-[2.25rem] font-bold leading-tight text-foreground">
+          {t("auth.welcome.heading")}
+        </h1>
+        <p className="mt-3 text-lg text-muted-foreground">{t("auth.welcome.body")}</p>
 
-      <div className="mt-8">
-        <Button variant="primary" href="/sign-in">
-          Sign in
-        </Button>
-      </div>
-
-      <p className="mt-6 text-sm text-muted-foreground">
-        Just looking?{" "}
-        <Link href="/" className="font-bold text-foreground underline">
-          Open the prototype
-        </Link>
-      </p>
+        <div className="mt-8">
+          <Button variant="primary" href="/sign-in">
+            {t("auth.welcome.signIn")}
+          </Button>
+        </div>
       </div>
     </main>
   );

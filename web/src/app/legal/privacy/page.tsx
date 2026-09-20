@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PRIVACY_VERSION } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Mhandisi Makini",
+  title: "Privacy policy",
 };
 
 export default function PrivacyPage() {

@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { SubcontractorInput } from "@/lib/validation/registers";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * The Subcontractor Register form (Slice 2.4b), shared by the new + edit
@@ -24,6 +25,7 @@ export function SubcontractorForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -31,17 +33,17 @@ export function SubcontractorForm({
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       <Card className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Subcontractor name" required error={errors.name}>
+          <Field label={t("subcontractors.form.name")} required error={errors.name}>
             <input name="name" defaultValue={initial?.name ?? ""} className={controlClass} />
           </Field>
           <Field
-            label="Trade"
-            hint="Mason, carpenter, steel-fixer, electrician…"
+            label={t("subcontractors.form.trade")}
+            hint={t("subcontractors.form.tradeHint")}
             error={errors.trade}
           >
             <input name="trade" defaultValue={initial?.trade ?? ""} className={controlClass} />
           </Field>
-          <Field label="Phone" error={errors.phone}>
+          <Field label={t("subcontractors.form.phone")} error={errors.phone}>
             <input
               name="phone"
               type="tel"
@@ -49,7 +51,7 @@ export function SubcontractorForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Email" error={errors.email}>
+          <Field label={t("subcontractors.form.email")} error={errors.email}>
             <input
               name="email"
               type="email"
@@ -58,23 +60,23 @@ export function SubcontractorForm({
             />
           </Field>
         </div>
-        <Field label="Address" error={errors.address}>
+        <Field label={t("subcontractors.form.address")} error={errors.address}>
           <input name="address" defaultValue={initial?.address ?? ""} className={controlClass} />
         </Field>
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <Field label="Status" error={errors.status}>
+        <Field label={t("subcontractors.form.status")} error={errors.status}>
           <select
             name="status"
             defaultValue={initial?.status ?? "active"}
             className={`${controlClass} cursor-pointer`}
           >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive — hide from new task assignments</option>
+            <option value="active">{t("subcontractors.form.active")}</option>
+            <option value="inactive">{t("subcontractors.form.inactive")}</option>
           </select>
         </Field>
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("subcontractors.form.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -85,19 +87,16 @@ export function SubcontractorForm({
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("subcontractors.form.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("subcontractors.form.cancel")}
+        </Button>
       </div>
     </form>
   );

@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { SiteDiaryEntryInput } from "@/lib/validation/site-diary";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Shared create/edit form for a Site Diary entry (Phase 4 Slice 4.1, ticket
@@ -26,6 +27,7 @@ export function SiteDiaryEntryForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -33,7 +35,7 @@ export function SiteDiaryEntryForm({
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       <Card className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Date" required error={errors.entryDate}>
+          <Field label={t("forms.diary.date")} required error={errors.entryDate}>
             <input
               name="entryDate"
               type="date"
@@ -41,12 +43,12 @@ export function SiteDiaryEntryForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Weather" error={errors.weather}>
+          <Field label={t("forms.diary.weather")} error={errors.weather}>
             <input name="weather" defaultValue={initial?.weather ?? ""} className={controlClass} />
           </Field>
         </div>
 
-        <Field label="Workers on site" error={errors.workersOnSite}>
+        <Field label={t("forms.diary.workersOnSite")} error={errors.workersOnSite}>
           <input
             name="workersOnSite"
             type="number"
@@ -56,7 +58,7 @@ export function SiteDiaryEntryForm({
           />
         </Field>
 
-        <Field label="Main activities" error={errors.activities}>
+        <Field label={t("forms.diary.activities")} error={errors.activities}>
           <textarea
             name="activities"
             rows={3}
@@ -66,8 +68,8 @@ export function SiteDiaryEntryForm({
         </Field>
 
         <Field
-          label="Materials received / used"
-          hint="Materials received and major materials used, together as one note."
+          label={t("forms.diary.materials")}
+          hint={t("forms.diary.materialsHint")}
           error={errors.materialsUsed}
         >
           <textarea
@@ -78,7 +80,7 @@ export function SiteDiaryEntryForm({
           />
         </Field>
 
-        <Field label="Equipment used" error={errors.equipmentUsed}>
+        <Field label={t("forms.diary.equipment")} error={errors.equipmentUsed}>
           <textarea
             name="equipmentUsed"
             rows={2}
@@ -88,7 +90,7 @@ export function SiteDiaryEntryForm({
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Delays" error={errors.delays}>
+          <Field label={t("forms.diary.delays")} error={errors.delays}>
             <textarea
               name="delays"
               rows={2}
@@ -96,7 +98,7 @@ export function SiteDiaryEntryForm({
               className={`${controlClass} min-h-16`}
             />
           </Field>
-          <Field label="Issues" error={errors.issues}>
+          <Field label={t("forms.diary.issues")} error={errors.issues}>
             <textarea
               name="issues"
               rows={2}
@@ -106,7 +108,7 @@ export function SiteDiaryEntryForm({
           </Field>
         </div>
 
-        <Field label="Instructions given" error={errors.instructions}>
+        <Field label={t("forms.diary.instructions")} error={errors.instructions}>
           <textarea
             name="instructions"
             rows={2}
@@ -115,11 +117,11 @@ export function SiteDiaryEntryForm({
           />
         </Field>
 
-        <Field label="Visitors" error={errors.visitors}>
+        <Field label={t("forms.diary.visitors")} error={errors.visitors}>
           <input name="visitors" defaultValue={initial?.visitors ?? ""} className={controlClass} />
         </Field>
 
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("forms.common.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -129,18 +131,15 @@ export function SiteDiaryEntryForm({
         </Field>
       </Card>
 
-      {state.error && <p className="text-sm font-bold text-destructive">{state.error}</p>}
+      {state.error && <Notice tone="error">{state.error}</Notice>}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("forms.common.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("forms.common.cancel")}
+        </Button>
       </div>
     </form>
   );

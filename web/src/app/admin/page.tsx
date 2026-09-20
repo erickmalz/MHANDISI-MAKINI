@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { requirePlatformAdmin } from "@/lib/auth/session";
 import { listAccountsForAdmin } from "@/lib/data/platform-admin";
 import { formatDate } from "@/lib/format";
+import { PageFrame } from "@/components/ui/PageFrame";
+
+export const metadata: Metadata = { title: "Accounts" };
 
 /**
  * The Account list (`.scratch/platform-admin/` ticket 03) — read-only,
@@ -14,7 +18,7 @@ export default async function AdminAccountsPage() {
   const accounts = await listAccountsForAdmin(user.id);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    <PageFrame width="working">
       <header className="mb-6">
         <h1 className="text-[1.75rem] font-bold text-foreground">Accounts</h1>
         <p className="mt-1 text-muted-foreground">
@@ -42,7 +46,7 @@ export default async function AdminAccountsPage() {
                     {a.fullName}
                   </Link>
                   {a.deletionScheduledAt && (
-                    <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                    <span className="rounded bg-destructive/10 px-2 py-0.5 text-sm font-bold text-destructive">
                       Deletion scheduled
                     </span>
                   )}
@@ -57,6 +61,6 @@ export default async function AdminAccountsPage() {
           ))}
         </ul>
       )}
-    </main>
+    </PageFrame>
   );
 }

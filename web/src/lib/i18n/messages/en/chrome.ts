@@ -1,0 +1,82 @@
+export const chrome = {
+  brand: {
+    name: "Mhandisi Makini",
+    tagline: "Let's build together",
+  },
+  metadata: {
+    title: "Mhandisi Makini — Construction project management",
+    description: "Construction project management for the site engineer. Client funds, procurement and labour, tracked project by project.",
+  },
+  skipToMain: "Skip to main content",
+  homeLink: "Mhandisi Makini — choose a project",
+  header: {
+    switchProject: "Switch project",
+    registers: "Registers",
+    settings: "Settings",
+    menu: "Menu",
+    signOut: {
+      idle: "Sign out",
+      pending: "Signing out…",
+      failed: "Try sign out again",
+    },
+  },
+  registers: {
+    suppliers: "Supplier register",
+    subcontractors: "Subcontractor register",
+    stageTemplates: "Stage templates",
+  },
+  language: {
+    switchTo: "Switch language to {language}",
+  },
+  project: {
+    actions: "Project actions",
+    edit: "Edit project",
+    saveAsTemplate: "Save as template",
+    closeout: "Project closeout",
+    sections: "Project sections",
+    tabs: {
+      overview: "Overview",
+      funding: "Funding requests",
+      procurement: "Purchase orders",
+      materialStock: "Material stock",
+      reports: "Reports",
+      activity: "Activity history",
+    },
+  },
+  verifyBanner: {
+    title: "Verify your email",
+    default: "We sent a link to {email}. Verifying unlocks password reset and changing your email.",
+    sent: "Sent. Check your inbox for the link.",
+    failed: "Could not send the link. Try again in a minute.",
+    resend: "Resend link",
+    sending: "Sending…",
+  },
+  verifyGate: {
+    title: "Verify your email to continue",
+    body: "Open the link we sent to {email}. It has been more than 7 days, so the rest of the app stays locked until you do. Nothing has been deleted.",
+    resend: "Resend the link",
+    resendAgain: "Link sent — resend",
+    sending: "Sending…",
+    sent: "Sent. Check your inbox (and spam).",
+    failed: "Could not send the link. Try again in a minute.",
+    wrongAccount: "Wrong account?",
+    stuck: "Stuck? Email {support}.",
+  },
+  error: {
+    title: "This page did not load",
+    body: "Try again. If it keeps happening, choose a project and open this page from there.",
+    reference: "Reference: {digest}",
+    retry: "Try again",
+    chooseProject: "Choose a project",
+  },
+  notFound: {
+    title: "Page not found",
+    body: "This page has moved or never existed. Choose a project to carry on.",
+    action: "Choose a project",
+  },
+  loader: {
+    site: "Loading your site",
+    workspace: "Preparing your workspace",
+    wait: "{label}. Please wait.",
+  },
+} as const;

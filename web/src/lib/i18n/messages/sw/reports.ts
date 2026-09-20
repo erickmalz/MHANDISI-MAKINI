@@ -1,0 +1,141 @@
+import type { reports as enReports } from "../en/reports";
+import type { Widen } from "../../types";
+
+export const reports: Widen<typeof enReports> = {
+  pageTitle: "Ripoti",
+  loading: "Inapakia ripoti",
+  total: "Jumla",
+  index: {
+    subtitle:
+      "Mwonekano wa moja kwa moja na wa sasa wa takwimu za mradi huu — huhesabiwa upya kila unapotembelea, hakuna kinachohifadhiwa. Si nyaraka zilizotolewa, kwa hivyo hakuna cha kupakua hapa.",
+  },
+  taskStatus: {
+    planned: "Imepangwa",
+    active: "Inaendelea",
+    onHold: "Imesimamishwa",
+    completed: "Imekamilika",
+    cancelled: "Imeghairiwa",
+  },
+  financialSummary: {
+    pageTitle: "Ripoti ya muhtasari wa fedha",
+    label: "Muhtasari wa fedha za mradi",
+    description:
+      "Fedha zilizoombwa, ada, ahadi za malipo, malipo, fedha zinazopatikana na makadirio — hatua kwa hatua.",
+    fundingRequested: "Fedha zilizoombwa",
+    fundingReceived: "Fedha zilizopokelewa",
+    feesInvoiced: "Ada zilizotozwa",
+    feesReceived: "Ada zilizopokelewa",
+    feesOutstanding: "Ada zilizobaki",
+    commitments: "Ahadi za malipo",
+    payments: "Malipo",
+    availableFloat: "Fedha zinazopatikana",
+    forecastShortfall: "Upungufu unaokadiriwa",
+    stageByStage: "Hatua kwa hatua",
+    noStages: "Mradi huu hauna hatua bado.",
+    caption: "Hali ya fedha kwa kila hatua",
+    columns: {
+      stage: "Hatua",
+      health: "Hali ya fedha",
+      clientDeposits: "Amana za mteja",
+      commitments: "Ahadi za malipo",
+      payments: "Malipo",
+      availableFloat: "Fedha zinazopatikana",
+      forecastRequirement: "Mahitaji yanayokadiriwa",
+    },
+  },
+  materialCost: {
+    pageTitle: "Ripoti ya gharama ya vifaa",
+    label: "Ripoti ya gharama ya vifaa",
+    description:
+      "Gharama iliyokadiriwa, iliyorekebishwa na halisi ya vifaa dhidi ya orodha ya mahitaji, kwa kila hatua.",
+    noStages: "Mradi huu hauna hatua bado.",
+    caption: "Gharama ya vifaa kwa kila hatua",
+    columns: {
+      stage: "Hatua",
+      estimated: "Iliyokadiriwa",
+      revised: "Iliyorekebishwa",
+      actual: "Halisi",
+      variance: "Tofauti",
+    },
+  },
+  procurement: {
+    pageTitle: "Ripoti ya manunuzi",
+    label: "Ripoti ya manunuzi",
+    description:
+      "Kila Oda ya ununuzi dhidi ya kinachohitajika kwenye orodha ya mahitaji — kilichoagizwa, kilichowasilishwa, kilicholipwa.",
+    required: "Kinachohitajika",
+    ordered: "Kilichoagizwa",
+    delivered: "Kilichowasilishwa",
+    paid: "Kilicholipwa",
+    outstanding: "Kilichobaki kulipwa",
+    empty: "Hakuna Oda za ununuzi zilizoandaliwa kwenye mradi huu bado.",
+    caption: "Oda za ununuzi",
+    columns: {
+      order: "Oda",
+      stage: "Hatua",
+      supplier: "Msambazaji",
+      ordered: "Kilichoagizwa",
+      delivered: "Kilichowasilishwa",
+      paid: "Kilicholipwa",
+      outstanding: "Kilichobaki kulipwa",
+    },
+  },
+  labour: {
+    pageTitle: "Ripoti ya fundi",
+    label: "Ripoti ya fundi",
+    description:
+      "Mkandarasi msaidizi wa kila Kazi, kiasi cha fundi kilichokubaliwa na kilichorekebishwa, kilicholipwa na kilichobaki.",
+    empty: "Hakuna Kazi zilizorekodiwa kwenye mradi huu bado.",
+    caption: "Fundi kwa kila kazi",
+    columns: {
+      task: "Kazi",
+      subcontractor: "Mkandarasi msaidizi",
+      stage: "Hatua",
+      agreed: "Kilichokubaliwa",
+      revised: "Kilichorekebishwa",
+      paid: "Kilicholipwa",
+      outstanding: "Kilichobaki kulipwa",
+    },
+  },
+  funding: {
+    pageTitle: "Ripoti ya maombi ya fedha",
+    label: "Ripoti ya maombi ya fedha",
+    description:
+      "Kila Ombi la fedha — kiasi kilichoombwa, kilichowekwa, salio na hali.",
+    requested: "Lililoombwa",
+    deposited: "Lililowekwa",
+    balance: "Salio",
+    empty: "Hakuna Maombi ya fedha yaliyoandaliwa kwenye mradi huu bado.",
+    caption: "Maombi ya fedha",
+    additional: "Ziada",
+    columns: {
+      request: "Ombi",
+      stage: "Hatua",
+      requested: "Lililoombwa",
+      deposited: "Lililowekwa",
+      balance: "Salio",
+    },
+  },
+  variations: {
+    pageTitle: "Ripoti ya mabadiliko ya kazi",
+    label: "Ripoti ya mabadiliko ya kazi",
+    description:
+      "Athari ya wigo, gharama ya ziada, idhini na hali ya fedha ya kila Badiliko la kazi.",
+    totalAdditional: "Jumla ya gharama ya ziada (iliyoidhinishwa)",
+    empty: "Hakuna Mabadiliko ya kazi yaliyorekodiwa kwenye mradi huu bado.",
+    caption: "Mabadiliko ya kazi",
+    columns: {
+      variation: "Badiliko la kazi",
+      scopeImpact: "Athari ya wigo",
+      additionalCost: "Gharama ya ziada",
+      approvalStatus: "Hali ya idhini",
+      fundingStatus: "Hali ya fedha",
+    },
+    fundingStatus: {
+      notApplicable: "Haihusiki",
+      notLinked: "Halijaunganishwa na ombi la fedha",
+      pending: "Ombi la fedha linasubiriwa",
+      funded: "Limepewa fedha",
+    },
+  },
+};

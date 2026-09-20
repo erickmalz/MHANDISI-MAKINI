@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,20 +8,21 @@ import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { StageTemplateStage } from "@/lib/stage-templates";
 import type { ProjectInput } from "@/lib/validation/structure";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
+import { PROJECT_STATUS_KEYS } from "./status-keys";
 
 type TemplateOption = { id: string; name: string; stages: StageTemplateStage[] };
 
-const ESTIMATE_MODELS: { value: ProjectInput["estimateModel"]; label: string }[] = [
-  { value: "budget", label: "Budget — client pays actual material cost" },
-  { value: "fixed_price", label: "Fixed price — client pays the estimate" },
+const ESTIMATE_MODELS: { value: ProjectInput["estimateModel"]; labelKey: MessageKey }[] = [
+  { value: "budget", labelKey: "forms.project.estimateModel.budget" },
+  { value: "fixed_price", labelKey: "forms.project.estimateModel.fixedPrice" },
 ];
 
-const STATUSES: { value: ProjectInput["status"]; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "on_hold", label: "On hold" },
-  { value: "completed", label: "Completed" },
-  { value: "archived", label: "Archived" },
-];
+const STATUSES: { value: ProjectInput["status"]; labelKey: MessageKey }[] = (
+  ["active", "on_hold", "completed", "archived"] as const
+).map((value) => ({ value, labelKey: PROJECT_STATUS_KEYS[value] }));
 
 export function ProjectForm({
   action,
@@ -40,6 +40,7 @@ export function ProjectForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -75,27 +76,28 @@ export function ProjectForm({
       <Card className="flex flex-col gap-4">
         {projectCode && (
           <p className="text-sm text-muted-foreground">
-            Project number <span className="font-bold text-foreground">{projectCode}</span>{" "}
-            — assigned on creation and fixed.
+            {t("forms.project.numberLabel")}{" "}
+            <span className="font-bold text-foreground">{projectCode}</span> —{" "}
+            {t("forms.project.numberNote")}
           </p>
         )}
 
-        <Field label="Project name" required error={errors.name}>
+        <Field label={t("forms.project.name")} required error={errors.name}>
           <input name="name" defaultValue={initial?.name ?? ""} className={controlClass} />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Client name" required error={errors.clientName}>
+          <Field label={t("forms.project.clientName")} required error={errors.clientName}>
             <input
               name="clientName"
               defaultValue={initial?.clientName ?? ""}
               className={controlClass}
             />
           </Field>
-          <Field label="Site" required error={errors.site}>
+          <Field label={t("forms.project.site")} required error={errors.site}>
             <input name="site" defaultValue={initial?.site ?? ""} className={controlClass} />
           </Field>
-          <Field label="Client phone" error={errors.clientPhone}>
+          <Field label={t("forms.project.clientPhone")} error={errors.clientPhone}>
             <input
               name="clientPhone"
               type="tel"
@@ -103,7 +105,7 @@ export function ProjectForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Client email" error={errors.clientEmail}>
+          <Field label={t("forms.project.clientEmail")} error={errors.clientEmail}>
             <input
               name="clientEmail"
               type="email"
@@ -117,8 +119,8 @@ export function ProjectForm({
       {templates && templates.length > 0 && (
         <Card className="flex flex-col gap-4">
           <Field
-            label="Start from a template"
-            hint="Optional — a template is a starting point. Uncheck anything you don't want; you can still add stages and tasks manually afterwards."
+            label={t("forms.project.template.label")}
+            hint={t("forms.project.template.hint")}
           >
             <select
               value={templateId}
@@ -128,7 +130,7 @@ export function ProjectForm({
               }}
               className={`${controlClass} cursor-pointer`}
             >
-              <option value="">None — start with an empty project</option>
+              <option value="">{t("forms.project.template.none")}</option>
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -176,7 +178,7 @@ export function ProjectForm({
 
       <Card className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Estimate model" error={errors.estimateModel}>
+          <Field label={t("forms.project.estimateModel.label")} error={errors.estimateModel}>
             <select
               name="estimateModel"
               defaultValue={initial?.estimateModel ?? "budget"}
@@ -184,12 +186,12 @@ export function ProjectForm({
             >
               {ESTIMATE_MODELS.map((m) => (
                 <option key={m.value} value={m.value}>
-                  {m.label}
+                  {t(m.labelKey)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Status" error={errors.status}>
+          <Field label={t("forms.common.status")} error={errors.status}>
             <select
               name="status"
               defaultValue={initial?.status ?? "active"}
@@ -197,12 +199,12 @@ export function ProjectForm({
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
-                  {s.label}
+                  {t(s.labelKey)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Started on" error={errors.startedOn}>
+          <Field label={t("forms.common.startedOn")} error={errors.startedOn}>
             <input
               name="startedOn"
               type="date"
@@ -210,7 +212,7 @@ export function ProjectForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Expected completion" error={errors.expectedCompletionOn}>
+          <Field label={t("forms.project.expectedCompletion")} error={errors.expectedCompletionOn}>
             <input
               name="expectedCompletionOn"
               type="date"
@@ -220,7 +222,7 @@ export function ProjectForm({
           </Field>
         </div>
 
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("forms.common.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -231,19 +233,16 @@ export function ProjectForm({
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("forms.common.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("forms.common.cancel")}
+        </Button>
       </div>
     </form>
   );

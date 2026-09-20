@@ -69,6 +69,12 @@ export async function requirePlatformAdmin(): Promise<{
   if (!result) redirect("/sign-in");
 
   const admin = await isPlatformAdmin(result.user.id);
+  // TEMP DIAGNOSTIC — remove after confirming production behaviour.
+  console.error("[platform-admin-debug]", {
+    userId: result.user.id,
+    email: result.user.email,
+    admin,
+  });
   if (!admin) redirect("/");
 
   return { user: result.user };

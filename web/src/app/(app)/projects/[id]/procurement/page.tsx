@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { Plus, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProjectOverview, listPurchaseOrders } from "@/lib/data";
 import {
   derivePOStatus,
@@ -11,6 +11,11 @@ import {
 import { Money } from "@/components/ui/Money";
 import { Button } from "@/components/ui/Button";
 import { POStatusBadge } from "./_components/POStatusBadge";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("procurement.pageTitle");
 
 export default async function ProcurementPage({ params }: PageProps<"/projects/[id]/procurement">) {
   const { id } = await params;
@@ -18,34 +23,26 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
   if (!project) notFound();
 
   const orders = await listPurchaseOrders(project.id);
+  const t = await getT();
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${project.id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {project.name}
-      </Link>
-
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[1.75rem] font-bold text-foreground">Purchase orders</h1>
-          <p className="mt-1 text-muted-foreground">
-            Ordered, delivered, and paid are tracked separately for every
-            material commitment.
-          </p>
-        </div>
-        <Button variant="primary" href={`/projects/${project.id}/procurement/new`}>
-          <Plus size={20} aria-hidden="true" />
-          Create purchase order
-        </Button>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        title={t("procurement.pageTitle")}
+        subtitle={t("procurement.list.subtitle")}
+        actions={
+          <>
+            <Button variant="primary" href={`/projects/${project.id}/procurement/new`}>
+              <Plus size={20} aria-hidden="true" />
+              {t("procurement.list.create")}
+            </Button>
+          </>
+        }
+      />
 
       {orders.length === 0 ? (
         <p className="rounded-lg border border-border bg-card p-4 text-muted-foreground">
-          No purchase orders yet. Create the first one.
+          {t("procurement.list.empty")}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -63,7 +60,7 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-card-foreground">
-                      {po.displayNumber ?? "Draft"}
+                      {po.displayNumber ?? t("procurement.list.draft")}
                     </span>
                     <POStatusBadge status={status} size="sm" />
                   </div>
@@ -72,9 +69,9 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-1 sm:grid sm:grid-cols-3 sm:gap-6 sm:text-right">
-                  <MiniStat label="Ordered" amount={ordered} />
-                  <MiniStat label="Delivered" amount={delivered} />
-                  <MiniStat label="Paid" amount={paid} />
+                  <MiniStat label={t("procurement.list.ordered")} amount={ordered} />
+                  <MiniStat label={t("procurement.list.delivered")} amount={delivered} />
+                  <MiniStat label={t("procurement.list.paid")} amount={paid} />
                 </div>
                 <CaretRight
                   size={18}
@@ -86,7 +83,7 @@ export default async function ProcurementPage({ params }: PageProps<"/projects/[
           })}
         </div>
       )}
-    </main>
+    </PageFrame>
   );
 }
 

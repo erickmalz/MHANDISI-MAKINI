@@ -1,10 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { getMaterialCostReport } from "@/lib/data";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataTable } from "@/components/ui/DataTable";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("reports.materialCost.pageTitle");
 
 /**
  * Material Cost Report (guidelines §38, Phase 4 ticket 06) — Estimated
@@ -20,84 +24,101 @@ export default async function MaterialCostReportPage({
   const { id } = await params;
   const report = await getMaterialCostReport(id);
   if (!report) notFound();
+  const t = await getT();
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${report.projectId}/reports`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Reports
-      </Link>
-
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">{report.projectCode}</p>
-        <h1 className="text-[1.75rem] font-bold text-foreground">
-          Material Cost Report
-        </h1>
-        <p className="mt-1 text-muted-foreground">{report.projectName}</p>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
+        title={t("reports.materialCost.label")}
+      />
 
       <Card>
         {report.rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            This project has no stages yet.
+            {t("reports.materialCost.noStages")}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-2 pr-4 font-bold">Stage</th>
-                  <th className="py-2 pr-4 text-right font-bold">Estimated</th>
-                  <th className="py-2 pr-4 text-right font-bold">Revised</th>
-                  <th className="py-2 pr-4 text-right font-bold">Actual</th>
-                  <th className="py-2 text-right font-bold">Variance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.rows.map((r) => (
-                  <tr key={r.stageId} className="border-b border-border last:border-0">
-                    <td className="py-2 pr-4 font-bold text-card-foreground">
-                      {r.stageName}
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.estimatedOriginal} className="text-card-foreground" />
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.estimatedRevised} className="text-card-foreground" />
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.actual} className="text-card-foreground" />
-                    </td>
-                    <td className="py-2 text-right">
-                      <Money amount={r.variance} className="font-bold text-card-foreground" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-border font-bold text-card-foreground">
-                  <td className="py-2 pr-4">Total</td>
-                  <td className="py-2 pr-4 text-right">
+          <DataTable
+            caption={t("reports.materialCost.caption")}
+            totalLabel={t("reports.total")}
+            rows={report.rows}
+            rowKey={(r) => r.stageId}
+            columns={[
+              {
+                key: "stage",
+                header: t("reports.materialCost.columns.stage"),
+                className: "font-bold text-card-foreground",
+                cell: (r) => (
+                  <>
+                    {r.stageName}
+                  </>
+                ),
+              },
+              {
+                key: "estimated",
+                header: t("reports.materialCost.columns.estimated"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.estimatedOriginal} className="text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.estimatedOriginal} />
-                  </td>
-                  <td className="py-2 pr-4 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "revised",
+                header: t("reports.materialCost.columns.revised"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.estimatedRevised} className="text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.estimatedRevised} />
-                  </td>
-                  <td className="py-2 pr-4 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "actual",
+                header: t("reports.materialCost.columns.actual"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.actual} className="text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.actual} />
-                  </td>
-                  <td className="py-2 text-right">
+                  </>
+                ),
+              },
+              {
+                key: "variance",
+                header: t("reports.materialCost.columns.variance"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.variance} className="font-bold text-card-foreground" />
+                  </>
+                ),
+                total: (
+                  <>
                     <Money amount={report.totals.variance} />
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                  </>
+                ),
+              },
+            ]}
+          />
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }

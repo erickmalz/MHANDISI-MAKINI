@@ -1,10 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createTemplateFromProjectAction } from "@/app/actions/stage-templates";
 import { getProjectOverview } from "@/lib/data";
 import { SaveAsTemplateForm } from "./_components/SaveAsTemplateForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("closeout.saveAsTemplate.pageTitle");
 
 /**
  * "Save as template" (Operational Control decision 2) — copies this
@@ -16,34 +19,22 @@ export default async function SaveAsTemplatePage({
   params,
 }: PageProps<"/projects/[id]/save-as-template">) {
   const { id } = await params;
-  const project = await getProjectOverview(id);
+  const [project, t] = await Promise.all([getProjectOverview(id), getT()]);
   if (!project) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {project.name}
-      </Link>
-
-      <h1 className="mb-1 text-[1.75rem] font-bold text-foreground">
-        Save as template
-      </h1>
-      <p className="mb-6 text-muted-foreground">
-        Copies every stage and task name, and every material&rsquo;s name and
-        unit, into a new template. No amounts, quantities, or client details
-        come with it, and this project is not linked to the template
-        afterwards.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("closeout.crumbOverview"), href: `/projects/${id}` }]}
+        title={t("closeout.saveAsTemplate.pageTitle")}
+        subtitle={t("closeout.saveAsTemplate.subtitle")}
+      />
 
       <SaveAsTemplateForm
         action={createTemplateFromProjectAction.bind(null, id)}
         defaultName={project.name}
         cancelHref={`/projects/${id}`}
       />
-    </main>
+    </PageFrame>
   );
 }

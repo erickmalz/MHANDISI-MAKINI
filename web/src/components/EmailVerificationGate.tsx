@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 
 import { authClient } from "@/lib/auth/client";
+import { useRich, useT } from "@/lib/i18n/client";
 import { Button } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
 import { BrandLogo } from "./BrandLogo";
 import { SignOutButton } from "./SignOutButton";
 
@@ -13,6 +15,8 @@ import { SignOutButton } from "./SignOutButton";
  * nothing else is reachable until the link is clicked.
  */
 export function EmailVerificationGate({ email }: { email: string }) {
+  const t = useT();
+  const rich = useRich();
   const [pending, startTransition] = useTransition();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
@@ -34,40 +38,44 @@ export function EmailVerificationGate({ email }: { email: string }) {
       <div className="flex w-full max-w-md flex-col items-center">
         <BrandLogo width={160} priority />
         <h1 className="mt-8 text-[1.75rem] font-bold text-foreground">
-          Verify your email to continue
+          {t("chrome.verifyGate.title")}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Open the link we sent to <span className="font-bold">{email}</span>.
-          It has been more than 7 days, so the rest of the app stays locked
-          until you do. Nothing has been deleted.
+          {rich("chrome.verifyGate.body", { email: <span className="font-bold">{email}</span> })}
         </p>
 
         <div className="mt-6">
           <Button variant="primary" onClick={resend} disabled={pending}>
-            {pending ? "Sending…" : sent ? "Link sent — resend" : "Resend the link"}
+            {pending
+              ? t("chrome.verifyGate.sending")
+              : sent
+                ? t("chrome.verifyGate.resendAgain")
+                : t("chrome.verifyGate.resend")}
           </Button>
         </div>
 
         {sent && (
-          <p className="mt-3 text-sm text-mm-success">
-            Sent. Check your inbox (and spam).
-          </p>
+          <Notice tone="success" className="mt-3 text-left">
+            {t("chrome.verifyGate.sent")}
+          </Notice>
         )}
         {error && (
-          <p className="mt-3 text-sm text-mm-error">
-            Could not send the link. Try again in a minute.
-          </p>
+          <Notice tone="error" className="mt-3 text-left">
+            {t("chrome.verifyGate.failed")}
+          </Notice>
         )}
 
         <p className="mt-8 text-sm text-muted-foreground">
-          Wrong account? <SignOutButton variant="inline" />
+          {t("chrome.verifyGate.wrongAccount")} <SignOutButton variant="inline" />
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Stuck? Email{" "}
-          <a className="font-bold text-foreground underline" href="mailto:support@mhandisimakini.app">
-            support@mhandisimakini.app
-          </a>
-          .
+          {rich("chrome.verifyGate.stuck", {
+            support: (
+              <a className="font-bold text-foreground underline" href="mailto:support@mhandisimakini.app">
+                {"support@mhandisimakini.app"}
+              </a>
+            ),
+          })}
         </p>
       </div>
     </main>

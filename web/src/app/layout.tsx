@@ -1,17 +1,32 @@
 import type { Metadata } from "next";
+import { FocusFirstInvalid } from "@/components/FocusFirstInvalid";
+import { catalogues } from "@/lib/i18n/catalogues";
+import { I18nProvider } from "@/lib/i18n/client";
+import { getLocale, getT } from "@/lib/i18n/server";
+import { dejaVu } from "./fonts/dejavu";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Mhandisi Makini — Construction project management",
-  description:
-    "Construction project management for the site engineer. Client funds, procurement and labour, tracked project by project.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    // Pages set a short title ("Funding requests"); the template adds the brand.
+    title: {
+      default: t("chrome.metadata.title"),
+      template: "%s — Mhandisi Makini",
+    },
+    description: t("chrome.metadata.description"),
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang={locale} className={`${dejaVu.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {children}
+        <I18nProvider locale={locale} messages={catalogues[locale]}>
+          {children}
+          <FocusFirstInvalid />
+        </I18nProvider>
       </body>
     </html>
   );
