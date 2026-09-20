@@ -67,7 +67,7 @@ export default async function StageTemplatesPage() {
                 <form action={deleteStageTemplateAction.bind(null, t.id)}>
                   <button
                     type="submit"
-                    className="inline-flex min-h-12 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-destructive"
+                    className="inline-flex min-h-12 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                   >
                     <Trash size={16} aria-hidden="true" />
                     Delete

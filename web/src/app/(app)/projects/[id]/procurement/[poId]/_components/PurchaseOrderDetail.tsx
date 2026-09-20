@@ -302,7 +302,7 @@ function DraftActions({
         <form action={discardAction}>
           <button
             type="submit"
-            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline"
+            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
           >
             Discard draft
           </button>
@@ -728,7 +728,7 @@ function TerminalCard({
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline disabled:opacity-50"
+            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline disabled:opacity-50 rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
           >
             {pending ? "Cancelling…" : "Cancel this order"}
           </button>
@@ -751,7 +751,7 @@ function VoidForm({ action, label }: { action: Bound; label: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-10 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-destructive hover:underline disabled:opacity-50"
+        className="inline-flex min-h-10 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-destructive hover:underline disabled:opacity-50 rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
       >
         <Trash size={14} aria-hidden="true" />
         {label}

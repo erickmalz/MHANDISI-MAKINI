@@ -81,7 +81,7 @@ export function StageList({
                     <form action={setCurrentStageAction.bind(null, projectId, stage.id)}>
                       <button
                         type="submit"
-                        className="cursor-pointer text-sm font-bold text-muted-foreground hover:text-foreground"
+                        className="cursor-pointer text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
                       >
                         Work this stage
                       </button>

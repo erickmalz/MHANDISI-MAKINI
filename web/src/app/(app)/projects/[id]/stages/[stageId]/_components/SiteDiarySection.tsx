@@ -87,7 +87,7 @@ export function SiteDiarySection({
                     >
                       <button
                         type="submit"
-                        className="min-h-12 cursor-pointer px-1 text-sm font-semibold text-destructive hover:underline"
+                        className="min-h-12 cursor-pointer px-1 text-sm font-semibold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
                       >
                         Delete
                       </button>

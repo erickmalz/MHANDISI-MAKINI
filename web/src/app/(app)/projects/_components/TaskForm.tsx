@@ -334,7 +334,7 @@ export function TaskForm({
                       type="button"
                       aria-label={`Remove material line ${i + 1}`}
                       onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                      className="cursor-pointer text-muted-foreground hover:text-destructive"
+                      className="cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                     >
                       <Trash size={16} aria-hidden="true" />
                     </button>
@@ -393,7 +393,7 @@ export function TaskForm({
           <button
             type="button"
             onClick={() => setLines([...lines, { ...emptyLine }])}
-            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
+            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
           >
             <Plus size={16} aria-hidden="true" />
             Add material line

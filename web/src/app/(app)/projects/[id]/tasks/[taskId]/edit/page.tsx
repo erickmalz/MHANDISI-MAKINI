@@ -70,7 +70,7 @@ export default async function EditTaskPage({
           <form action={deleteTaskAction.bind(null, id, task.stageId, taskId)}>
             <button
               type="submit"
-              className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline"
+              className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
             >
               Delete this task
             </button>

@@ -56,7 +56,7 @@ export function PhotoStrip({
               <form action={deleteAction.bind(null, p.id)}>
                 <button
                   type="submit"
-                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-destructive hover:underline"
+                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
                 >
                   <Trash size={12} aria-hidden="true" />
                   Remove
@@ -95,7 +95,7 @@ export function PhotoStrip({
         </div>
 
         <details className="text-sm">
-          <summary className="cursor-pointer font-bold text-muted-foreground">
+          <summary className="cursor-pointer font-bold text-muted-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground">
             Caption, GPS &amp; capture date (optional)
           </summary>
           <div className="mt-3 flex flex-wrap gap-3">
