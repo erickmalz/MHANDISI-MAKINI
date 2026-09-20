@@ -6,6 +6,13 @@ import { AccountDeletionForm } from "./_components/AccountDeletionForm";
 import { AccountLogoForm } from "./_components/AccountLogoForm";
 import { AccountProfileForm } from "./_components/AccountProfileForm";
 import { DataExportCard } from "./_components/DataExportCard";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Card } from "@/components/ui/Card";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("settings.pageTitle");
 
 /**
  * Account settings (Slice 2.8) — name/phone, letterhead logo, the (read-only)
@@ -20,6 +27,7 @@ export default async function SettingsPage() {
     getAccountDeletionStatus(),
   ]);
   if (!profile) notFound();
+  const t = await getT();
 
   let deleteAt: Date | null = null;
   if (deletionStatus.scheduledAt) {
@@ -28,10 +36,20 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-6 text-[1.75rem] font-bold text-foreground">Settings</h1>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("settings.crumbProjects"), href: "/" }]}
+        title={t("settings.title")}
+      />
 
       <div className="flex flex-col gap-6">
+        <Card>
+          <h2 className="text-xl font-bold text-card-foreground">{t("settings.language.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("settings.language.hint")}</p>
+          <div className="mt-4">
+            <LanguageSwitcher />
+          </div>
+        </Card>
         <AccountProfileForm
           initial={{ fullName: profile.fullName, phone: profile.phone }}
           email={profile.email}
@@ -40,6 +58,6 @@ export default async function SettingsPage() {
         <DataExportCard />
         <AccountDeletionForm email={profile.email} deleteAt={deleteAt} />
       </div>
-    </main>
+    </PageFrame>
   );
 }

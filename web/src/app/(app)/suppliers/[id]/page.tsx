@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { getSupplierStatement } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { Button } from "@/components/ui/Button";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("suppliers.statement.pageTitle");
 
 /**
  * The Supplier Statement (Operational Control decision 5) — an always-live,
@@ -17,41 +22,33 @@ export default async function SupplierStatementPage({
   params,
 }: PageProps<"/suppliers/[id]">) {
   const { id } = await params;
-  const statement = await getSupplierStatement(id);
+  const [statement, t, locale] = await Promise.all([getSupplierStatement(id), getT(), getLocale()]);
   if (!statement) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/suppliers"
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Supplier register
-      </Link>
-
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[1.75rem] font-bold text-foreground">{statement.name}</h1>
-          <p className="mt-1 text-muted-foreground">Statement of account, every project</p>
-        </div>
-        <Link
-          href={`/suppliers/${id}/edit`}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Edit details
-        </Link>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("suppliers.crumbProjects"), href: "/" }, { label: t("suppliers.crumbRegister"), href: "/suppliers" }]}
+        title={statement.name}
+        subtitle={t("suppliers.statement.subtitle")}
+        actions={
+          <>
+            <Button variant="ghost" href={`/suppliers/${id}/edit`}>
+              {t("suppliers.statement.editDetails")}
+            </Button>
+          </>
+        }
+      />
 
       <Card className="mb-6 flex items-center justify-between">
-        <span className="text-lg font-bold text-card-foreground">Outstanding balance</span>
+        <span className="text-lg font-bold text-card-foreground">{t("suppliers.statement.outstanding")}</span>
         <Money amount={statement.outstandingBalance} className="text-xl font-bold text-card-foreground" />
       </Card>
 
       <Card className="mb-6">
-        <h2 className="text-xl font-bold text-card-foreground">Orders</h2>
+        <h2 className="text-xl font-bold text-card-foreground">{t("suppliers.statement.orders")}</h2>
         {statement.orders.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">No Purchase Orders yet.</p>
+          <p className="mt-4 text-muted-foreground">{t("suppliers.statement.noOrders")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.orders.map((o) => (
@@ -64,7 +61,7 @@ export default async function SupplierStatementPage({
                   className="min-w-0 hover:underline"
                 >
                   <span className="font-bold text-card-foreground">
-                    {o.displayNumber ?? "Draft"}
+                    {o.displayNumber ?? t("suppliers.statement.draft")}
                   </span>{" "}
                   <span className="text-sm text-muted-foreground">
                     {o.projectName} — {o.stageName}
@@ -78,9 +75,9 @@ export default async function SupplierStatementPage({
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold text-card-foreground">Payments</h2>
+        <h2 className="text-xl font-bold text-card-foreground">{t("suppliers.statement.payments")}</h2>
         {statement.payments.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">No payments recorded yet.</p>
+          <p className="mt-4 text-muted-foreground">{t("suppliers.statement.noPayments")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.payments.map((p) => (
@@ -92,9 +89,9 @@ export default async function SupplierStatementPage({
                   href={`/projects/${p.projectId}/procurement/${p.purchaseOrderId}`}
                   className="min-w-0 hover:underline"
                 >
-                  <span className="text-sm text-muted-foreground">{formatDate(p.paidOn)}</span>{" "}
+                  <span className="text-sm text-muted-foreground">{formatDate(p.paidOn, locale)}</span>{" "}
                   <span className="font-bold text-card-foreground">
-                    {p.displayNumber ?? "Draft"}
+                    {p.displayNumber ?? t("suppliers.statement.draft")}
                   </span>{" "}
                   <span className="text-sm text-muted-foreground">— {p.projectName}</span>
                 </Link>
@@ -104,6 +101,6 @@ export default async function SupplierStatementPage({
           </ul>
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }

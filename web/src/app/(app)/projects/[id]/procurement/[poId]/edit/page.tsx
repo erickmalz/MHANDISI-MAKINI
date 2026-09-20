@@ -1,16 +1,20 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { updatePurchaseOrderAction } from "@/app/actions/procurement";
 import { getPurchaseOrderDraftInput, listSuppliers } from "@/lib/data";
 import { PurchaseOrderForm } from "../../../../_components/PurchaseOrderForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("procurement.editPageTitle");
 
 export default async function EditPurchaseOrderPage({
   params,
 }: PageProps<"/projects/[id]/procurement/[poId]/edit">) {
   const { id, poId } = await params;
 
+  const t = await getT();
   const [draft, suppliers] = await Promise.all([
     getPurchaseOrderDraftInput(poId),
     listSuppliers(),
@@ -24,21 +28,15 @@ export default async function EditPurchaseOrderPage({
     .map((s) => ({ id: s.id, name: s.name, status: s.status }));
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/procurement/${poId}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Back to the draft
-      </Link>
-
-      <h1 className="mb-2 text-[1.75rem] font-bold text-foreground">
-        Edit draft purchase order
-      </h1>
-      <p className="mb-6 max-w-prose text-muted-foreground">
-        Adjust the supplier, lines and terms before issuing.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[
+          { label: t("procurement.pageTitle"), href: `/projects/${id}/procurement` },
+          { label: t("procurement.detailPageTitle"), href: `/projects/${id}/procurement/${poId}` },
+        ]}
+        title={t("procurement.edit.title")}
+        subtitle={t("procurement.edit.subtitle")}
+      />
 
       <PurchaseOrderForm
         action={updatePurchaseOrderAction.bind(null, id, poId)}
@@ -51,9 +49,9 @@ export default async function EditPurchaseOrderPage({
           notes: draft.notes,
           lines: draft.lines,
         }}
-        submitLabel="Save draft"
+        submitLabel={t("procurement.edit.saveDraft")}
         cancelHref={`/projects/${id}/procurement/${poId}`}
       />
-    </main>
+    </PageFrame>
   );
 }

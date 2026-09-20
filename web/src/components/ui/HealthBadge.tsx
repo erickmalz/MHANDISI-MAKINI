@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CheckCircle,
   Warning,
@@ -5,35 +7,18 @@ import {
   Clock,
 } from "@phosphor-icons/react/dist/ssr";
 import type { FinancialHealth } from "@/lib/types";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
+import { StatusBadge, type StatusTone } from "./StatusBadge";
 
 const HEALTH_CONFIG: Record<
   FinancialHealth,
-  { label: string; text: string; bg: string; Icon: typeof CheckCircle }
+  { label: MessageKey; tone: StatusTone; Icon: typeof CheckCircle }
 > = {
-  green: {
-    label: "Comfortable",
-    text: "text-health-green",
-    bg: "bg-health-green-bg",
-    Icon: CheckCircle,
-  },
-  amber: {
-    label: "Tight",
-    text: "text-health-amber",
-    bg: "bg-health-amber-bg",
-    Icon: Warning,
-  },
-  red: {
-    label: "Underfunded",
-    text: "text-health-red",
-    bg: "bg-health-red-bg",
-    Icon: WarningCircle,
-  },
-  blue: {
-    label: "Funding pending",
-    text: "text-health-blue",
-    bg: "bg-health-blue-bg",
-    Icon: Clock,
-  },
+  green: { label: "common.health.comfortable", tone: "success", Icon: CheckCircle },
+  amber: { label: "common.health.tight", tone: "warning", Icon: Warning },
+  red: { label: "common.health.underfunded", tone: "danger", Icon: WarningCircle },
+  blue: { label: "common.health.pending", tone: "info", Icon: Clock },
 };
 
 export function HealthBadge({
@@ -43,16 +28,11 @@ export function HealthBadge({
   health: FinancialHealth;
   size?: "sm" | "md";
 }) {
-  const { label, text, bg, Icon } = HEALTH_CONFIG[health];
-  const padding = size === "sm" ? "px-2 py-1 text-xs" : "px-2 py-1 text-sm";
-  const iconSize = size === "sm" ? 14 : 16;
-
+  const t = useT();
+  const { label, tone, Icon } = HEALTH_CONFIG[health];
   return (
-    <span
-      className={`inline-flex items-center gap-2 rounded font-bold ${padding} ${text} ${bg}`}
-    >
-      <Icon size={iconSize} aria-hidden="true" />
-      {label}
-    </span>
+    <StatusBadge tone={tone} icon={Icon} size={size}>
+      {t(label)}
+    </StatusBadge>
   );
 }

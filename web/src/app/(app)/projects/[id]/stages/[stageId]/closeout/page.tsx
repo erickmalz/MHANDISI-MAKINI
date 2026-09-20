@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   CheckCircle,
   Info,
   WarningCircle,
@@ -20,9 +19,9 @@ import { formatDate } from "@/lib/format";
 import {
   feeOutstanding,
   forecastFundingRequirement,
+  formatTZS,
   supervisorFeePosition,
 } from "@/lib/finance";
-import { stageStatusLabel } from "@/lib/project-view";
 import { CLOSEABLE_STAGE_STATUSES, canCloseStage } from "@/lib/stage-closeout";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -30,14 +29,20 @@ import { Money } from "@/components/ui/Money";
 import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { BudgetVarianceCard } from "../_components/BudgetVarianceCard";
 import { SurplusMaterialsForm } from "./_components/SurplusMaterialsForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translate";
+import { emphasise, stageStatusText, variationStatusText } from "@/app/(app)/projects/[id]/closeout/_components/closeout-text";
 
-const CLOSE_ERROR_MESSAGES: Record<string, string> = {
-  "not-found": "This stage could not be found.",
-  "not-closeable-status":
-    "This stage is not Active or Ready for Closeout, so Close Stage is unavailable.",
-  "gates-failed":
-    "This stage still has open items blocking closeout — check the checklist below.",
-};
+export const generateMetadata = pageTitle("closeout.stage.pageTitle");
+
+// The URL carries a short error code; each maps to a catalogue message.
+const CLOSE_ERROR_KEYS = {
+  "not-found": "closeout.stage.errors.notFound",
+  "not-closeable-status": "closeout.stage.errors.notCloseable",
+  "gates-failed": "closeout.stage.errors.gatesFailed",
+} as const;
 
 export default async function StageCloseoutPage({
   params,
@@ -46,9 +51,11 @@ export default async function StageCloseoutPage({
   const { id, stageId } = await params;
   const { closeError } = await searchParams;
 
-  const [stage, gates] = await Promise.all([
+  const [stage, gates, t, locale] = await Promise.all([
     getStageDetail(stageId),
     getStageCloseoutGates(stageId),
+    getT(),
+    getLocale(),
   ]);
   if (!stage || stage.projectId !== id || !gates) notFound();
 
@@ -66,34 +73,19 @@ export default async function StageCloseoutPage({
 
   const ffr = forecastFundingRequirement(stage.financials);
   const fee = supervisorFeePosition(stage.financials);
-  const errorMessage = typeof closeError === "string" ? CLOSE_ERROR_MESSAGES[closeError] : undefined;
+  const errorMessage =
+    typeof closeError === "string" && closeError in CLOSE_ERROR_KEYS
+      ? t(CLOSE_ERROR_KEYS[closeError as keyof typeof CLOSE_ERROR_KEYS])
+      : undefined;
+  const closeAction = t("closeout.stage.closeAction");
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/stages/${stageId}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {stage.name}
-      </Link>
-
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">
-          Stage {stage.seq} &middot; {stage.projectName}
-        </p>
-        <h1 className="text-[1.75rem] font-bold text-foreground">
-          Stage Closeout — {stage.name}
-        </h1>
-        <p className="mt-2 max-w-prose text-muted-foreground">
-          A controlled review before this stage is marked Completed —
-          distinct from simply picking &ldquo;Completed&rdquo; on the stage
-          form. Four checks below must all clear before{" "}
-          <span className="font-bold text-foreground">Close Stage</span> is
-          available; everything else is shown for the Engineer&rsquo;s own
-          review only.
-        </p>
-      </header>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("closeout.crumbOverview"), href: `/projects/${id}` }, { label: stage.name, href: `/projects/${id}/stages/${stageId}` }]}
+        title={t("closeout.stage.pageTitle")}
+        subtitle={emphasise(t("closeout.stage.subtitle", { action: closeAction }), closeAction)}
+      />
 
       {errorMessage && (
         <Card className="mb-6 border-health-red bg-health-red-bg">
@@ -108,9 +100,9 @@ export default async function StageCloseoutPage({
         <Card className="mb-6 border-health-green bg-health-green-bg">
           <p className="flex items-center gap-2 text-sm font-bold text-health-green">
             <CheckCircle size={18} aria-hidden="true" />
-            Closed{stage.completedOn ? ` on ${formatDate(stage.completedOn)}` : ""}.
-            Its budget is frozen — a real change now goes through a Variation
-            or a superseding Funding Request on the next stage.
+            {stage.completedOn
+              ? t("closeout.stage.closedOn", { date: formatDate(stage.completedOn, locale) })
+              : t("closeout.stage.closed")}
           </p>
         </Card>
       )}
@@ -119,10 +111,10 @@ export default async function StageCloseoutPage({
         <div className="mb-6">
           {closeoutReport ? (
             <DocumentDownloads
-              title="Stage Closeout Report"
+              title={t("closeout.stage.reportTitle")}
               links={[
                 {
-                  label: `Stage Closeout Report ${closeoutReport.displayNumber}`,
+                  label: t("closeout.stage.reportLabel", { number: closeoutReport.displayNumber }),
                   pdfHref: `/projects/${id}/stages/${stageId}/closeout/document.pdf`,
                   jpgHref: `/projects/${id}/stages/${stageId}/closeout/document.jpg`,
                 },
@@ -131,12 +123,11 @@ export default async function StageCloseoutPage({
           ) : (
             <Card className="border-border bg-muted">
               <h2 className="text-xl font-bold text-card-foreground">
-                Stage Closeout Report
+                {t("closeout.stage.reportTitle")}
               </h2>
               <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                 <Info size={18} aria-hidden="true" className="shrink-0" />
-                Report not available — this stage was closed before this
-                feature existed.
+                {t("closeout.stage.reportMissing")}
               </p>
             </Card>
           )}
@@ -147,8 +138,7 @@ export default async function StageCloseoutPage({
         <Card className="mb-6 border-health-amber bg-health-amber-bg">
           <p className="flex items-center gap-2 text-sm font-bold text-health-amber">
             <Info size={18} aria-hidden="true" />
-            This stage is {stageStatusLabel(stage.status)}. Close Stage is
-            only available once it is Active or Ready for Closeout.
+            {t("closeout.stage.notCloseable", { status: stageStatusText(t, stage.status) })}
           </p>
         </Card>
       )}
@@ -156,41 +146,40 @@ export default async function StageCloseoutPage({
       {/* --- Hard-blocking checklist (ticket 05 §1) --------------------- */}
       <Card className="mb-6 flex flex-col gap-4">
         <h2 className="text-lg font-bold text-card-foreground">
-          Closeout checks
+          {t("closeout.stage.checksTitle")}
         </h2>
         <ul className="flex flex-col gap-3">
           <ChecklistItem
             ok={gates.openTasks.length === 0}
-            label="Every task is complete or cancelled"
+            label={t("closeout.stage.checkTasks")}
           >
             {gates.openTasks.length > 0 && (
-              <TaskList items={gates.openTasks} projectId={id} />
+              <TaskList items={gates.openTasks} projectId={id} t={t} />
             )}
           </ChecklistItem>
           <ChecklistItem
             ok={gates.nonTerminalVariations.length === 0}
-            label="No outstanding variations"
+            label={t("closeout.stage.checkVariations")}
           >
             {gates.nonTerminalVariations.length > 0 && (
-              <VariationList items={gates.nonTerminalVariations} projectId={id} />
+              <VariationList items={gates.nonTerminalVariations} projectId={id} t={t} />
             )}
           </ChecklistItem>
           <ChecklistItem
             ok={gates.orderedPurchaseOrders.length === 0}
-            label="No purchase order still ordered (closed or cancelled instead)"
+            label={t("closeout.stage.checkOrders")}
           >
             {gates.orderedPurchaseOrders.length > 0 && (
-              <PurchaseOrderList items={gates.orderedPurchaseOrders} projectId={id} />
+              <PurchaseOrderList items={gates.orderedPurchaseOrders} projectId={id} t={t} />
             )}
           </ChecklistItem>
           <ChecklistItem
             ok={gates.openLabourCommitments === 0}
-            label="Labour agreements fully paid"
+            label={t("closeout.stage.checkLabour")}
           >
             {gates.openLabourCommitments > 0 && (
               <p className="text-sm text-muted-foreground">
-                <Money amount={gates.openLabourCommitments} /> still owed
-                across this stage&rsquo;s tasks.
+                {t("closeout.stage.labourOwed", { amount: formatTZS(gates.openLabourCommitments) })}
               </p>
             )}
           </ChecklistItem>
@@ -202,11 +191,11 @@ export default async function StageCloseoutPage({
             className="border-t border-border pt-4"
           >
             <Button variant="primary" type="submit" disabled={!canClose}>
-              Close Stage
+              {closeAction}
             </Button>
             {!canClose && closeableFromStatus && (
               <p className="mt-2 text-sm text-muted-foreground">
-                Resolve every item above to enable Close Stage.
+                {t("closeout.stage.resolveAll")}
               </p>
             )}
           </form>
@@ -216,10 +205,10 @@ export default async function StageCloseoutPage({
       {/* --- Informational-only groups (ticket 05 §1) -------------------- */}
       <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Card className="flex flex-col gap-2">
-          <h3 className="text-sm font-bold text-card-foreground">Client Funds</h3>
-          <InfoRow label="Client deposits" value={<Money amount={stage.financials.clientDeposits} />} />
+          <h3 className="text-sm font-bold text-card-foreground">{t("closeout.stage.clientFunds")}</h3>
+          <InfoRow label={t("closeout.stage.clientDeposits")} value={<Money amount={stage.financials.clientDeposits} />} />
           <InfoRow
-            label="Stage funding position"
+            label={t("closeout.stage.fundingPosition")}
             value={
               <Money
                 amount={ffr}
@@ -227,32 +216,30 @@ export default async function StageCloseoutPage({
                 className={ffr > 0 ? "font-bold text-health-red" : "font-bold text-health-green"}
               />
             }
-            hint={ffr > 0 ? "Additional funding required" : "Current funding adequate"}
+            hint={ffr > 0 ? t("closeout.stage.needsFunding") : t("closeout.stage.fundingOk")}
           />
         </Card>
         <Card className="flex flex-col gap-2">
-          <h3 className="text-sm font-bold text-card-foreground">Supervisor Fee</h3>
-          <InfoRow label="Invoiced" value={<Money amount={fee.invoiced} />} />
-          <InfoRow label="Received" value={<Money amount={fee.received} />} />
+          <h3 className="text-sm font-bold text-card-foreground">{t("closeout.stage.supervisorFee")}</h3>
+          <InfoRow label={t("closeout.stage.invoiced")} value={<Money amount={fee.invoiced} />} />
+          <InfoRow label={t("closeout.stage.received")} value={<Money amount={fee.received} />} />
           <InfoRow
-            label="Outstanding"
+            label={t("closeout.stage.outstanding")}
             value={<Money amount={feeOutstanding(stage.financials)} />}
-            hint="Never blocks closeout (Phase 1 decision 03)."
+            hint={t("closeout.stage.feeNeverBlocks")}
           />
         </Card>
         <Card className="flex flex-col gap-2">
-          <h3 className="text-sm font-bold text-card-foreground">Materials</h3>
+          <h3 className="text-sm font-bold text-card-foreground">{t("closeout.stage.materials")}</h3>
           <p className="text-sm text-muted-foreground">
-            Deliveries and remaining quantities reconcile through the Budget
-            Variance card below — over/under-delivery is reconciled at
-            closeout, not a precondition for it.
+            {t("closeout.stage.materialsBody")}
           </p>
           <div>
             <p className="text-sm font-bold text-card-foreground">
-              Surplus materials on site (project-wide)
+              {t("closeout.stage.surplusOnSite")}
             </p>
             {stock.length === 0 ? (
-              <p className="text-sm text-muted-foreground">None recorded.</p>
+              <p className="text-sm text-muted-foreground">{t("closeout.stage.noneRecorded")}</p>
             ) : (
               <ul className="text-sm text-muted-foreground">
                 {stock.map((s) => (
@@ -267,20 +254,17 @@ export default async function StageCloseoutPage({
             href={`/projects/${id}/material-stock`}
             className="text-sm font-bold underline"
           >
-            View Material Stock
+            {t("closeout.stage.viewStock")}
           </Link>
         </Card>
         <Card className="flex flex-col gap-2">
-          <h3 className="text-sm font-bold text-card-foreground">Labour</h3>
-          <p className="text-sm text-muted-foreground">Retention: not used.</p>
+          <h3 className="text-sm font-bold text-card-foreground">{t("closeout.stage.labour")}</h3>
+          <p className="text-sm text-muted-foreground">{t("closeout.stage.retention")}</p>
         </Card>
         <Card className="flex flex-col gap-2 sm:col-span-2">
-          <h3 className="text-sm font-bold text-card-foreground">Documents</h3>
+          <h3 className="text-sm font-bold text-card-foreground">{t("closeout.stage.documents")}</h3>
           <p className="text-sm text-muted-foreground">
-            Receipts and delivery notes attach per Purchase Order — an
-            optional record, not a mandatory one. Every Issued Funding
-            Request is already immutable by construction, so its record is
-            preserved automatically.
+            {t("closeout.stage.documentsBody")}
           </p>
         </Card>
       </div>
@@ -297,16 +281,16 @@ export default async function StageCloseoutPage({
         <div className="flex flex-col gap-6">
           <Card className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-card-foreground">
-              Next steps
+              {t("closeout.stage.nextSteps")}
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               {nextStage ? (
                 <Button variant="secondary" href={`/projects/${id}/stages/${nextStage.id}`}>
-                  Go to Stage {nextStage.seq} — {nextStage.name}
+                  {t("closeout.stage.goToStage", { seq: nextStage.seq, name: nextStage.name })}
                 </Button>
               ) : (
                 <Button variant="primary" href={`/projects/${id}/stages/new`}>
-                  Create Next Stage
+                  {t("closeout.stage.createNext")}
                 </Button>
               )}
               {nextStage && (
@@ -314,15 +298,12 @@ export default async function StageCloseoutPage({
                   variant="secondary"
                   href={`/projects/${id}/funding/new?stageId=${nextStage.id}`}
                 >
-                  Create Next Stage Funding Request
+                  {t("closeout.stage.createNextFunding")}
                 </Button>
               )}
             </div>
             <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Carry Forward Approved Client Float — nothing to do here.
-              Available Float continues automatically into the next stage;
-              it is a live per-project figure, not a balance held inside this
-              closed stage.
+              {t("closeout.stage.carryForwardNote")}
             </p>
           </Card>
 
@@ -332,7 +313,7 @@ export default async function StageCloseoutPage({
           />
         </div>
       )}
-    </main>
+    </PageFrame>
   );
 }
 
@@ -373,7 +354,7 @@ function InfoRow({
     <div className="flex items-center justify-between gap-2 text-sm">
       <span className="text-muted-foreground">
         {label}
-        {hint && <span className="block text-xs">{hint}</span>}
+        {hint && <span className="block text-sm">{hint}</span>}
       </span>
       {value}
     </div>
@@ -383,16 +364,18 @@ function InfoRow({
 function TaskList({
   items,
   projectId,
+  t,
 }: {
   items: { id: string; seq: number; description: string }[];
   projectId: string;
+  t: Translator;
 }) {
   return (
     <ul className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground">
-      {items.map((t) => (
-        <li key={t.id}>
-          <Link href={`/projects/${projectId}/tasks/${t.id}/edit`} className="underline">
-            {t.seq}. {t.description}
+      {items.map((task) => (
+        <li key={task.id}>
+          <Link href={`/projects/${projectId}/tasks/${task.id}/edit`} className="underline">
+            {t("closeout.stage.taskLink", { seq: task.seq, description: task.description })}
           </Link>
         </li>
       ))}
@@ -403,16 +386,18 @@ function TaskList({
 function VariationList({
   items,
   projectId,
+  t,
 }: {
   items: { id: string; displayNumber: string | null; status: string; description: string }[];
   projectId: string;
+  t: Translator;
 }) {
   return (
     <ul className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground">
       {items.map((v) => (
         <li key={v.id}>
           <Link href={`/projects/${projectId}/variations/${v.id}`} className="underline">
-            {v.displayNumber ?? "Draft"} — {v.description} ({v.status})
+            {v.displayNumber ?? t("closeout.stage.draft")} — {v.description} ({variationStatusText(t, v.status)})
           </Link>
         </li>
       ))}
@@ -423,16 +408,18 @@ function VariationList({
 function PurchaseOrderList({
   items,
   projectId,
+  t,
 }: {
   items: { id: string; displayNumber: string | null }[];
   projectId: string;
+  t: Translator;
 }) {
   return (
     <ul className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground">
       {items.map((po) => (
         <li key={po.id}>
           <Link href={`/projects/${projectId}/procurement/${po.id}`} className="underline">
-            {po.displayNumber ?? "Purchase order"}
+            {po.displayNumber ?? t("closeout.stage.purchaseOrder")}
           </Link>
         </li>
       ))}

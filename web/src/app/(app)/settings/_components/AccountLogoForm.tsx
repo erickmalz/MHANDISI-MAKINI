@@ -6,6 +6,8 @@ import { removeAccountLogoAction, uploadAccountLogoAction } from "@/app/actions/
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Letterhead logo upload / replace / remove (Slice 2.8 Part 2). The preview
@@ -21,6 +23,7 @@ import { Field, controlClass } from "@/components/ui/Field";
  * size/MIME field error.
  */
 export function AccountLogoForm({ hasLogo }: { hasLogo: boolean }) {
+  const t = useT();
   // Cache-busts the preview after a successful upload so the browser doesn't
   // keep showing the previous image at the same URL.
   const [logoVersion, setLogoVersion] = useState(0);
@@ -39,10 +42,9 @@ export function AccountLogoForm({ hasLogo }: { hasLogo: boolean }) {
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-foreground">Letterhead logo</h2>
+      <h2 className="text-lg font-bold text-foreground">{t("settings.logo.title")}</h2>
       <p className="text-sm text-muted-foreground">
-        Shown on every Funding Request, Fee Invoice and Purchase Order you issue.
-        PNG or JPEG, up to 1MB.
+        {t("settings.logo.intro")}
       </p>
 
       {hasLogo && (
@@ -50,14 +52,14 @@ export function AccountLogoForm({ hasLogo }: { hasLogo: boolean }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`/settings/logo?v=${logoVersion}`}
-          alt="Current letterhead logo"
+          alt={t("settings.logo.alt")}
           className="h-16 w-auto rounded border border-border bg-card object-contain p-2"
         />
       )}
 
       <form action={uploadAction} className="flex flex-col gap-3" noValidate>
         <Field
-          label={hasLogo ? "Replace logo" : "Upload logo"}
+          label={hasLogo ? t("settings.logo.replace") : t("settings.logo.upload")}
           error={uploadState.fieldErrors?.logo}
         >
           <input
@@ -69,12 +71,16 @@ export function AccountLogoForm({ hasLogo }: { hasLogo: boolean }) {
         </Field>
 
         {uploadState.error && (
-          <p className="text-sm font-bold text-destructive">{uploadState.error}</p>
+          <Notice tone="error">{uploadState.error}</Notice>
         )}
 
         <div>
           <Button variant="secondary" type="submit" disabled={uploadPending}>
-            {uploadPending ? "Uploading…" : hasLogo ? "Replace logo" : "Upload logo"}
+            {uploadPending
+              ? t("settings.logo.uploading")
+              : hasLogo
+                ? t("settings.logo.replace")
+                : t("settings.logo.upload")}
           </Button>
         </div>
       </form>
@@ -82,7 +88,7 @@ export function AccountLogoForm({ hasLogo }: { hasLogo: boolean }) {
       {hasLogo && (
         <form action={removeAccountLogoAction}>
           <Button variant="danger-quiet" type="submit">
-            Remove logo
+            {t("settings.logo.remove")}
           </Button>
         </form>
       )}

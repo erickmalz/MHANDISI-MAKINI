@@ -1,39 +1,36 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createSiteDiaryEntryAction } from "@/app/actions/site-diary";
 import { getStageDetail } from "@/lib/data";
+import { getT, pageTitle } from "@/lib/i18n/server";
 import { SiteDiaryEntryForm } from "../../../../../_components/SiteDiaryEntryForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const generateMetadata = pageTitle("stages.diary.newPage.pageTitle");
 
 export default async function NewSiteDiaryEntryPage({
   params,
 }: PageProps<"/projects/[id]/stages/[stageId]/diary/new">) {
   const { id, stageId } = await params;
+  const t = await getT();
 
   const stage = await getStageDetail(stageId);
   if (!stage || stage.projectId !== id) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/stages/${stageId}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {stage.name}
-      </Link>
-
-      <h1 className="mb-1 text-[1.75rem] font-bold text-foreground">New diary entry</h1>
-      <p className="mb-6 text-muted-foreground">
-        A lightweight daily record for {stage.name} — leave any section blank.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("stages.crumbs.overview"), href: `/projects/${id}` }, { label: stage.name, href: `/projects/${id}/stages/${stageId}` }]}
+        title={t("stages.diary.newPage.title")}
+        subtitle={t("stages.diary.newPage.subtitle", { stage: stage.name })}
+      />
 
       <SiteDiaryEntryForm
         action={createSiteDiaryEntryAction.bind(null, id, stageId)}
-        submitLabel="Add entry"
+        submitLabel={t("stages.diary.newPage.submit")}
         cancelHref={`/projects/${id}/stages/${stageId}`}
       />
-    </main>
+    </PageFrame>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CaretRight, Plus } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, Plus } from "@phosphor-icons/react/dist/ssr";
 
 import { getProjectOverview, listFundingRequests } from "@/lib/data";
 import {
@@ -12,6 +12,13 @@ import {
 import { Money } from "@/components/ui/Money";
 import { Button } from "@/components/ui/Button";
 import { FRStatusBadge } from "./_components/FRStatusBadge";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getT, pageTitle } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/translate";
+
+export const generateMetadata = pageTitle("funding.pageTitle");
 
 export default async function FundingPage({
   params,
@@ -21,53 +28,46 @@ export default async function FundingPage({
   if (!project) notFound();
 
   const requests = await listFundingRequests(project.id);
+  const t = await getT();
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${project.id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {project.name}
-      </Link>
-
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[1.75rem] font-bold text-foreground">
-            Funding requests
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            What has been requested from the client and deposited against it.
-          </p>
-        </div>
-        <Button variant="primary" href={`/projects/${project.id}/funding/new`}>
-          <Plus size={20} aria-hidden="true" />
-          Create funding request
-        </Button>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        title={t("funding.pageTitle")}
+        subtitle={t("funding.list.subtitle")}
+        actions={
+          <>
+            <Button variant="primary" href={`/projects/${project.id}/funding/new`}>
+              <Plus size={20} aria-hidden="true" />
+              {t("funding.list.create")}
+            </Button>
+          </>
+        }
+      />
 
       {requests.length === 0 ? (
         <p className="rounded-lg border border-border bg-card p-4 text-muted-foreground">
-          No funding requests yet. Create the first one.
+          {t("funding.list.empty")}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
           {requests.map((fr) => (
-            <FundingRow key={fr.id} projectId={project.id} fr={fr} />
+            <FundingRow key={fr.id} projectId={project.id} fr={fr} t={t} />
           ))}
         </div>
       )}
-    </main>
+    </PageFrame>
   );
 }
 
 function FundingRow({
   projectId,
   fr,
+  t,
 }: {
   projectId: string;
   fr: FundingRequest;
+  t: Translator;
 }) {
   const status = deriveFRStatus(fr);
   const target = depositTarget(fr);
@@ -81,23 +81,27 @@ function FundingRow({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-card-foreground">
-            {fr.displayNumber ?? "Draft"}
+            {fr.displayNumber ?? t("funding.list.draft")}
           </span>
           <FRStatusBadge status={status} size="sm" />
           {fr.kind === "additional" && (
-            <span className="rounded bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
-              Additional
-            </span>
+            <StatusBadge tone="neutral" size="sm">
+              {t("funding.list.additional")}
+            </StatusBadge>
           )}
         </div>
         <p className="mt-1 truncate text-sm text-muted-foreground">
-          {fr.stageName}
-          {fr.supersedesDisplayNumber && ` · revises ${fr.supersedesDisplayNumber}`}
+          {fr.supersedesDisplayNumber
+            ? t("funding.list.stageRevises", {
+                stage: fr.stageName,
+                number: fr.supersedesDisplayNumber,
+              })
+            : fr.stageName}
         </p>
       </div>
       <div className="flex shrink-0 flex-col gap-1 sm:grid sm:grid-cols-2 sm:gap-6 sm:text-right">
-        <MiniStat label="Requested" amount={target} />
-        <MiniStat label="Deposited" amount={deposited} />
+        <MiniStat label={t("funding.list.requested")} amount={target} />
+        <MiniStat label={t("funding.list.deposited")} amount={deposited} />
       </div>
       <CaretRight
         size={18}

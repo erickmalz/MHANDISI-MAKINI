@@ -1,13 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { VariationDraftInput } from "@/lib/validation/variations";
+import { Notice } from "@/components/ui/Notice";
+import { MoneyInput } from "@/components/ui/MoneyInput";
+import { useT } from "@/lib/i18n/client";
 
 type TaskOption = { id: string; seq: number; description: string };
 
@@ -28,6 +30,7 @@ export function VariationForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -38,86 +41,84 @@ export function VariationForm({
           <>
             <input type="hidden" name="taskId" value={initial?.taskId ?? ""} />
             <p className="text-sm text-muted-foreground">
-              Task <span className="font-bold text-foreground">{fixedTaskDescription}</span>{" "}
-              — frozen with this Variation.
+              {t("variations.form.task")}{" "}
+              <span className="font-bold text-foreground">{fixedTaskDescription}</span> —{" "}
+              {t("variations.form.taskFrozen")}
             </p>
           </>
         ) : (
-          <Field label="Task this Variation is against" required error={errors.taskId}>
+          <Field label={t("variations.form.taskAgainst")} required error={errors.taskId}>
             <select
               name="taskId"
               defaultValue={initial?.taskId ?? tasks?.[0]?.id ?? ""}
               className={`${controlClass} cursor-pointer`}
             >
-              {(tasks ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.seq}. {t.description}
+              {(tasks ?? []).map((task) => (
+                <option key={task.id} value={task.id}>
+                  {task.seq}. {task.description}
                 </option>
               ))}
             </select>
           </Field>
         )}
 
-        <Field label="Scope change" required error={errors.description}>
+        <Field label={t("variations.form.scopeChange")} required error={errors.description}>
           <textarea
             name="description"
             rows={2}
             defaultValue={initial?.description ?? ""}
-            placeholder="e.g. Additional room added to the ground floor plan"
+            placeholder={t("variations.form.scopePlaceholder")}
             className={`${controlClass} min-h-16`}
           />
         </Field>
 
-        <Field label="Reason" error={errors.reason}>
+        <Field label={t("variations.form.reason")} error={errors.reason}>
           <textarea
             name="reason"
             rows={2}
             defaultValue={initial?.reason ?? ""}
-            placeholder="Why the client asked for, or agreed to, this change"
+            placeholder={t("variations.form.reasonPlaceholder")}
             className={`${controlClass} min-h-16`}
           />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field
-            label="Material impact (TZS)"
-            hint="A reduction can be entered as a negative amount."
+            label={t("variations.form.materialImpact")}
+            hint={t("variations.form.materialHint")}
             error={errors.materialImpact}
           >
-            <input
+            <MoneyInput
               name="materialImpact"
-              type="number"
               defaultValue={initial?.materialImpact ?? ""}
-              className={controlClass}
+              allowNegative
             />
           </Field>
           <Field
-            label="Labour impact (TZS)"
-            hint="Revises the task's labour agreement once Approved."
+            label={t("variations.form.labourImpact")}
+            hint={t("variations.form.labourHint")}
             error={errors.labourImpact}
           >
-            <input
+            <MoneyInput
               name="labourImpact"
-              type="number"
               defaultValue={initial?.labourImpact ?? ""}
-              className={controlClass}
+              allowNegative
             />
           </Field>
           <Field
-            label="Fee impact (TZS)"
-            hint="A carried note — key it into the Additional Funding Request's own fee line by hand."
+            label={t("variations.form.feeImpact")}
+            hint={t("variations.form.feeHint")}
             error={errors.feeImpact}
           >
-            <input
+            <MoneyInput
               name="feeImpact"
-              type="number"
               defaultValue={initial?.feeImpact ?? ""}
-              className={controlClass}
+              allowNegative
             />
           </Field>
         </div>
 
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("variations.form.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -128,19 +129,16 @@ export function VariationForm({
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("variations.form.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("variations.form.cancel")}
+        </Button>
       </div>
     </form>
   );

@@ -1,9 +1,14 @@
-import { SurveySweepLoader } from "@/components/PageLoaders";
+import {
+  SkeletonFrame,
+  SkeletonHeader,
+  SkeletonTable,
+} from "@/components/ui/Skeleton";
 
 export default function AdminLoading() {
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-8">
-      <SurveySweepLoader />
-    </main>
+    <SkeletonFrame width="working" label="Loading accounts">
+      <SkeletonHeader action={false} />
+      <SkeletonTable rows={6} cols={4} />
+    </SkeletonFrame>
   );
 }

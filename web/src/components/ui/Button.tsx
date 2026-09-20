@@ -17,12 +17,18 @@ const VARIANTS: Record<Variant, string> = {
     "bg-card text-foreground border border-foreground hover:bg-muted active:border-accent active:bg-accent/10",
   // Tertiary navigation (wizard "Back", "Cancel") — quietest control.
   ghost:
-    "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-sm font-bold text-muted-foreground transition-[color,background-color,transform] duration-100 hover:text-foreground active:scale-[0.97] active:bg-accent/10 active:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
+    "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-sm font-bold text-muted-foreground transition-[color,background-color,transform] duration-100 hover:text-foreground active:scale-[0.97] active:bg-accent/10 active:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
   // Low-emphasis destructive action — never a filled button. The label stays
   // destructive-red; the brand-yellow wash is only the system tap cue.
   "danger-quiet":
-    "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold text-destructive transition-[background-color,transform] duration-100 hover:underline active:scale-[0.97] active:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold text-destructive transition-[background-color,transform] duration-100 hover:underline active:scale-[0.97] active:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-50",
 };
+
+/** The classes for a button variant, for elements that cannot be `<Button>` (e.g. a hard-navigation `<a>`). */
+export function buttonClassName(variant: Variant = "secondary", className = ""): string {
+  const usesBase = variant === "primary" || variant === "secondary";
+  return `${usesBase ? BASE : ""} ${VARIANTS[variant]} ${className}`.trim();
+}
 
 type CommonProps = {
   variant?: Variant;
@@ -38,8 +44,7 @@ type ButtonAsLink = CommonProps &
 
 export function Button(props: ButtonAsButton | ButtonAsLink) {
   const { variant = "secondary", children, className = "", ...rest } = props;
-  const usesBase = variant === "primary" || variant === "secondary";
-  const classes = `${usesBase ? BASE : ""} ${VARIANTS[variant]} ${className}`.trim();
+  const classes = buttonClassName(variant, className);
 
   if ("href" in rest && rest.href !== undefined) {
     return (

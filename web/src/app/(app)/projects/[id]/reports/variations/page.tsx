@@ -1,12 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { getVariationReport } from "@/lib/data";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { StatTile } from "@/components/ui/StatTile";
 import { VariationStatusBadge } from "../../variations/_components/VariationStatusBadge";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataTable } from "@/components/ui/DataTable";
+import { getT, pageTitle } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/types";
+
+/** The data layer's English funding-status text -> its label key; unknown values show as stored. */
+const FUNDING_STATUS: Record<string, MessageKey> = {
+  "Not applicable": "reports.variations.fundingStatus.notApplicable",
+  "Not linked to a funding request": "reports.variations.fundingStatus.notLinked",
+  "Funding request pending": "reports.variations.fundingStatus.pending",
+  Funded: "reports.variations.fundingStatus.funded",
+};
+
+export const generateMetadata = pageTitle("reports.variations.pageTitle");
 
 /**
  * Variation Report (guidelines §38, Phase 4 ticket 06) — every Variation's
@@ -21,26 +35,18 @@ export default async function VariationReportPage({
   const { id } = await params;
   const report = await getVariationReport(id);
   if (!report) notFound();
+  const t = await getT();
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${report.projectId}/reports`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Reports
-      </Link>
-
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">{report.projectCode}</p>
-        <h1 className="text-[1.75rem] font-bold text-foreground">Variation Report</h1>
-        <p className="mt-1 text-muted-foreground">{report.projectName}</p>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
+        title={t("reports.variations.label")}
+      />
 
       <Card className="mb-6 max-w-xs">
         <StatTile
-          label="Total additional cost (approved)"
+          label={t("reports.variations.totalAdditional")}
           amount={report.totals.additionalCostApproved}
           emphasis
         />
@@ -49,51 +55,76 @@ export default async function VariationReportPage({
       <Card>
         {report.rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No Variations logged on this project yet.
+            {t("reports.variations.empty")}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-2 pr-4 font-bold">Variation</th>
-                  <th className="py-2 pr-4 font-bold">Scope impact</th>
-                  <th className="py-2 pr-4 text-right font-bold">Additional cost</th>
-                  <th className="py-2 pr-4 font-bold">Approval status</th>
-                  <th className="py-2 font-bold">Funding status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.rows.map((r) => (
-                  <tr key={r.variationId} className="border-b border-border last:border-0 align-top">
-                    <td className="py-2 pr-4">
-                      <Link
-                        href={`/projects/${report.projectId}/variations/${r.variationId}`}
-                        className="font-bold text-card-foreground hover:underline"
-                      >
-                        {r.variationLabel}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {r.stageName} &middot; {r.taskDescription}
-                      </p>
-                    </td>
-                    <td className="py-2 pr-4 max-w-xs text-muted-foreground">
-                      {r.scopeImpact}
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <Money amount={r.additionalCost} className="font-bold text-card-foreground" />
-                    </td>
-                    <td className="py-2 pr-4">
-                      <VariationStatusBadge status={r.approvalStatus} size="sm" />
-                    </td>
-                    <td className="py-2 text-muted-foreground">{r.fundingStatus}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            caption={t("reports.variations.caption")}
+            rows={report.rows}
+            rowKey={(r) => r.variationId}
+            columns={[
+              {
+                key: "variation",
+                header: t("reports.variations.columns.variation"),
+                cell: (r) => (
+                  <>
+                    <Link
+                      href={`/projects/${report.projectId}/variations/${r.variationId}`}
+                      className="font-bold text-card-foreground hover:underline"
+                    >
+                      {r.variationLabel}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {r.stageName} &middot; {r.taskDescription}
+                    </p>
+                  </>
+                ),
+              },
+              {
+                key: "scope-impact",
+                header: t("reports.variations.columns.scopeImpact"),
+                className: "text-muted-foreground",
+                cell: (r) => (
+                  <>
+                    {r.scopeImpact}
+                  </>
+                ),
+              },
+              {
+                key: "additional-cost",
+                header: t("reports.variations.columns.additionalCost"),
+                align: "right",
+                cell: (r) => (
+                  <>
+                    <Money amount={r.additionalCost} className="font-bold text-card-foreground" />
+                  </>
+                ),
+              },
+              {
+                key: "approval-status",
+                header: t("reports.variations.columns.approvalStatus"),
+                cell: (r) => (
+                  <>
+                    <VariationStatusBadge status={r.approvalStatus} size="sm" />
+                  </>
+                ),
+              },
+              {
+                key: "funding-status",
+                header: t("reports.variations.columns.fundingStatus"),
+                className: "text-muted-foreground",
+                cell: (r) => (
+                  <>
+                    {FUNDING_STATUS[r.fundingStatus]
+                      ? t(FUNDING_STATUS[r.fundingStatus])
+                      : r.fundingStatus}
+                  </>
+                ),
+              },
+            ]}
+          />
         )}
       </Card>
-    </main>
+    </PageFrame>
   );
 }

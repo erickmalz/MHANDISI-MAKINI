@@ -3,8 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createTask, deleteTask, updateTask } from "@/lib/data";
+import {
+  createTask,
+  deleteTask,
+  recordLabourPayment,
+  updateTask,
+  voidLabourPayment,
+} from "@/lib/data";
 import { type ActionState, zodFieldErrors } from "@/lib/forms/action-helpers";
+import {
+  labourPaymentSchema,
+  voidReasonSchema,
+} from "@/lib/validation/labour-payments";
 import { taskInputSchema } from "@/lib/validation/tasks";
 
 /**
@@ -94,4 +104,71 @@ export async function deleteTaskAction(
     revalidatePath(`/projects/${projectId}/stages/${stageId}`);
   }
   redirect(`/projects/${projectId}/stages/${stageId}`);
+}
+
+function revalidateTask(projectId: string, stageId: string, taskId: string) {
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/stages/${stageId}`);
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}/edit`);
+}
+
+const LABOUR_PAYMENT_ERRORS: Record<string, string> = {
+  "not-found": "This task could not be found.",
+  "no-agreement":
+    "This task has no labour agreement amount yet — set one before recording a payment.",
+};
+
+export async function recordLabourPaymentAction(
+  projectId: string,
+  stageId: string,
+  taskId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = labourPaymentSchema.safeParse({
+    paidOn: formData.get("paidOn") ?? undefined,
+    amount: formData.get("amount") ?? undefined,
+    method: formData.get("method") ?? undefined,
+    reference: formData.get("reference") ?? undefined,
+    notes: formData.get("notes") ?? undefined,
+  });
+  if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
+
+  let result: Awaited<ReturnType<typeof recordLabourPayment>>;
+  try {
+    result = await recordLabourPayment(taskId, parsed.data);
+  } catch {
+    return { error: "Could not record the payment. Try again." };
+  }
+  if (!result.ok) {
+    return { error: LABOUR_PAYMENT_ERRORS[result.reason] ?? "Could not record the payment." };
+  }
+
+  revalidateTask(projectId, stageId, taskId);
+  redirect(`/projects/${projectId}/tasks/${taskId}/edit`);
+}
+
+export async function voidLabourPaymentAction(
+  projectId: string,
+  stageId: string,
+  taskId: string,
+  paymentId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = voidReasonSchema.safeParse({
+    reason: formData.get("reason") ?? undefined,
+  });
+  if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
+
+  let ok: boolean;
+  try {
+    ok = await voidLabourPayment(taskId, paymentId, parsed.data.reason);
+  } catch {
+    return { error: "Could not void the payment. Try again." };
+  }
+  if (!ok) return { error: "That payment could not be found." };
+
+  revalidateTask(projectId, stageId, taskId);
+  redirect(`/projects/${projectId}/tasks/${taskId}/edit`);
 }

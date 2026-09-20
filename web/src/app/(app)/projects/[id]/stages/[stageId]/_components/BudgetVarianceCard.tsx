@@ -4,6 +4,7 @@ import {
   labourVariance,
   materialVariance,
 } from "@/lib/finance";
+import { getT } from "@/lib/i18n/server";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 
@@ -18,13 +19,14 @@ import { Money } from "@/components/ui/Money";
  * figure — Σ Material Variance across every stage of the *project*, derived
  * live, never stored (Petty Cash was never a separately tracked balance).
  */
-export function BudgetVarianceCard({
+export async function BudgetVarianceCard({
   f,
   accumulatedMaterialVariance,
 }: {
   f: StageFinancials;
   accumulatedMaterialVariance: number;
 }) {
+  const t = await getT();
   const material = materialVariance(f);
   const labour = labourVariance(f);
   const total = budgetVarianceTotal(f);
@@ -33,43 +35,44 @@ export function BudgetVarianceCard({
     <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-xl font-bold text-card-foreground">
-          Budget Variance
+          {t("stages.budget.title")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          The Approved Estimate against what has actually been spent, for
-          this stage. Positive = a saving; negative = an overspend.
+          {t("stages.budget.intro")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <VarianceColumn
-          title="Material"
-          estimatedLabel="Estimated"
+          title={t("stages.budget.material")}
+          estimatedLabel={t("stages.budget.estimated")}
           estimated={f.materialEstimated}
-          actualLabel="Actual"
+          actualLabel={t("stages.budget.actual")}
           actual={f.paidPurchases}
           variance={material}
+          varianceLabel={t("stages.budget.variance")}
         />
         <VarianceColumn
-          title="Labour"
-          estimatedLabel="Agreement"
+          title={t("stages.budget.labour")}
+          estimatedLabel={t("stages.budget.agreement")}
           estimated={f.labourAgreementTotal}
-          actualLabel="Paid"
+          actualLabel={t("stages.budget.paid")}
           actual={f.labourPayments}
           variance={labour}
+          varianceLabel={t("stages.budget.variance")}
         />
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
         <span className="text-sm font-bold text-muted-foreground">
-          Combined Budget Variance
+          {t("stages.budget.combined")}
         </span>
         <VarianceMoney amount={total} className="text-lg" />
       </div>
 
       <div className="flex items-center justify-between gap-3 rounded-lg bg-muted px-3 py-2">
         <span className="text-sm text-muted-foreground">
-          Accumulated Material Variance (project-wide)
+          {t("stages.budget.accumulated")}
         </span>
         <VarianceMoney amount={accumulatedMaterialVariance} className="text-sm" />
       </div>
@@ -84,6 +87,7 @@ function VarianceColumn({
   actualLabel,
   actual,
   variance,
+  varianceLabel,
 }: {
   title: string;
   estimatedLabel: string;
@@ -91,6 +95,7 @@ function VarianceColumn({
   actualLabel: string;
   actual: number;
   variance: number;
+  varianceLabel: string;
 }) {
   return (
     <div className="rounded-lg border border-border p-3">
@@ -104,7 +109,7 @@ function VarianceColumn({
         <Money amount={actual} className="font-bold text-card-foreground" />
       </div>
       <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2 text-sm">
-        <span className="font-bold text-muted-foreground">Variance</span>
+        <span className="font-bold text-muted-foreground">{varianceLabel}</span>
         <VarianceMoney amount={variance} />
       </div>
     </div>

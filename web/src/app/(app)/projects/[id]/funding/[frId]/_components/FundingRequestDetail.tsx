@@ -15,6 +15,8 @@ import { DocumentDownloads } from "@/components/DocumentDownloads";
 import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
 import { formatDate } from "@/lib/format";
+import { useLocale, useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import {
   type FundingRequest,
@@ -24,10 +26,22 @@ import {
   depositedTotal,
   depositOutstanding,
   feeSubtotal,
+  type PaymentMethod,
 } from "@/lib/funding";
 import { FRStatusBadge } from "../../_components/FRStatusBadge";
+import { Notice } from "@/components/ui/Notice";
+import { LineField } from "@/components/ui/LineField";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 
 type Bound = (prev: ActionState, formData: FormData) => Promise<ActionState>;
+
+const METHOD_LABEL: Record<PaymentMethod, MessageKey> = {
+  "Bank Transfer": "funding.method.bankTransfer",
+  "Mobile Money": "funding.method.mobileMoney",
+  Cheque: "funding.method.cheque",
+  Cash: "funding.method.cash",
+  Other: "funding.method.other",
+};
 
 export function FundingRequestDetail({
   fr,
@@ -50,6 +64,8 @@ export function FundingRequestDetail({
   editHref: string;
   voidActions: Record<string, Bound>;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const status = deriveFRStatus(fr);
   const isDraft = fr.status === "draft";
   const canRevise = fr.status === "issued" && !fr.supersededByDisplayNumber;
@@ -68,11 +84,12 @@ export function FundingRequestDetail({
             {fr.projectName} &middot; {fr.stageName}
           </p>
           <h1 className="text-[1.75rem] font-bold text-foreground">
-            {fr.displayNumber ?? "Draft funding request"}
+            {fr.displayNumber ?? t("funding.detail.draftTitle")}
           </h1>
           <p className="mt-1 text-muted-foreground">
-            {fr.clientName}
-            {fr.kind === "additional" && " · additional request"}
+            {fr.kind === "additional"
+              ? t("funding.detail.additionalRequest", { client: fr.clientName })
+              : fr.clientName}
           </p>
         </div>
         <FRStatusBadge status={status} />
@@ -80,53 +97,52 @@ export function FundingRequestDetail({
 
       {isDraft && (
         <p className="mb-6 rounded-lg border border-border-strong bg-muted p-3 text-sm text-muted-foreground">
-          This request is still a draft. Issuing it freezes the lines and totals,
-          assigns its number, and raises the stage&apos;s Fee Invoice.
+          {t("funding.detail.draftNotice")}
         </p>
       )}
       {fr.supersedesDisplayNumber && (
         <p className="mb-6 rounded-lg bg-health-amber-bg p-3 text-sm text-health-amber">
-          Revises {fr.supersedesDisplayNumber}
-          {fr.revisionReason ? ` — ${fr.revisionReason}` : ""}.
+          {fr.revisionReason
+            ? t("funding.detail.revisesWithReason", {
+                number: fr.supersedesDisplayNumber,
+                reason: fr.revisionReason,
+              })
+            : t("funding.detail.revises", { number: fr.supersedesDisplayNumber })}
         </p>
       )}
       {fr.supersededByDisplayNumber && (
         <p className="mb-6 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          Superseded by {fr.supersededByDisplayNumber}. This version still renders
-          its own frozen content and keeps any deposits recorded against it.
+          {t("funding.detail.supersededBy", { number: fr.supersededByDisplayNumber })}
         </p>
       )}
 
       <Card className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Requested" amount={target} emphasis />
-        <Stat label="Deposited" amount={deposited} />
+        <Stat label={t("funding.detail.requested")} amount={target} emphasis />
+        <Stat label={t("funding.detail.deposited")} amount={deposited} />
         <Stat
-          label="Outstanding"
+          label={t("funding.detail.outstanding")}
           amount={outstanding}
           tone={outstanding > 0 ? "destructive" : undefined}
         />
-        <Stat label="Supervision fee" amount={fee} />
+        <Stat label={t("funding.detail.supervisionFee")} amount={fee} />
       </Card>
 
       <Card className="mb-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-bold text-card-foreground">Lines</h2>
+          <h2 className="text-xl font-bold text-card-foreground">{t("funding.detail.lines")}</h2>
           {isDraft && (
-            <Link
-              href={editHref}
-              className="text-sm font-bold text-muted-foreground hover:text-foreground"
-            >
-              Edit draft
-            </Link>
+            <Button variant="ghost" href={editHref}>
+              {t("funding.detail.editDraft")}
+            </Button>
           )}
         </div>
         <div className="mt-4 flex flex-col gap-4">
-          <LineSection title="Materials" lines={fr.lines.filter((l) => l.category === "material")} />
-          <LineSection title="Labour" lines={fr.lines.filter((l) => l.category === "labour")} />
-          <LineSection title="Other" lines={fr.lines.filter((l) => l.category === "other")} />
+          <LineSection title={t("funding.detail.materials")} lines={fr.lines.filter((l) => l.category === "material")} />
+          <LineSection title={t("funding.detail.labour")} lines={fr.lines.filter((l) => l.category === "labour")} />
+          <LineSection title={t("funding.detail.other")} lines={fr.lines.filter((l) => l.category === "other")} />
           {fee > 0 && (
             <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-sm text-muted-foreground">
-              <span>Supervision fee — billed separately via Fee Invoice</span>
+              <span>{t("funding.detail.feeLine")}</span>
               <Money amount={fee} className="shrink-0 whitespace-nowrap" />
             </div>
           )}
@@ -139,15 +155,21 @@ export function FundingRequestDetail({
         )}
         {fr.issuedAt && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Issued {formatDate(fr.issuedAt)}
-            {fr.feeInvoice && (
-              <>
-                {" "}
-                &middot; Fee Invoice {fr.feeInvoice.displayNumber} (
-                {fr.feeInvoice.status === "paid" ? "paid" : "issued"}
-                {fr.feeInvoice.isDelta ? ", delta" : ""})
-              </>
-            )}
+            {fr.feeInvoice
+              ? t("funding.detail.issuedWithInvoice", {
+                  date: formatDate(fr.issuedAt, locale),
+                  number: fr.feeInvoice.displayNumber,
+                  state: t(
+                    fr.feeInvoice.status === "paid"
+                      ? fr.feeInvoice.isDelta
+                        ? "funding.detail.invoiceState.paidDelta"
+                        : "funding.detail.invoiceState.paid"
+                      : fr.feeInvoice.isDelta
+                        ? "funding.detail.invoiceState.issuedDelta"
+                        : "funding.detail.invoiceState.issued",
+                  ),
+                })
+              : t("funding.detail.issuedOn", { date: formatDate(fr.issuedAt, locale) })}
           </p>
         )}
       </Card>
@@ -157,14 +179,16 @@ export function FundingRequestDetail({
           <DocumentDownloads
             links={[
               {
-                label: `Funding request ${fr.displayNumber}`,
+                label: t("funding.detail.documentRequest", { number: fr.displayNumber }),
                 pdfHref: `/projects/${projectId}/funding/${fr.id}/document.pdf`,
                 jpgHref: `/projects/${projectId}/funding/${fr.id}/document.jpg`,
               },
               ...(fr.feeInvoice
                 ? [
                     {
-                      label: `Fee Invoice ${fr.feeInvoice.displayNumber}`,
+                      label: t("funding.detail.documentFeeInvoice", {
+                        number: fr.feeInvoice.displayNumber,
+                      }),
                       pdfHref: `/projects/${projectId}/funding/${fr.id}/fee-invoice.pdf`,
                       jpgHref: `/projects/${projectId}/funding/${fr.id}/fee-invoice.jpg`,
                     },
@@ -194,7 +218,7 @@ export function FundingRequestDetail({
             href={`/projects/${projectId}/funding`}
             className="inline-flex items-center gap-2 text-sm font-bold text-foreground underline"
           >
-            Back to all funding requests
+            {t("funding.detail.backToAll")}
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
@@ -212,29 +236,29 @@ function DraftActions({
   issueError?: string;
   discardAction: () => Promise<void>;
 }) {
+  const t = useT();
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold text-card-foreground">Issue to client</h2>
+      <h2 className="text-xl font-bold text-card-foreground">{t("funding.detail.issue.title")}</h2>
       <p className="text-sm text-muted-foreground">
-        This freezes the request and cannot be undone — a later correction is
-        made by issuing a revised version.
+        {t("funding.detail.issue.warning")}
       </p>
       {issueError && (
-        <p className="text-sm font-bold text-destructive">{issueError}</p>
+        <Notice tone="error">{issueError}</Notice>
       )}
       <div className="flex flex-wrap items-center gap-3">
         <form action={issueAction}>
           <Button variant="primary" type="submit">
             <PaperPlaneTilt size={18} aria-hidden="true" />
-            Issue to client
+            {t("funding.detail.issue.action")}
           </Button>
         </form>
         <form action={discardAction}>
           <button
             type="submit"
-            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
+            className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-lg transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
           >
-            Discard draft
+            {t("funding.detail.issue.discard")}
           </button>
         </form>
       </div>
@@ -253,12 +277,14 @@ function DepositsCard({
   depositAction: Bound;
   voidActions: Record<string, Bound>;
 }) {
+  const t = useT();
+  const locale = useLocale();
   return (
     <Card>
-      <h2 className="text-xl font-bold text-card-foreground">Deposits</h2>
+      <h2 className="text-xl font-bold text-card-foreground">{t("funding.detail.deposits.title")}</h2>
       {fr.deposits.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
-          No deposits recorded yet.
+          {t("funding.detail.deposits.none")}
         </p>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
@@ -269,12 +295,14 @@ function DepositsCard({
             >
               <div className="flex items-center justify-between gap-3">
                 <span>
-                  <span className="font-bold text-card-foreground">{d.method}</span>
+                  <span className="font-bold text-card-foreground">
+                    {METHOD_LABEL[d.method] ? t(METHOD_LABEL[d.method]) : d.method}
+                  </span>
                   {d.reference && (
                     <span className="ml-2 text-muted-foreground">{d.reference}</span>
                   )}
                   <span className="ml-2 text-muted-foreground">
-                    {formatDate(d.receivedOn)}
+                    {formatDate(d.receivedOn, locale)}
                   </span>
                 </span>
                 <Money
@@ -287,7 +315,9 @@ function DepositsCard({
               )}
               {d.voidedAt ? (
                 <p className="mt-1 font-bold text-destructive">
-                  Voided{d.voidReason ? ` — ${d.voidReason}` : ""}
+                  {d.voidReason
+                    ? t("funding.detail.deposits.voidedWithReason", { reason: d.voidReason })
+                    : t("funding.detail.deposits.voided")}
                 </p>
               ) : (
                 <VoidDepositForm action={voidActions[d.id]} />
@@ -307,18 +337,19 @@ function DepositsCard({
 }
 
 function RecordDepositForm({ action }: { action: Bound }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
   const today = new Date().toISOString().slice(0, 10);
 
   return (
     <form action={formAction} className="flex flex-col gap-4" noValidate>
-      <h3 className="font-bold text-card-foreground">Record a deposit</h3>
+      <h3 className="font-bold text-card-foreground">{t("funding.detail.record.title")}</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Amount (TZS)" required error={errors.amount}>
-          <input name="amount" type="number" min={1} className={controlClass} />
+        <Field label={t("funding.detail.record.amount")} required error={errors.amount}>
+          <MoneyInput name="amount" />
         </Field>
-        <Field label="Received on" required error={errors.receivedOn}>
+        <Field label={t("funding.detail.record.receivedOn")} required error={errors.receivedOn}>
           <input
             name="receivedOn"
             type="date"
@@ -326,29 +357,29 @@ function RecordDepositForm({ action }: { action: Bound }) {
             className={controlClass}
           />
         </Field>
-        <Field label="Method" required error={errors.method}>
+        <Field label={t("funding.detail.record.method")} required error={errors.method}>
           <select name="method" defaultValue="bank_transfer" className={`${controlClass} cursor-pointer`}>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="mobile_money">Mobile money</option>
-            <option value="cheque">Cheque</option>
-            <option value="cash">Cash</option>
-            <option value="other">Other</option>
+            <option value="bank_transfer">{t("funding.method.bankTransfer")}</option>
+            <option value="mobile_money">{t("funding.method.mobileMoney")}</option>
+            <option value="cheque">{t("funding.method.cheque")}</option>
+            <option value="cash">{t("funding.method.cash")}</option>
+            <option value="other">{t("funding.method.other")}</option>
           </select>
         </Field>
-        <Field label="Reference" error={errors.reference}>
+        <Field label={t("funding.detail.record.reference")} error={errors.reference}>
           <input name="reference" className={controlClass} />
         </Field>
       </div>
-      <Field label="Notes" error={errors.notes}>
+      <Field label={t("funding.detail.record.notes")} error={errors.notes}>
         <input name="notes" className={controlClass} />
       </Field>
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
       <div>
         <Button variant="secondary" type="submit" disabled={pending}>
           <CheckCircle size={18} aria-hidden="true" />
-          {pending ? "Recording…" : "Record deposit"}
+          {pending ? t("funding.detail.record.submitting") : t("funding.detail.record.submit")}
         </Button>
       </div>
     </form>
@@ -356,52 +387,54 @@ function RecordDepositForm({ action }: { action: Bound }) {
 }
 
 function VoidDepositForm({ action }: { action: Bound }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   return (
-    <form action={formAction} className="mt-2 flex flex-wrap items-center gap-2">
-      <input
-        name="reason"
-        placeholder="Reason to void"
-        aria-label="Reason to void this deposit"
-        className="min-h-10 flex-1 rounded-lg border border-border-strong bg-card px-2 py-1 text-sm"
-      />
+    <form action={formAction} className="mt-2 flex flex-wrap items-end gap-2">
+      <LineField label={t("funding.detail.void.reason")} className="flex-1">
+        <input
+          name="reason"
+          aria-label={t("funding.detail.void.reasonAria")}
+          className="min-h-12 rounded-lg border border-control-border bg-card px-2 py-1 text-sm"
+        />
+      </LineField>
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-10 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-destructive hover:underline disabled:opacity-50 rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
+        className="inline-flex min-h-12 cursor-pointer items-center gap-1 px-2 text-sm font-bold text-destructive hover:underline disabled:opacity-50 rounded-lg transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
       >
         <Trash size={14} aria-hidden="true" />
-        Void
+        {t("funding.detail.void.action")}
       </button>
       {(state.fieldErrors?.reason || state.error) && (
-        <span className="w-full text-sm font-bold text-destructive">
+        <Notice tone="error" className="w-full">
           {state.fieldErrors?.reason ?? state.error}
-        </span>
+        </Notice>
       )}
     </form>
   );
 }
 
 function SupersedeCard({ supersedeAction }: { supersedeAction: Bound }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(supersedeAction, {});
   const errors = state.fieldErrors ?? {};
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold text-card-foreground">Revise this request</h2>
+      <h2 className="text-xl font-bold text-card-foreground">{t("funding.detail.revise.title")}</h2>
       <p className="text-sm text-muted-foreground">
-        An issued request is never edited in place. This starts a new version
-        (carrying the current lines) that supersedes this one when you issue it.
+        {t("funding.detail.revise.body")}
       </p>
       <form action={formAction} className="flex flex-col gap-3" noValidate>
-        <Field label="Why is it being revised?" required error={errors.revisionReason}>
+        <Field label={t("funding.detail.revise.why")} required error={errors.revisionReason}>
           <input name="revisionReason" className={controlClass} />
         </Field>
         {state.error && (
-          <p className="text-sm font-bold text-destructive">{state.error}</p>
+          <Notice tone="error">{state.error}</Notice>
         )}
         <div>
           <Button variant="secondary" type="submit" disabled={pending}>
-            {pending ? "Starting…" : "Start a revision"}
+            {pending ? t("funding.detail.revise.starting") : t("funding.detail.revise.start")}
           </Button>
         </div>
       </form>
@@ -416,6 +449,7 @@ function LineSection({
   title: string;
   lines: FundingRequestLine[];
 }) {
+  const t = useT();
   if (lines.length === 0) return null;
   const subtotal = lines.reduce((s, l) => s + l.amount, 0);
   return (
@@ -440,7 +474,9 @@ function LineSection({
         ))}
       </ul>
       <div className="mt-1 flex items-center justify-between gap-3 text-sm">
-        <span className="text-muted-foreground">{title} subtotal</span>
+        <span className="text-muted-foreground">
+          {t("funding.detail.subtotal", { section: title })}
+        </span>
         <Money amount={subtotal} className="font-bold text-card-foreground" />
       </div>
     </div>

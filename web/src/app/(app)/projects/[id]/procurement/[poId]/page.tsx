@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import {
   cancelPurchaseOrderAction,
@@ -17,6 +15,11 @@ import {
 import { getAttachmentMeta, getPurchaseOrder } from "@/lib/data";
 import { AttachmentCard } from "./_components/AttachmentCard";
 import { PurchaseOrderDetail } from "./_components/PurchaseOrderDetail";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("procurement.detailPageTitle");
 
 export default async function PurchaseOrderPage({
   params,
@@ -25,6 +28,7 @@ export default async function PurchaseOrderPage({
   const { id, poId } = await params;
   const { issue_error } = await searchParams;
 
+  const t = await getT();
   const [po, attachment] = await Promise.all([
     getPurchaseOrder(poId),
     getAttachmentMeta("purchaseOrder", poId),
@@ -45,14 +49,8 @@ export default async function PurchaseOrderPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/procurement`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Purchase orders
-      </Link>
+    <PageFrame width="working">
+      <Breadcrumbs crumbs={[{ label: t("procurement.pageTitle"), href: `/projects/${id}/procurement` }]} />
 
       <PurchaseOrderDetail
         po={po}
@@ -74,6 +72,6 @@ export default async function PurchaseOrderPage({
       <div className="mt-6">
         <AttachmentCard projectId={id} poId={po.id} attachment={attachment} />
       </div>
-    </main>
+    </PageFrame>
   );
 }

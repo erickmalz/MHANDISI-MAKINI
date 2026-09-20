@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 import { Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/Button";
@@ -11,6 +10,13 @@ import { Money } from "@/components/ui/Money";
 import type { EditableTakeOffLine } from "@/lib/data";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { TaskInput } from "@/lib/validation/tasks";
+import { Notice } from "@/components/ui/Notice";
+import { LineField } from "@/components/ui/LineField";
+import { MoneyInput } from "@/components/ui/MoneyInput";
+import { formatTZS } from "@/lib/finance";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
+import { TASK_STATUS_KEYS } from "./status-keys";
 
 type LineRow = {
   /** Present only for a line that already exists in the database (Phase 3 ticket 03 §2) — a missing id tells the DAL to insert a new row. */
@@ -37,13 +43,9 @@ function stockKey(item: string, unit: string): string {
   return `${item.trim().toLowerCase()}::${unit.trim().toLowerCase()}`;
 }
 
-const STATUSES: { value: TaskInput["status"]; label: string }[] = [
-  { value: "planned", label: "Planned" },
-  { value: "active", label: "Active" },
-  { value: "on_hold", label: "On hold" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-];
+const STATUSES: { value: TaskInput["status"]; labelKey: MessageKey }[] = (
+  Object.keys(TASK_STATUS_KEYS) as (keyof typeof TASK_STATUS_KEYS)[]
+).map((value) => ({ value, labelKey: TASK_STATUS_KEYS[value] }));
 
 const emptyLine: LineRow = {
   item: "",
@@ -89,6 +91,7 @@ export function TaskForm({
   /** Distinct known material item names for the item field's `<datalist>` autocomplete (ticket 06 §4/§6) — a typo-drift mitigation, not validation. */
   knownItems?: string[];
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -150,28 +153,27 @@ export function TaskForm({
       <Card className="flex flex-col gap-4">
         {seq != null && (
           <p className="text-sm text-muted-foreground">
-            Task <span className="font-bold text-foreground">{seq}</span> in this
-            stage.
+            {t("forms.task.seqNote", { seq })}
           </p>
         )}
 
-        <Field label="Task description" required error={errors.description}>
+        <Field label={t("forms.task.description")} required error={errors.description}>
           <input
             name="description"
             defaultValue={initial?.description ?? ""}
-            placeholder="e.g. Ground-floor blockwork up to ring beam"
+            placeholder={t("forms.task.descriptionPlaceholder")}
             className={controlClass}
           />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Subcontractor" error={errors.subcontractorId}>
+          <Field label={t("forms.task.subcontractor")} error={errors.subcontractorId}>
             <select
               name="subcontractorId"
               defaultValue={initial?.subcontractorId ?? ""}
               className={`${controlClass} cursor-pointer`}
             >
-              <option value="">Unassigned</option>
+              <option value="">{t("forms.task.unassigned")}</option>
               {subcontractors.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -180,26 +182,24 @@ export function TaskForm({
             </select>
           </Field>
           <Field
-            label="Labour agreement (TZS)"
+            label={t("forms.task.labourAgreement")}
             hint={
               budgetLocked
-                ? "Locked — this stage's Funding Request has been issued. A real change goes through superseding it instead."
+                ? t("forms.task.labourHintLocked")
                 : labourOriginalAmount != null
-                  ? `The agreed price for this subcontractor's work. Reduces Available Float once set. Original: ${labourOriginalAmount.toLocaleString("en-US")}.`
-                  : "The agreed price for this subcontractor's work. Reduces Available Float once set."
+                  ? t("forms.task.labourHintOriginal", { amount: labourOriginalAmount.toLocaleString("en-US") })
+                  : t("forms.task.labourHint")
             }
             error={errors.labourAmount}
           >
-            <input
+            <MoneyInput
               name="labourAmount"
-              type="number"
-              min={0}
               defaultValue={initial?.labourAmount ?? ""}
               readOnly={budgetLocked}
-              className={`${controlClass} ${budgetLocked ? "cursor-not-allowed opacity-70" : ""}`}
+              className={budgetLocked ? "cursor-not-allowed opacity-70" : ""}
             />
           </Field>
-          <Field label="Status" error={errors.status}>
+          <Field label={t("forms.common.status")} error={errors.status}>
             <select
               name="status"
               defaultValue={initial?.status ?? "planned"}
@@ -207,12 +207,12 @@ export function TaskForm({
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
-                  {s.label}
+                  {t(s.labelKey)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Progress (%)" error={errors.progressPercent}>
+          <Field label={t("forms.common.progressPercent")} error={errors.progressPercent}>
             <input
               name="progressPercent"
               type="number"
@@ -222,7 +222,7 @@ export function TaskForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Started on" error={errors.startedOn}>
+          <Field label={t("forms.common.startedOn")} error={errors.startedOn}>
             <input
               name="startedOn"
               type="date"
@@ -230,7 +230,7 @@ export function TaskForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Completed on" error={errors.completedOn}>
+          <Field label={t("forms.common.completedOn")} error={errors.completedOn}>
             <input
               name="completedOn"
               type="date"
@@ -240,7 +240,7 @@ export function TaskForm({
           </Field>
         </div>
 
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("forms.common.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -253,12 +253,12 @@ export function TaskForm({
       <Card className="flex flex-col gap-4">
         <div>
           <h2 className="text-xl font-bold text-card-foreground">
-            Material take-off
+            {t("forms.task.takeOff.title")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {budgetLocked
-              ? "Locked — this stage's Funding Request has been issued, so item name and unit are frozen as the Approved Estimate. Change a quantity or cost to record a revision, remove a line to drop it, or add a new one."
-              : "Your material estimate for this task. Optional now — it feeds Material Variance at closeout and pre-fills purchase orders."}
+              ? t("forms.task.takeOff.introLocked")
+              : t("forms.task.takeOff.intro")}
           </p>
         </div>
 
@@ -278,53 +278,55 @@ export function TaskForm({
                 key={row.id ?? `new-${i}`}
                 className="rounded-lg border border-border p-3"
               >
-                <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
-                  <input
-                    aria-label={`Material item, line ${i + 1}`}
-                    placeholder="Item"
-                    list="material-item-options"
-                    value={row.item}
-                    readOnly={identityLocked}
-                    onChange={(e) =>
-                      setLines(lines.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))
-                    }
-                    className={`${controlClass} sm:col-span-2 ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
-                  />
-                  <input
-                    aria-label={`Quantity, line ${i + 1}`}
-                    type="number"
-                    min={0}
-                    step="0.001"
-                    placeholder="Qty"
-                    value={row.qty}
-                    onChange={(e) =>
-                      setLines(lines.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))
-                    }
-                    className={controlClass}
-                  />
-                  <input
-                    aria-label={`Unit, line ${i + 1}`}
-                    placeholder="Unit"
-                    value={row.unit}
-                    readOnly={identityLocked}
-                    onChange={(e) =>
-                      setLines(lines.map((r, j) => (j === i ? { ...r, unit: e.target.value } : r)))
-                    }
-                    className={`${controlClass} ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
-                  />
-                  <input
-                    aria-label={`Estimated unit cost, line ${i + 1}`}
-                    type="number"
-                    min={0}
-                    placeholder="Unit cost"
-                    value={row.estUnitCost}
-                    onChange={(e) =>
-                      setLines(
-                        lines.map((r, j) => (j === i ? { ...r, estUnitCost: e.target.value } : r)),
-                      )
-                    }
-                    className={controlClass}
-                  />
+                <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
+                  <LineField label={t("forms.task.item")} className="col-span-2 sm:col-span-2">
+                    <input
+                      aria-label={t("forms.task.ariaItem", { n: i + 1 })}
+                      list="material-item-options"
+                      value={row.item}
+                      readOnly={identityLocked}
+                      onChange={(e) =>
+                        setLines(lines.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))
+                      }
+                      className={`${controlClass} ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
+                    />
+                  </LineField>
+                  <LineField label={t("forms.task.quantity")}>
+                    <input
+                      aria-label={t("forms.task.ariaQuantity", { n: i + 1 })}
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.001"
+                      value={row.qty}
+                      onChange={(e) =>
+                        setLines(lines.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))
+                      }
+                      className={controlClass}
+                    />
+                  </LineField>
+                  <LineField label={t("forms.task.unit")}>
+                    <input
+                      aria-label={t("forms.task.ariaUnit", { n: i + 1 })}
+                      value={row.unit}
+                      readOnly={identityLocked}
+                      onChange={(e) =>
+                        setLines(lines.map((r, j) => (j === i ? { ...r, unit: e.target.value } : r)))
+                      }
+                      className={`${controlClass} ${identityLocked ? "cursor-not-allowed opacity-70" : ""}`}
+                    />
+                  </LineField>
+                  <LineField label={t("forms.task.unitCost")}>
+                    <MoneyInput
+                      aria-label={t("forms.task.ariaUnitCost", { n: i + 1 })}
+                      value={row.estUnitCost}
+                      onChange={(v) =>
+                        setLines(
+                          lines.map((r, j) => (j === i ? { ...r, estUnitCost: v } : r)),
+                        )
+                      }
+                    />
+                  </LineField>
                   <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:justify-end">
                     <Money
                       amount={lineTotal(row)}
@@ -332,31 +334,31 @@ export function TaskForm({
                     />
                     <button
                       type="button"
-                      aria-label={`Remove material line ${i + 1}`}
+                      aria-label={t("forms.task.ariaRemove", { n: i + 1 })}
                       onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                      className="cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
+                      className="inline-flex min-h-12 min-w-12 cursor-pointer items-center justify-center text-muted-foreground hover:text-destructive rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
                     >
                       <Trash size={16} aria-hidden="true" />
                     </button>
                   </div>
                 </div>
                 {wasRevised && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Original: {row.qtyOriginal ?? "—"} {row.unit} @{" "}
-                    <Money amount={row.estUnitCostOriginal ?? 0} className="text-xs" />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t("forms.task.original", { qty: row.qtyOriginal ?? "—", unit: row.unit })}{" "}
+                    <Money amount={row.estUnitCostOriginal ?? 0} className="text-sm" />
                   </p>
                 )}
                 {stockFor(row) > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-xs">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-2 py-1.5 text-sm">
                     <span className="text-muted-foreground">
-                      On site: <span className="font-bold text-card-foreground">{stockFor(row)}</span>{" "}
-                      {row.unit}
+                      {t("forms.task.onSite", { qty: stockFor(row), unit: row.unit })}
                     </span>
                     <label className="flex items-center gap-1.5 text-muted-foreground">
-                      Apply from stock
+                      {t("forms.task.applyFromStock")}
                       <input
-                        aria-label={`Apply from stock, line ${i + 1}`}
+                        aria-label={t("forms.task.ariaApplyFromStock", { n: i + 1 })}
                         type="number"
+                        inputMode="decimal"
                         min={0}
                         max={maxApplyFromStock(row)}
                         step="0.001"
@@ -375,7 +377,7 @@ export function TaskForm({
                             ),
                           );
                         }}
-                        className="w-20 rounded border border-border bg-card px-1.5 py-0.5 text-card-foreground"
+                        className="min-h-12 w-24 rounded-lg border border-control-border bg-card px-2 text-card-foreground"
                       />
                       {row.unit}
                     </label>
@@ -385,7 +387,7 @@ export function TaskForm({
             );
           })}
           {lines.length === 0 && (
-            <li className="text-sm text-muted-foreground">No material lines yet.</li>
+            <li className="text-sm text-muted-foreground">{t("forms.task.noLines")}</li>
           )}
         </ul>
 
@@ -393,42 +395,37 @@ export function TaskForm({
           <button
             type="button"
             onClick={() => setLines([...lines, { ...emptyLine }])}
-            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
+            className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
           >
             <Plus size={16} aria-hidden="true" />
-            Add material line
+            {t("forms.task.addLine")}
           </button>
           <span className="text-sm text-muted-foreground">
-            Estimated material cost{" "}
+            {t("forms.task.estimatedCost")}{" "}
             <Money amount={materialEstimate} className="font-bold text-card-foreground" />
           </span>
         </div>
         {!!variationMaterialTotal && (
           <p className="text-sm text-muted-foreground">
-            Plus{" "}
-            <Money amount={variationMaterialTotal} className="font-bold text-card-foreground" />{" "}
-            from approved Variations (recorded separately — see the Variation).
+            {t("forms.task.variationPlus", { amount: formatTZS(variationMaterialTotal) })}
           </p>
         )}
         {errors.lines && (
-          <p className="text-sm font-bold text-destructive">{errors.lines}</p>
+          <Notice tone="error">{errors.lines}</Notice>
         )}
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("forms.common.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("forms.common.cancel")}
+        </Button>
       </div>
     </form>
   );

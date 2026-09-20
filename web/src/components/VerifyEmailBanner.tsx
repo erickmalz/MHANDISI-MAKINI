@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { authClient } from "@/lib/auth/client";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Persistent "verify your email" banner shown on every authenticated screen
@@ -11,6 +12,7 @@ import { authClient } from "@/lib/auth/client";
  * `EmailVerificationGate` instead.
  */
 export function VerifyEmailBanner({ email }: { email: string }) {
+  const t = useT();
   const [pending, startTransition] = useTransition();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
@@ -31,15 +33,15 @@ export function VerifyEmailBanner({ email }: { email: string }) {
   }
 
   return (
-    <div className="border-b border-mm-warning/30 bg-mm-warning-surface">
+    <div className="border-b border-health-amber/30 bg-health-amber-bg">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm sm:px-6 lg:px-8">
-        <span className="font-bold text-mm-warning">Verify your email</span>
-        <span className="text-foreground">
+        <span className="font-bold text-health-amber">{t("chrome.verifyBanner.title")}</span>
+        <span role="status" className="text-foreground">
           {sent
-            ? "Sent. Check your inbox for the link."
+            ? t("chrome.verifyBanner.sent")
             : error
-              ? "Could not send the link. Try again in a minute."
-              : `We sent a link to ${email}. Verifying unlocks password reset and changing your email.`}
+              ? t("chrome.verifyBanner.failed")
+              : t("chrome.verifyBanner.default", { email })}
         </span>
         {!sent && (
           <button
@@ -48,7 +50,7 @@ export function VerifyEmailBanner({ email }: { email: string }) {
             disabled={pending}
             className="font-bold text-foreground underline disabled:opacity-60"
           >
-            {pending ? "Sending…" : "Resend link"}
+            {pending ? t("chrome.verifyBanner.sending") : t("chrome.verifyBanner.resend")}
           </button>
         )}
       </div>

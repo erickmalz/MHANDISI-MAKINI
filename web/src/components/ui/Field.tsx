@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Children,
   cloneElement,
@@ -6,6 +8,9 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+
+import { useT } from "@/lib/i18n/client";
+import { translateIfKey } from "@/lib/i18n/translate";
 
 /**
  * Input wrapper for the MHANDISI MAKINI system.
@@ -21,7 +26,7 @@ import {
 
 /** Shared control styling — 48px min height, visible border at rest. */
 export const controlClass =
-  "min-h-12 w-full rounded-lg border border-border-strong bg-card px-3 py-2 text-base text-foreground";
+  "min-h-12 w-full rounded-lg border border-control-border bg-card px-3 py-2 text-base text-foreground";
 
 export function Field({
   label,
@@ -36,6 +41,7 @@ export function Field({
   error?: ReactNode;
   children: ReactElement<Record<string, unknown>>;
 }) {
+  const t = useT();
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -56,7 +62,7 @@ export function Field({
       <label htmlFor={id} className="text-sm font-bold text-foreground">
         {label}
         {required && (
-          <span className="font-normal text-muted-foreground"> (required)</span>
+          <span className="font-normal text-muted-foreground"> {t("common.required")}</span>
         )}
       </label>
       {control}
@@ -66,8 +72,8 @@ export function Field({
         </p>
       )}
       {error && (
-        <p id={errorId} className="text-sm font-bold text-destructive">
-          {error}
+        <p id={errorId} role="alert" className="text-sm font-bold text-destructive">
+          {typeof error === "string" ? translateIfKey(t, error) : error}
         </p>
       )}
     </div>

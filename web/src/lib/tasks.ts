@@ -117,3 +117,41 @@ export interface Task {
 export function estimatedMaterialCost(task: Pick<Task, "materialLines">): number {
   return task.materialLines.reduce((sum, l) => sum + lineEstimate(l), 0);
 }
+
+/** How a Labour Payment moved — the display form of the shared `payment_method` enum. */
+export type PaymentMethod =
+  | "Bank Transfer"
+  | "Cash"
+  | "Mobile Money"
+  | "Cheque"
+  | "Other";
+
+/** Money paid to a Task's Subcontractor against its labour agreement. */
+export interface LabourPayment {
+  id: string;
+  paidOn: string;
+  amount: number;
+  method: PaymentMethod;
+  reference: string | null;
+  notes: string | null;
+  /** Append-only with reversal: a voided record is kept, marked. */
+  voidedAt: string | null;
+  voidReason: string | null;
+}
+
+/** Σ non-voided payments. */
+export function paidLabourTotal(payments: LabourPayment[]): number {
+  return payments.reduce((sum, p) => (p.voidedAt ? sum : sum + p.amount), 0);
+}
+
+/**
+ * The live labour agreement minus payments made against it (CONTEXT.md
+ * "Subcontractor Position / Outstanding Labour"), floored at 0 — retention is
+ * dormant (Phase 1 decision 04), so no release adjustment yet.
+ */
+export function outstandingLabour(
+  labourAmount: number | null | undefined,
+  payments: LabourPayment[],
+): number {
+  return Math.max(0, (labourAmount ?? 0) - paidLabourTotal(payments));
+}

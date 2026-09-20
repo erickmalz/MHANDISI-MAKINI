@@ -64,7 +64,10 @@ export {
   createTask,
   updateTask,
   deleteTask,
+  recordLabourPayment,
+  voidLabourPayment,
   type EditableTakeOffLine,
+  type LabourPaymentResult,
 } from "./tasks";
 export {
   getDocumentProfile,

@@ -1,23 +1,21 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { StageInput } from "@/lib/validation/structure";
+import { Notice } from "@/components/ui/Notice";
+import { MoneyInput } from "@/components/ui/MoneyInput";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
+import { STAGE_DB_STATUS_KEYS } from "./status-keys";
 
-const STATUSES: { value: StageInput["status"]; label: string }[] = [
-  { value: "planned", label: "Planned" },
-  { value: "active", label: "Active" },
-  { value: "awaiting_funding", label: "Awaiting funding" },
-  { value: "on_hold", label: "On hold" },
-  { value: "ready_for_closeout", label: "Ready for closeout" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-];
+const STATUSES: { value: StageInput["status"]; labelKey: MessageKey }[] = (
+  Object.keys(STAGE_DB_STATUS_KEYS) as (keyof typeof STAGE_DB_STATUS_KEYS)[]
+).map((value) => ({ value, labelKey: STAGE_DB_STATUS_KEYS[value] }));
 
 export function StageForm({
   action,
@@ -32,6 +30,7 @@ export function StageForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
   const [feeBasis, setFeeBasis] = useState<string>(initial?.feeBasis ?? "");
@@ -41,17 +40,16 @@ export function StageForm({
       <Card className="flex flex-col gap-4">
         {seq != null && (
           <p className="text-sm text-muted-foreground">
-            Stage <span className="font-bold text-foreground">{seq}</span> in the
-            project sequence.
+            {t("forms.stage.seqNote", { seq })}
           </p>
         )}
 
-        <Field label="Stage name" required error={errors.name}>
+        <Field label={t("forms.stage.name")} required error={errors.name}>
           <input name="name" defaultValue={initial?.name ?? ""} className={controlClass} />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Status" error={errors.status}>
+          <Field label={t("forms.common.status")} error={errors.status}>
             <select
               name="status"
               defaultValue={initial?.status ?? "planned"}
@@ -59,12 +57,12 @@ export function StageForm({
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
-                  {s.label}
+                  {t(s.labelKey)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Progress (%)" error={errors.progressPercent}>
+          <Field label={t("forms.common.progressPercent")} error={errors.progressPercent}>
             <input
               name="progressPercent"
               type="number"
@@ -78,32 +76,29 @@ export function StageForm({
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <Field label="Supervision fee basis" error={errors.feeBasis}>
+        <Field label={t("forms.stage.feeBasis.label")} error={errors.feeBasis}>
           <select
             name="feeBasis"
             value={feeBasis}
             onChange={(e) => setFeeBasis(e.target.value)}
             className={`${controlClass} cursor-pointer`}
           >
-            <option value="">Not set yet</option>
-            <option value="fixed">Fixed amount</option>
-            <option value="percent">Percentage of stage cost</option>
+            <option value="">{t("forms.stage.feeBasis.notSet")}</option>
+            <option value="fixed">{t("forms.stage.feeBasis.fixed")}</option>
+            <option value="percent">{t("forms.stage.feeBasis.percent")}</option>
           </select>
         </Field>
 
         {feeBasis === "fixed" && (
-          <Field label="Fixed fee (TZS)" required error={errors.feeAmount}>
-            <input
+          <Field label={t("forms.stage.fixedFee")} required error={errors.feeAmount}>
+            <MoneyInput
               name="feeAmount"
-              type="number"
-              min={0}
               defaultValue={initial?.feeAmount ?? ""}
-              className={controlClass}
             />
           </Field>
         )}
         {feeBasis === "percent" && (
-          <Field label="Fee percentage" required error={errors.feePercent}>
+          <Field label={t("forms.stage.feePercent")} required error={errors.feePercent}>
             <input
               name="feePercent"
               type="number"
@@ -120,7 +115,7 @@ export function StageForm({
         {feeBasis !== "percent" && <input type="hidden" name="feePercent" value="" />}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Started on" error={errors.startedOn}>
+          <Field label={t("forms.common.startedOn")} error={errors.startedOn}>
             <input
               name="startedOn"
               type="date"
@@ -128,7 +123,7 @@ export function StageForm({
               className={controlClass}
             />
           </Field>
-          <Field label="Completed on" error={errors.completedOn}>
+          <Field label={t("forms.common.completedOn")} error={errors.completedOn}>
             <input
               name="completedOn"
               type="date"
@@ -138,7 +133,7 @@ export function StageForm({
           </Field>
         </div>
 
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t("forms.common.notes")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -149,19 +144,16 @@ export function StageForm({
       </Card>
 
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("forms.common.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("forms.common.cancel")}
+        </Button>
       </div>
     </form>
   );

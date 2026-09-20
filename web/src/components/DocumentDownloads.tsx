@@ -1,6 +1,9 @@
+"use client";
+
 import { DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 
 import { Card } from "@/components/ui/Card";
+import { useT } from "@/lib/i18n/client";
 
 export interface DocumentLink {
   /** e.g. "Funding request FR-PRJ-2026-001-004 v2" */
@@ -19,18 +22,18 @@ const linkClass =
  * stored.
  */
 export function DocumentDownloads({
-  title = "Documents",
+  title,
   links,
 }: {
   title?: string;
   links: DocumentLink[];
 }) {
+  const t = useT();
   return (
     <Card>
-      <h2 className="text-xl font-bold text-card-foreground">{title}</h2>
+      <h2 className="text-xl font-bold text-card-foreground">{title ?? t("common.documents.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Rendered fresh from the issued record each time. The PDF is the
-        authoritative copy; the JPG previews inline when shared on WhatsApp.
+        {t("common.documents.note")}
       </p>
       <div className="mt-4 flex flex-col gap-4">
         {links.map((link) => (
@@ -41,11 +44,11 @@ export function DocumentDownloads({
             <div className="flex flex-wrap gap-3">
               <a href={link.pdfHref} className={linkClass}>
                 <DownloadSimple size={16} aria-hidden="true" />
-                PDF
+                {t("common.documents.pdf")}
               </a>
               <a href={link.jpgHref} className={linkClass}>
                 <DownloadSimple size={16} aria-hidden="true" />
-                JPG
+                {t("common.documents.jpg")}
               </a>
             </div>
           </div>

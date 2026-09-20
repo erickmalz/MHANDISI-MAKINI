@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import {
   deleteFundingRequestDraftAction,
@@ -11,6 +9,11 @@ import {
 } from "@/app/actions/funding";
 import { getFundingRequest } from "@/lib/data";
 import { FundingRequestDetail } from "./_components/FundingRequestDetail";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("funding.detailPageTitle");
 
 export default async function FundingRequestPage({
   params,
@@ -19,6 +22,7 @@ export default async function FundingRequestPage({
   const { id, frId } = await params;
   const { issue_error } = await searchParams;
 
+  const t = await getT();
   const fr = await getFundingRequest(frId);
   if (!fr || fr.projectId !== id) notFound();
 
@@ -30,14 +34,8 @@ export default async function FundingRequestPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}/funding`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Funding requests
-      </Link>
+    <PageFrame width="working">
+      <Breadcrumbs crumbs={[{ label: t("funding.pageTitle"), href: `/projects/${id}/funding` }]} />
 
       <FundingRequestDetail
         fr={fr}
@@ -50,6 +48,6 @@ export default async function FundingRequestPage({
         editHref={`/projects/${id}/funding/${fr.id}/edit`}
         voidActions={voidActions}
       />
-    </main>
+    </PageFrame>
   );
 }

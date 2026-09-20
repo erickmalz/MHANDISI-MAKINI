@@ -1,20 +1,29 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
-import { deleteTaskAction, updateTaskAction } from "@/app/actions/tasks";
+import {
+  deleteTaskAction,
+  recordLabourPaymentAction,
+  updateTaskAction,
+  voidLabourPaymentAction,
+} from "@/app/actions/tasks";
 import {
   getStockBalances,
   getTaskInput,
   listKnownMaterialItems,
   listSubcontractors,
 } from "@/lib/data";
+import { getT } from "@/lib/i18n/server";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TaskForm } from "../../../../_components/TaskForm";
+import { LabourPaymentsCard } from "./_components/LabourPaymentsCard";
+import { TASK_STATUS_KEYS } from "../../../../_components/status-keys";
 
 export default async function EditTaskPage({
   params,
 }: PageProps<"/projects/[id]/tasks/[taskId]/edit">) {
   const { id, taskId } = await params;
+  const t = await getT();
 
   const [task, subcontractors] = await Promise.all([
     getTaskInput(taskId),
@@ -35,23 +44,28 @@ export default async function EditTaskPage({
 
   const back = `/projects/${id}/stages/${task.stageId}`;
 
-  return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={back}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {task.stageName}
-      </Link>
+  const voidActions = Object.fromEntries(
+    task.payments.map((p) => [
+      p.id,
+      voidLabourPaymentAction.bind(null, id, task.stageId, taskId, p.id),
+    ]),
+  );
 
-      <h1 className="mb-6 text-[1.75rem] font-bold text-foreground">Edit task</h1>
+  return (
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[
+          { label: t("stages.crumbs.overview"), href: `/projects/${id}` },
+          { label: task.stageName, href: back },
+        ]}
+        title={t("tasks.edit.title")}
+      />
 
       <TaskForm
         action={updateTaskAction.bind(null, id, task.stageId, taskId)}
         subcontractors={options}
         initial={task}
-        submitLabel="Save changes"
+        submitLabel={t("tasks.edit.submit")}
         cancelHref={back}
         labourOriginalAmount={task.labourOriginalAmount}
         budgetLocked={task.budgetLocked}
@@ -60,27 +74,34 @@ export default async function EditTaskPage({
         knownItems={knownItems}
       />
 
+      <div className="mt-8">
+        <LabourPaymentsCard
+          labourAmount={task.labourAmount}
+          payments={task.payments}
+          paymentAction={recordLabourPaymentAction.bind(null, id, task.stageId, taskId)}
+          voidActions={voidActions}
+        />
+      </div>
+
       <div className="mt-8 border-t border-border pt-6">
         {task.hasLabourPayments ? (
           <p className="text-sm text-muted-foreground">
-            This task has recorded labour payments, so it can&apos;t be deleted —
-            set its status to <span className="font-bold">Cancelled</span> instead.
+            {t("tasks.edit.cannotDelete", { cancelled: t(TASK_STATUS_KEYS.cancelled) })}
           </p>
         ) : (
           <form action={deleteTaskAction.bind(null, id, task.stageId, taskId)}>
             <button
               type="submit"
-              className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-md transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
+              className="inline-flex min-h-12 cursor-pointer items-center px-3 text-sm font-bold text-destructive hover:underline rounded-lg transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
             >
-              Delete this task
+              {t("tasks.edit.delete")}
             </button>
             <p className="mt-1 text-sm text-muted-foreground">
-              Removes the task and its material take-off. Its labour agreement
-              stops counting against the stage.
+              {t("tasks.edit.deleteNote")}
             </p>
           </form>
         )}
       </div>
-    </main>
+    </PageFrame>
   );
 }

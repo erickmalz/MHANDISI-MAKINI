@@ -58,8 +58,11 @@ export async function signup(
     );
   } catch (error) {
     if (error instanceof APIError) {
-      // Reuse better-auth's message for "email already registered" etc.
-      return { error: error.message || "Could not create your account. Try again." };
+      // Catalogue keys (translated by Notice), never better-auth's raw English text.
+      const code = String((error.body as { code?: string } | undefined)?.code ?? "");
+      return {
+        error: code.includes("ALREADY_EXISTS") ? "auth.signUp.emailTaken" : "auth.signUp.failed",
+      };
     }
     throw error;
   }

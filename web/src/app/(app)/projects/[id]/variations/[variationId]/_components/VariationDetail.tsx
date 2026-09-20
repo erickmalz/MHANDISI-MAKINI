@@ -9,13 +9,25 @@ import { Card } from "@/components/ui/Card";
 import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
 import { formatDate } from "@/lib/format";
+import { useLocale, useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { Variation } from "@/lib/variations";
 import { isVariationDraft, isVariationFunded } from "@/lib/variations";
 import { VariationStatusBadge } from "../../_components/VariationStatusBadge";
+import { Notice } from "@/components/ui/Notice";
 
 type Bound = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 type PlainAction = () => Promise<void>;
+
+/** Stored status of a linked funding request -> label. Unknown values show as stored. */
+const LINKED_FR_STATUS: Record<string, MessageKey> = {
+  draft: "funding.status.draft",
+  issued: "funding.status.issued",
+  superseded: "funding.status.superseded",
+  cancelled: "funding.status.cancelled",
+  closed: "funding.status.closed",
+};
 
 export function VariationDetail({
   projectId,
@@ -32,6 +44,8 @@ export function VariationDetail({
   cancelAction: PlainAction;
   deleteDraftAction: PlainAction;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const draft = isVariationDraft(variation);
   const funded = isVariationFunded(variation);
 
@@ -40,42 +54,51 @@ export function VariationDetail({
       <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-lg font-bold text-card-foreground">
-            {variation.displayNumber ?? "Draft"}
+            {variation.displayNumber ?? t("variations.detail.draftLabel")}
           </span>
           <VariationStatusBadge status={variation.status} />
           {funded && (
-            <span className="rounded bg-health-green-bg px-2 py-0.5 text-xs font-bold text-health-green">
-              Funded
+            <span className="rounded bg-health-green-bg px-2 py-0.5 text-sm font-bold text-health-green">
+              {t("variations.detail.funded")}
             </span>
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          Against task <span className="font-bold text-foreground">{variation.taskDescription}</span>
+          {t("variations.detail.againstTask")}{" "}
+          <span className="font-bold text-foreground">{variation.taskDescription}</span>
         </p>
         <p className="text-card-foreground">{variation.description}</p>
         {variation.reason && (
           <p className="text-sm text-muted-foreground">
-            <span className="font-bold">Reason: </span>
+            <span className="font-bold">{t("variations.detail.reason")} </span>
             {variation.reason}
           </p>
         )}
 
         <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
-          <ImpactStat label="Material impact" amount={variation.materialImpact} />
-          <ImpactStat label="Labour impact" amount={variation.labourImpact} />
-          <ImpactStat label="Fee impact (note only)" amount={variation.feeImpact} />
+          <ImpactStat label={t("variations.detail.materialImpact")} amount={variation.materialImpact} />
+          <ImpactStat label={t("variations.detail.labourImpact")} amount={variation.labourImpact} />
+          <ImpactStat label={t("variations.detail.feeImpact")} amount={variation.feeImpact} />
         </div>
 
         <div className="grid grid-cols-1 gap-2 border-t border-border pt-4 text-sm text-muted-foreground sm:grid-cols-2">
-          <p>Requested {formatDate(variation.requestedAt)}</p>
+          <p>{t("variations.detail.requested", { date: formatDate(variation.requestedAt, locale) })}</p>
           {variation.approvedAt && (
             <p>
-              Approved {formatDate(variation.approvedAt)}
-              {variation.clientReference && ` — ${variation.clientReference}`}
+              {variation.clientReference
+                ? t("variations.detail.approvedWithReference", {
+                    date: formatDate(variation.approvedAt, locale),
+                    reference: variation.clientReference,
+                  })
+                : t("variations.detail.approved", { date: formatDate(variation.approvedAt, locale) })}
             </p>
           )}
-          {variation.rejectedAt && <p>Rejected {formatDate(variation.rejectedAt)}</p>}
-          {variation.cancelledAt && <p>Cancelled {formatDate(variation.cancelledAt)}</p>}
+          {variation.rejectedAt && (
+            <p>{t("variations.detail.rejected", { date: formatDate(variation.rejectedAt, locale) })}</p>
+          )}
+          {variation.cancelledAt && (
+            <p>{t("variations.detail.cancelled", { date: formatDate(variation.cancelledAt, locale) })}</p>
+          )}
         </div>
 
         {variation.notes && (
@@ -88,7 +111,7 @@ export function VariationDetail({
       {variation.fundingRequestLinks.length > 0 && (
         <Card className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-card-foreground">
-            Linked Additional Funding Requests
+            {t("variations.detail.linkedFunding")}
           </h2>
           <ul className="flex flex-col gap-1 text-sm">
             {variation.fundingRequestLinks.map((fr) => (
@@ -97,9 +120,11 @@ export function VariationDetail({
                   href={`/projects/${projectId}/funding/${fr.id}`}
                   className="font-bold text-foreground hover:underline"
                 >
-                  {fr.displayNumber ?? "Draft"}
+                  {fr.displayNumber ?? t("variations.detail.draftLabel")}
                 </Link>{" "}
-                <span className="text-muted-foreground">({fr.status})</span>
+                <span className="text-muted-foreground">
+                  ({LINKED_FR_STATUS[fr.status] ? t(LINKED_FR_STATUS[fr.status]) : fr.status})
+                </span>
               </li>
             ))}
           </ul>
@@ -109,21 +134,22 @@ export function VariationDetail({
       {draft && (
         <>
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href={`/projects/${projectId}/variations/${variation.id}/edit`}
-              className="inline-flex min-h-12 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-            >
+            <Button variant="ghost" href={`/projects/${projectId}/variations/${variation.id}/edit`}>
               <PencilSimple size={16} aria-hidden="true" />
-              Edit
-            </Link>
-            <PlainForm action={deleteDraftAction} label="Discard draft" variant="danger-quiet" />
+              {t("variations.detail.edit")}
+            </Button>
+            <PlainForm
+              action={deleteDraftAction}
+              label={t("variations.detail.discard")}
+              variant="danger-quiet"
+            />
           </div>
 
           <ApproveCard action={approveAction} />
 
           <div className="flex flex-wrap gap-3">
-            <PlainForm action={rejectAction} label="Reject" variant="secondary" />
-            <PlainForm action={cancelAction} label="Cancel" variant="danger-quiet" />
+            <PlainForm action={rejectAction} label={t("variations.detail.reject")} variant="secondary" />
+            <PlainForm action={cancelAction} label={t("variations.detail.cancel")} variant="danger-quiet" />
           </div>
         </>
       )}
@@ -134,9 +160,13 @@ export function VariationDetail({
             variant="primary"
             href={`/projects/${projectId}/funding/new?kind=additional&variationId=${variation.id}`}
           >
-            Raise Additional Funding Request
+            {t("variations.detail.raiseFunding")}
           </Button>
-          <PlainForm action={cancelAction} label="Cancel this Variation" variant="danger-quiet" />
+          <PlainForm
+            action={cancelAction}
+            label={t("variations.detail.cancelThis")}
+            variant="danger-quiet"
+          />
         </div>
       )}
     </div>
@@ -157,41 +187,43 @@ function ImpactStat({ label, amount }: { label: string; amount: number | null })
 }
 
 function ApproveCard({ action }: { action: Bound }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
   return (
     <Card className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-bold text-card-foreground">Approve</h2>
+        <h2 className="text-lg font-bold text-card-foreground">
+          {t("variations.detail.approve.title")}
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Records the client&rsquo;s real-world sign-off and mints this
-          Variation&rsquo;s number. Revises the task&rsquo;s labour agreement
-          and appends a material take-off line for the impacts above — this
-          cannot be undone by editing.
+          {t("variations.detail.approve.body")}
         </p>
       </div>
       <form action={formAction} className="flex flex-col gap-4" noValidate>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
-            label="Approval date"
-            hint="Defaults to today if left blank."
+            label={t("variations.detail.approve.dateLabel")}
+            hint={t("variations.detail.approve.dateHint")}
             error={errors.approvedAt}
           >
             <input name="approvedAt" type="date" className={controlClass} />
           </Field>
           <Field
-            label="Client reference"
-            hint="A WhatsApp confirmation, a signed change-order sheet number…"
+            label={t("variations.detail.approve.referenceLabel")}
+            hint={t("variations.detail.approve.referenceHint")}
             error={errors.clientReference}
           >
             <input name="clientReference" className={controlClass} />
           </Field>
         </div>
-        {state.error && <p className="text-sm font-bold text-destructive">{state.error}</p>}
+        {state.error && <Notice tone="error">{state.error}</Notice>}
         <div>
           <Button variant="primary" type="submit" disabled={pending}>
-            {pending ? "Approving…" : "Approve variation"}
+            {pending
+              ? t("variations.detail.approve.submitting")
+              : t("variations.detail.approve.submit")}
           </Button>
         </div>
       </form>

@@ -1,31 +1,27 @@
-import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createStageTemplateAction } from "@/app/actions/stage-templates";
 import { StageTemplateForm } from "../_components/StageTemplateForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
 
-export default function NewStageTemplatePage() {
+export const generateMetadata = pageTitle("stageTemplates.new.pageTitle");
+
+export default async function NewStageTemplatePage() {
+  const t = await getT();
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/stage-templates"
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Stage templates
-      </Link>
-
-      <h1 className="mb-1 text-[1.75rem] font-bold text-foreground">New template</h1>
-      <p className="mb-6 text-muted-foreground">
-        Names and units only — no quantities, prices, or costs. Those are
-        filled in per-project after applying the template.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("stageTemplates.crumbProjects"), href: "/" }, { label: t("stageTemplates.crumbRegister"), href: "/stage-templates" }]}
+        title={t("stageTemplates.new.title")}
+        subtitle={t("stageTemplates.new.subtitle")}
+      />
 
       <StageTemplateForm
         action={createStageTemplateAction}
-        submitLabel="Save template"
+        submitLabel={t("stageTemplates.new.submit")}
         cancelHref="/stage-templates"
       />
-    </main>
+    </PageFrame>
   );
 }

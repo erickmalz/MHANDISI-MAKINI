@@ -8,9 +8,13 @@ import { resolvePostSignInRedirect } from "@/app/actions/auth";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Field, controlClass } from "@/components/ui/Field";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { authClient } from "@/lib/auth/client";
+import { useT } from "@/lib/i18n/client";
+import { Notice } from "@/components/ui/Notice";
 
 export default function SignInPage() {
+  const t = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +40,7 @@ export default function SignInPage() {
 
     if (error) {
       // Generic message, no enumeration (ticket 02).
-      setFormError("Email or password is incorrect.");
+      setFormError(t("auth.signIn.wrong"));
       return;
     }
     // Platform Admins land on /admin instead of Choose Project
@@ -49,19 +53,22 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-card px-4 py-16 sm:px-6">
       <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <BrandLogo width={200} priority />
 
-        <h1 className="mt-6 text-[1.75rem] font-bold text-foreground">Sign in</h1>
+        <h1 className="mt-6 text-[1.75rem] font-bold text-foreground">{t("auth.signIn.title")}</h1>
         <p className="mt-1 text-muted-foreground">
-          Sign in, then choose the project you want to work on.
+          {t("auth.signIn.intro")}
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4" noValidate>
           <Field
-            label="Email"
+            label={t("auth.signIn.email")}
             required
             error={
-              attempted && emailMissing ? "Enter your email address." : undefined
+              attempted && emailMissing ? t("auth.signIn.emailMissing") : undefined
             }
           >
             <input
@@ -74,10 +81,10 @@ export default function SignInPage() {
           </Field>
 
           <Field
-            label="Password"
+            label={t("auth.signIn.password")}
             required
             error={
-              attempted && passwordMissing ? "Enter your password." : undefined
+              attempted && passwordMissing ? t("auth.signIn.passwordMissing") : undefined
             }
           >
             <input
@@ -90,20 +97,20 @@ export default function SignInPage() {
           </Field>
 
           {formError && (
-            <p className="text-sm font-bold text-destructive">{formError}</p>
+            <Notice tone="error">{formError}</Notice>
           )}
 
           <Button variant="primary" type="submit" className="w-full" disabled={pending}>
-            {pending ? "Signing in…" : "Sign in"}
+            {pending ? t("auth.signIn.submitting") : t("auth.signIn.submit")}
           </Button>
         </form>
 
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link href="/reset-password" className="font-bold text-foreground underline">
-            Forgotten your password?
+            {t("auth.signIn.forgot")}
           </Link>
           <Link href="/sign-up" className="font-bold text-foreground underline">
-            Create an account
+            {t("auth.signIn.create")}
           </Link>
         </p>
       </div>

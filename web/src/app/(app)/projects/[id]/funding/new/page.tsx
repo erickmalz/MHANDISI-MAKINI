@@ -1,10 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createFundingRequestAction } from "@/app/actions/funding";
 import { getProjectOverview, getVariation } from "@/lib/data";
 import { FundingRequestForm } from "../../../_components/FundingRequestForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("funding.newPageTitle");
 
 export default async function NewFundingRequestPage({
   params,
@@ -14,6 +17,7 @@ export default async function NewFundingRequestPage({
   const { kind, variationId, stageId } = await searchParams;
   const project = await getProjectOverview(id);
   if (!project) notFound();
+  const t = await getT();
 
   const isAdditional = kind === "additional";
 
@@ -30,30 +34,29 @@ export default async function NewFundingRequestPage({
 
   if (fundableStages.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <BackLink id={id} name={project.name} />
-        <h1 className="mb-4 text-[1.75rem] font-bold text-foreground">
-          Create funding request
-        </h1>
+      <PageFrame width="reading">
+        <PageHeader
+          crumbs={[{ label: t("funding.pageTitle"), href: `/projects/${id}/funding` }]}
+          title={t("funding.new.title")}
+        />
         <p className="rounded-lg border border-dashed border-border-strong bg-card p-6 text-sm text-muted-foreground">
-          This project has no stage that can be funded yet. Add a stage first.
+          {t("funding.new.noFundableStage")}
         </p>
-      </main>
+      </PageFrame>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <BackLink id={id} name={project.name} />
-
-      <h1 className="mb-2 text-[1.75rem] font-bold text-foreground">
-        {isAdditional ? "Additional funding request" : "Create funding request"}
-      </h1>
-      <p className="mb-6 max-w-prose text-muted-foreground">
-        {isAdditional
-          ? "A separate request for approved scope growth mid-stage. It gets its own number; the original request stays live and the stage's requirement is their sum."
-          : "Enter the stage's material and labour scope. The supervision fee is added from the stage's fee basis when you issue, and billed through its own Fee Invoice."}
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("funding.pageTitle"), href: `/projects/${id}/funding` }]}
+        title={isAdditional ? t("funding.new.additionalTitle") : t("funding.new.title")}
+        subtitle={
+          isAdditional
+            ? t("funding.new.subtitleAdditional")
+            : t("funding.new.subtitleBase")
+        }
+      />
 
       <FundingRequestForm
         action={createFundingRequestAction.bind(
@@ -73,7 +76,7 @@ export default async function NewFundingRequestPage({
           project.currentStageId ??
           undefined
         }
-        submitLabel="Save draft"
+        submitLabel={t("funding.new.saveDraft")}
         cancelHref={`/projects/${id}/funding`}
         variationLinks={linkedVariations.map((v) => ({
           id: v.id,
@@ -81,18 +84,6 @@ export default async function NewFundingRequestPage({
           description: v.description,
         }))}
       />
-    </main>
-  );
-}
-
-function BackLink({ id, name }: { id: string; name: string }) {
-  return (
-    <Link
-      href={`/projects/${id}/funding`}
-      className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-    >
-      <ArrowLeft size={16} aria-hidden="true" />
-      {name} — funding
-    </Link>
+    </PageFrame>
   );
 }

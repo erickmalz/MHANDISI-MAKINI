@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 import { Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/Button";
@@ -10,6 +9,11 @@ import { Field, controlClass } from "@/components/ui/Field";
 import { Money } from "@/components/ui/Money";
 import type { ActionState } from "@/lib/forms/action-helpers";
 import type { FundingRequestLine } from "@/lib/funding";
+import { useT } from "@/lib/i18n/client";
+import { STAGE_STATUS_LABEL } from "./status-labels";
+import { Notice } from "@/components/ui/Notice";
+import { LineField } from "@/components/ui/LineField";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 
 type MaterialRow = { item: string; qty: string; unit: string; unitCost: string };
 type LumpRow = { item: string; amount: string };
@@ -75,6 +79,7 @@ export function FundingRequestForm({
    */
   variationLinks?: { id: string; displayNumber: string | null; description: string }[];
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const errors = state.fieldErrors ?? {};
 
@@ -137,12 +142,12 @@ export function FundingRequestForm({
       {variationLinks && variationLinks.length > 0 && (
         <Card>
           <p className="text-sm font-bold text-card-foreground">
-            Raised for {variationLinks.length === 1 ? "this Variation" : "these Variations"}
+            {t("funding.form.raisedFor", { count: variationLinks.length })}
           </p>
           <ul className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
             {variationLinks.map((v) => (
               <li key={v.id}>
-                {v.displayNumber ?? "Draft"} — {v.description}
+                {v.displayNumber ?? t("funding.status.draft")} — {v.description}
               </li>
             ))}
           </ul>
@@ -152,13 +157,14 @@ export function FundingRequestForm({
       {fixedStageName ? (
         <Card>
           <p className="text-sm text-muted-foreground">
-            Stage <span className="font-bold text-foreground">{fixedStageName}</span>{" "}
-            — frozen with this request.
+            {t("funding.form.stage")}{" "}
+            <span className="font-bold text-foreground">{fixedStageName}</span> —{" "}
+            {t("funding.form.stageFrozen")}
           </p>
         </Card>
       ) : (
         <Card>
-          <Field label="Stage to fund" required error={errors.stageId}>
+          <Field label={t("funding.form.stageToFund")} required error={errors.stageId}>
             <select
               name="stageId"
               defaultValue={defaultStageId ?? stages?.[0]?.id ?? ""}
@@ -166,7 +172,8 @@ export function FundingRequestForm({
             >
               {(stages ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.seq}. {s.name} ({s.status})
+                  {s.seq}. {s.name} (
+                  {STAGE_STATUS_LABEL[s.status] ? t(STAGE_STATUS_LABEL[s.status]) : s.status})
                 </option>
               ))}
             </select>
@@ -175,47 +182,49 @@ export function FundingRequestForm({
       )}
 
       <RowEditor
-        title="Materials"
-        subtitle="Quantity × unit cost. Lump-sum items go under “Other costs”."
-        addLabel="Add material line"
+        title={t("funding.form.materials.title")}
+        subtitle={t("funding.form.materials.subtitle")}
+        addLabel={t("funding.form.materials.add")}
         rows={material}
         onChange={setMaterial}
         makeEmpty={() => ({ ...emptyMaterial })}
         render={(row, update) => (
           <>
-            <input
-              aria-label="Material item"
-              placeholder="Item"
-              value={row.item}
-              onChange={(e) => update({ item: e.target.value })}
-              className={`${controlClass} sm:col-span-2`}
-            />
-            <input
-              aria-label="Quantity"
-              type="number"
-              min={0}
-              step="0.001"
-              placeholder="Qty"
-              value={row.qty}
-              onChange={(e) => update({ qty: e.target.value })}
-              className={controlClass}
-            />
-            <input
-              aria-label="Unit"
-              placeholder="Unit"
-              value={row.unit}
-              onChange={(e) => update({ unit: e.target.value })}
-              className={controlClass}
-            />
-            <input
-              aria-label="Unit cost (TZS)"
-              type="number"
-              min={0}
-              placeholder="Unit cost"
-              value={row.unitCost}
-              onChange={(e) => update({ unitCost: e.target.value })}
-              className={controlClass}
-            />
+            <LineField label={t("funding.form.item")} className="col-span-2 sm:col-span-2">
+              <input
+                aria-label={t("funding.form.materialItemAria")}
+                value={row.item}
+                onChange={(e) => update({ item: e.target.value })}
+                className={controlClass}
+              />
+            </LineField>
+            <LineField label={t("funding.form.quantity")}>
+              <input
+                aria-label={t("funding.form.quantity")}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.001"
+                value={row.qty}
+                onChange={(e) => update({ qty: e.target.value })}
+                className={controlClass}
+              />
+            </LineField>
+            <LineField label={t("funding.form.unit")}>
+              <input
+                aria-label={t("funding.form.unit")}
+                value={row.unit}
+                onChange={(e) => update({ unit: e.target.value })}
+                className={controlClass}
+              />
+            </LineField>
+            <LineField label={t("funding.form.unitCost")}>
+              <MoneyInput
+                aria-label={t("funding.form.unitCost")}
+                value={row.unitCost}
+                onChange={(v) => update({ unitCost: v })}
+              />
+            </LineField>
           </>
         )}
         lineTotal={(row) => Math.round(toNumber(row.qty) * toNumber(row.unitCost))}
@@ -223,30 +232,29 @@ export function FundingRequestForm({
       />
 
       <RowEditor
-        title="Labour"
-        subtitle="One lump-sum amount per subcontractor or crew."
-        addLabel="Add labour line"
+        title={t("funding.form.labour.title")}
+        subtitle={t("funding.form.labour.subtitle")}
+        addLabel={t("funding.form.labour.add")}
         rows={labour}
         onChange={setLabour}
         makeEmpty={() => ({ ...emptyLump })}
         render={(row, update) => (
           <>
-            <input
-              aria-label="Labour item"
-              placeholder="Subcontractor / scope"
-              value={row.item}
-              onChange={(e) => update({ item: e.target.value })}
-              className={`${controlClass} sm:col-span-4`}
-            />
-            <input
-              aria-label="Amount (TZS)"
-              type="number"
-              min={0}
-              placeholder="Amount"
-              value={row.amount}
-              onChange={(e) => update({ amount: e.target.value })}
-              className={controlClass}
-            />
+            <LineField label={t("funding.form.subcontractorOrScope")} className="col-span-2 sm:col-span-4">
+              <input
+                aria-label={t("funding.form.subcontractorOrScope")}
+                value={row.item}
+                onChange={(e) => update({ item: e.target.value })}
+                className={controlClass}
+              />
+            </LineField>
+            <LineField label={t("funding.form.amount")}>
+              <MoneyInput
+                aria-label={t("funding.form.amount")}
+                value={row.amount}
+                onChange={(v) => update({ amount: v })}
+              />
+            </LineField>
           </>
         )}
         lineTotal={(row) => Math.round(toNumber(row.amount))}
@@ -254,30 +262,29 @@ export function FundingRequestForm({
       />
 
       <RowEditor
-        title="Other costs"
-        subtitle="Anything else the client funds for this stage (optional)."
-        addLabel="Add other line"
+        title={t("funding.form.other.title")}
+        subtitle={t("funding.form.other.subtitle")}
+        addLabel={t("funding.form.other.add")}
         rows={other}
         onChange={setOther}
         makeEmpty={() => ({ ...emptyLump })}
         render={(row, update) => (
           <>
-            <input
-              aria-label="Other item"
-              placeholder="Description"
-              value={row.item}
-              onChange={(e) => update({ item: e.target.value })}
-              className={`${controlClass} sm:col-span-4`}
-            />
-            <input
-              aria-label="Amount (TZS)"
-              type="number"
-              min={0}
-              placeholder="Amount"
-              value={row.amount}
-              onChange={(e) => update({ amount: e.target.value })}
-              className={controlClass}
-            />
+            <LineField label={t("funding.form.description")} className="col-span-2 sm:col-span-4">
+              <input
+                aria-label={t("funding.form.description")}
+                value={row.item}
+                onChange={(e) => update({ item: e.target.value })}
+                className={controlClass}
+              />
+            </LineField>
+            <LineField label={t("funding.form.amount")}>
+              <MoneyInput
+                aria-label={t("funding.form.amount")}
+                value={row.amount}
+                onChange={(v) => update({ amount: v })}
+              />
+            </LineField>
           </>
         )}
         lineTotal={(row) => Math.round(toNumber(row.amount))}
@@ -286,25 +293,25 @@ export function FundingRequestForm({
 
       <Card className="flex items-center justify-between gap-3">
         <span className="font-bold text-card-foreground">
-          Deposit requested (materials + labour + other)
+          {t("funding.form.depositRequested")}
         </span>
         <Money
           amount={depositTarget}
-          className="text-lg font-bold text-card-foreground"
+          className="shrink-0 whitespace-nowrap text-lg font-bold text-card-foreground"
         />
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <Field label="Payment instructions" error={errors.paymentInstructions}>
+        <Field label={t("funding.form.paymentInstructions")} error={errors.paymentInstructions}>
           <textarea
             name="paymentInstructions"
             rows={2}
             defaultValue={initial?.paymentInstructions ?? ""}
-            placeholder="Bank transfer, mobile money or cheque — account details on file with the client."
+            placeholder={t("funding.form.paymentPlaceholder")}
             className={`${controlClass} min-h-16`}
           />
         </Field>
-        <Field label="Notes for the client" error={errors.notes}>
+        <Field label={t("funding.form.notesForClient")} error={errors.notes}>
           <textarea
             name="notes"
             rows={3}
@@ -315,22 +322,19 @@ export function FundingRequestForm({
       </Card>
 
       {errors.lines && (
-        <p className="text-sm font-bold text-destructive">{errors.lines}</p>
+        <Notice tone="error">{errors.lines}</Notice>
       )}
       {state.error && (
-        <p className="text-sm font-bold text-destructive">{state.error}</p>
+        <Notice tone="error">{state.error}</Notice>
       )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={pending}>
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("funding.form.saving") : submitLabel}
         </Button>
-        <Link
-          href={cancelHref}
-          className="inline-flex min-h-12 items-center px-3 text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </Link>
+        <Button variant="ghost" href={cancelHref}>
+          {t("funding.form.cancel")}
+        </Button>
       </div>
     </form>
   );
@@ -357,6 +361,7 @@ function RowEditor<Row>({
   lineTotal: (row: Row) => number;
   subtotal: number;
 }) {
+  const t = useT();
   return (
     <Card className="flex flex-col gap-4">
       <div>
@@ -368,7 +373,7 @@ function RowEditor<Row>({
         {rows.map((row, i) => (
           <li
             key={i}
-            className="grid grid-cols-2 items-center gap-2 rounded-lg border border-border p-3 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
+            className="grid grid-cols-2 items-end gap-2 rounded-lg border border-border p-3 sm:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
           >
             {render(row, (patch) =>
               onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r))),
@@ -380,9 +385,9 @@ function RowEditor<Row>({
               />
               <button
                 type="button"
-                aria-label={`Remove ${title} line ${i + 1}`}
+                aria-label={t("funding.form.removeLine", { section: title, number: i + 1 })}
                 onClick={() => onChange(rows.filter((_, j) => j !== i))}
-                className="cursor-pointer text-muted-foreground hover:text-destructive rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
+                className="inline-flex min-h-12 min-w-12 cursor-pointer items-center justify-center text-muted-foreground hover:text-destructive rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-destructive"
               >
                 <Trash size={16} aria-hidden="true" />
               </button>
@@ -390,7 +395,7 @@ function RowEditor<Row>({
           </li>
         ))}
         {rows.length === 0 && (
-          <li className="text-sm text-muted-foreground">No lines yet.</li>
+          <li className="text-sm text-muted-foreground">{t("funding.form.noLines")}</li>
         )}
       </ul>
 
@@ -398,13 +403,13 @@ function RowEditor<Row>({
         <button
           type="button"
           onClick={() => onChange([...rows, makeEmpty()])}
-          className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-md transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
+          className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground rounded-lg transition-[color,background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10 active:text-foreground"
         >
           <Plus size={16} aria-hidden="true" />
           {addLabel}
         </button>
         <span className="text-sm text-muted-foreground">
-          Subtotal <Money amount={subtotal} className="font-bold text-card-foreground" />
+          {t("funding.form.subtotal")} <Money amount={subtotal} className="font-bold text-card-foreground" />
         </span>
       </div>
     </Card>

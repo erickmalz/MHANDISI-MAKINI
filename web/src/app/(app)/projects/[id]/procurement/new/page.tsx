@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
 import { createPurchaseOrderAction } from "@/app/actions/procurement";
 import { getProjectOverview, listSuppliers } from "@/lib/data";
 import { PurchaseOrderForm } from "../../../_components/PurchaseOrderForm";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getT, pageTitle } from "@/lib/i18n/server";
+
+export const generateMetadata = pageTitle("procurement.newPageTitle");
 
 export default async function NewPurchaseOrderPage({
   params,
 }: PageProps<"/projects/[id]/procurement/new">) {
   const { id } = await params;
+  const t = await getT();
   const [project, suppliers] = await Promise.all([
     getProjectOverview(id),
     listSuppliers(),
@@ -21,35 +26,24 @@ export default async function NewPurchaseOrderPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${project.id}/procurement`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Purchase orders
-      </Link>
-
-      <h1 className="mb-2 text-[1.75rem] font-bold text-foreground">
-        Create purchase order
-      </h1>
-      <p className="mb-6 max-w-prose text-muted-foreground">
-        Enter the material lines and pick the supplier. Issuing the order freezes
-        the supplier, lines and unit prices, and assigns its number.
-      </p>
+    <PageFrame width="reading">
+      <PageHeader
+        crumbs={[{ label: t("procurement.pageTitle"), href: `/projects/${id}/procurement` }]}
+        title={t("procurement.new.title")}
+        subtitle={t("procurement.new.subtitle")}
+      />
 
       {orderableStages.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-strong bg-card p-6 text-sm text-muted-foreground">
-          This project has no stage that can take a purchase order yet. Add a
-          stage first.
+          {t("procurement.new.noStage")}
         </p>
       ) : suppliers.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-strong bg-card p-6 text-sm text-muted-foreground">
-          Add a supplier to the{" "}
+          {t("procurement.new.addSupplierBefore")}{" "}
           <Link href="/suppliers/new" className="font-bold underline">
-            Supplier Register
+            {t("procurement.new.supplierRegister")}
           </Link>{" "}
-          before raising a purchase order.
+          {t("procurement.new.addSupplierAfter")}
         </p>
       ) : (
         <PurchaseOrderForm
@@ -64,10 +58,10 @@ export default async function NewPurchaseOrderPage({
           suppliers={suppliers
             .filter((s) => s.status === "active")
             .map((s) => ({ id: s.id, name: s.name, status: s.status }))}
-          submitLabel="Save draft"
+          submitLabel={t("procurement.new.saveDraft")}
           cancelHref={`/projects/${id}/procurement`}
         />
       )}
-    </main>
+    </PageFrame>
   );
 }

@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+
+import { useT } from "@/lib/i18n/client";
 
 import styles from "./PageLoaders.module.css";
 
@@ -10,7 +14,9 @@ type LoaderProps = {
  * Light-surface loader: a measured survey sweep circles the mark while the
  * wordless construction symbol settles into place.
  */
-export function SurveySweepLoader({ label = "Loading your site" }: LoaderProps) {
+export function SurveySweepLoader({ label }: LoaderProps) {
+  const t = useT();
+  const text = label ?? t("chrome.loader.site");
   return (
     <div className={styles.surveyLoader} role="status" aria-live="polite">
       <div className={styles.surveyMark} aria-hidden="true">
@@ -25,7 +31,7 @@ export function SurveySweepLoader({ label = "Loading your site" }: LoaderProps) 
           priority
         />
       </div>
-      <span className="sr-only">{label}. Please wait.</span>
+      <span className="sr-only">{t("chrome.loader.wait", { label: text })}</span>
     </div>
   );
 }
@@ -34,7 +40,9 @@ export function SurveySweepLoader({ label = "Loading your site" }: LoaderProps) 
  * Dark-surface loader: the structure rises in short, steady construction
  * phases while the reversed brand symbol remains fully legible.
  */
-export function FoundationRiseLoader({ label = "Preparing your workspace" }: LoaderProps) {
+export function FoundationRiseLoader({ label }: LoaderProps) {
+  const t = useT();
+  const text = label ?? t("chrome.loader.workspace");
   return (
     <div className={styles.foundationLoader} role="status" aria-live="polite">
       <div className={styles.foundationMark} aria-hidden="true">
@@ -56,8 +64,8 @@ export function FoundationRiseLoader({ label = "Preparing your workspace" }: Loa
         <span />
         <span />
       </div>
-      <p className={styles.darkLabel}>{label}</p>
-      <span className="sr-only">{label}. Please wait.</span>
+      <p className={styles.darkLabel}>{text}</p>
+      <span className="sr-only">{t("chrome.loader.wait", { label: text })}</span>
     </div>
   );
 }

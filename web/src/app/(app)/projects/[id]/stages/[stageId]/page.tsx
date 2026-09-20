@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  PencilSimple,
-  Plus,
-} from "@phosphor-icons/react/dist/ssr";
+import { Flag, PencilSimple, Plus } from "@phosphor-icons/react/dist/ssr";
 
 import {
   getAccumulatedMaterialVariance,
@@ -13,8 +9,8 @@ import {
   listSiteDiaryEntries,
   listVariationsForStage,
 } from "@/lib/data";
-import { estimatedMaterialCost, taskStatusLabel } from "@/lib/tasks";
-import { stageStatusLabel } from "@/lib/project-view";
+import { getT, pageTitle } from "@/lib/i18n/server";
+import { estimatedMaterialCost } from "@/lib/tasks";
 import { deletePhotoAction, uploadStagePhotoAction } from "@/app/actions/photos";
 import { PhotoStrip } from "@/components/photos/PhotoStrip";
 import { Button } from "@/components/ui/Button";
@@ -24,11 +20,19 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { VariationStatusBadge } from "../../variations/_components/VariationStatusBadge";
 import { BudgetVarianceCard } from "./_components/BudgetVarianceCard";
 import { SiteDiarySection } from "./_components/SiteDiarySection";
+import { ActionMenu, ActionMenuItem } from "@/components/ActionMenu";
+import { PageFrame } from "@/components/ui/PageFrame";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TASK_STATUS_KEYS } from "../../../_components/status-keys";
+
+export const generateMetadata = pageTitle("stages.detail.pageTitle");
 
 export default async function StageDetailPage({
   params,
 }: PageProps<"/projects/[id]/stages/[stageId]">) {
   const { id, stageId } = await params;
+  const t = await getT();
 
   const stage = await getStageDetail(stageId);
   if (!stage || stage.projectId !== id) notFound();
@@ -49,56 +53,46 @@ export default async function StageDetailPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href={`/projects/${id}`}
-        className="mb-6 inline-flex min-h-12 items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        {stage.projectName}
-      </Link>
-
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Stage {stage.seq} &middot; {stageStatusLabel(stage.status)}
-          </p>
-          <h1 className="text-[1.75rem] font-bold text-foreground">{stage.name}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href={`/projects/${id}/stages/${stageId}/edit`}
-            className="inline-flex min-h-12 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-          >
-            <PencilSimple size={16} aria-hidden="true" />
-            Edit stage
-          </Link>
-          <Button
-            variant="secondary"
-            href={`/projects/${id}/stages/${stageId}/financial-check`}
-          >
-            Run Financial Check
-          </Button>
-          <Button
-            variant="secondary"
-            href={`/projects/${id}/stages/${stageId}/closeout`}
-          >
-            Stage Closeout
-          </Button>
-          <Button
-            variant="primary"
-            href={`/projects/${id}/stages/${stageId}/tasks/new`}
-          >
-            <Plus size={20} aria-hidden="true" />
-            Add task
-          </Button>
-        </div>
-      </header>
+    <PageFrame width="working">
+      <PageHeader
+        crumbs={[{ label: t("stages.crumbs.overview"), href: `/projects/${id}` }]}
+        title={stage.name}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              href={`/projects/${id}/stages/${stageId}/financial-check`}
+            >
+              {t("stages.detail.financialCheck")}
+            </Button>
+            <ActionMenu label={t("stages.detail.actionsMenu")}>
+              <ActionMenuItem
+                href={`/projects/${id}/stages/${stageId}/edit`}
+                icon={<PencilSimple size={20} aria-hidden="true" />}
+              >
+                {t("stages.detail.editStage")}
+              </ActionMenuItem>
+              <ActionMenuItem
+                href={`/projects/${id}/stages/${stageId}/closeout`}
+                icon={<Flag size={20} aria-hidden="true" />}
+              >
+                {t("stages.detail.closeout")}
+              </ActionMenuItem>
+            </ActionMenu>
+            <Button
+              variant="primary"
+              href={`/projects/${id}/stages/${stageId}/tasks/new`}
+            >
+              <Plus size={20} aria-hidden="true" />
+              {t("stages.detail.addTask")}
+            </Button>
+          </>
+        }
+      />
 
       {stage.tasks.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-strong bg-card p-6 text-sm text-muted-foreground">
-          No tasks in this stage yet. Add the work items, each with its
-          subcontractor, labour agreement and material take-off.
+          {t("stages.detail.noTasks")}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -111,12 +105,12 @@ export default async function StageDetailPage({
                       <span className="font-bold text-card-foreground">
                         {task.seq}. {task.description}
                       </span>
-                      <span className="rounded bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
-                        {taskStatusLabel(task.status)}
-                      </span>
+                      <StatusBadge tone="neutral" size="sm">
+                        {t(TASK_STATUS_KEYS[task.status])}
+                      </StatusBadge>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {task.subcontractorName ?? "Unassigned"}
+                      {task.subcontractorName ?? t("stages.detail.task.unassigned")}
                     </p>
                   </div>
                   <Link
@@ -124,7 +118,7 @@ export default async function StageDetailPage({
                     className="inline-flex min-h-12 shrink-0 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
                   >
                     <PencilSimple size={16} aria-hidden="true" />
-                    Edit
+                    {t("stages.detail.task.edit")}
                   </Link>
                 </div>
 
@@ -132,7 +126,7 @@ export default async function StageDetailPage({
                   <ProgressBar
                     percent={task.progressPercent}
                     className="flex-1"
-                    label={`${task.description} progress`}
+                    label={t("stages.detail.task.progress", { name: task.description })}
                   />
                   <span className="text-sm text-muted-foreground">
                     {task.progressPercent}%
@@ -141,21 +135,21 @@ export default async function StageDetailPage({
 
                 <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-sm sm:grid-cols-3">
                   <div>
-                    <p className="text-muted-foreground">Labour agreement</p>
+                    <p className="text-muted-foreground">{t("stages.detail.task.labourAgreement")}</p>
                     <Money
                       amount={task.labourAmount ?? 0}
                       className="font-bold text-card-foreground"
                     />
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Material estimate</p>
+                    <p className="text-muted-foreground">{t("stages.detail.task.materialEstimate")}</p>
                     <Money
                       amount={estimatedMaterialCost(task)}
                       className="font-bold text-card-foreground"
                     />
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Take-off lines</p>
+                    <p className="text-muted-foreground">{t("stages.detail.task.takeOffLines")}</p>
                     <p className="font-bold text-card-foreground">
                       {task.materialLines.length}
                     </p>
@@ -176,9 +170,9 @@ export default async function StageDetailPage({
 
       <div className="mt-10 mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Variations</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("stages.detail.variations.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Formally logged scope changes against this stage&rsquo;s tasks.
+            {t("stages.detail.variations.subtitle")}
           </p>
         </div>
         {stage.tasks.length > 0 && (
@@ -187,14 +181,14 @@ export default async function StageDetailPage({
             href={`/projects/${id}/stages/${stageId}/variations/new`}
           >
             <Plus size={20} aria-hidden="true" />
-            Raise variation
+            {t("stages.detail.variations.raise")}
           </Button>
         )}
       </div>
 
       {variations.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-strong bg-card p-6 text-sm text-muted-foreground">
-          No variations logged against this stage yet.
+          {t("stages.detail.variations.none")}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -207,7 +201,7 @@ export default async function StageDetailPage({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-card-foreground">
-                      {v.displayNumber ?? "Draft"}
+                      {v.displayNumber ?? t("stages.detail.variations.draft")}
                     </span>
                     <VariationStatusBadge status={v.status} size="sm" />
                   </div>
@@ -218,12 +212,12 @@ export default async function StageDetailPage({
                 <div className="flex shrink-0 flex-col gap-1 text-sm sm:text-right">
                   {v.materialImpact != null && v.materialImpact !== 0 && (
                     <span className="text-muted-foreground">
-                      Material <Money amount={v.materialImpact} className="font-bold text-card-foreground" />
+                      {t("stages.detail.variations.material")} <Money amount={v.materialImpact} className="font-bold text-card-foreground" />
                     </span>
                   )}
                   {v.labourImpact != null && v.labourImpact !== 0 && (
                     <span className="text-muted-foreground">
-                      Labour <Money amount={v.labourImpact} className="font-bold text-card-foreground" />
+                      {t("stages.detail.variations.labour")} <Money amount={v.labourImpact} className="font-bold text-card-foreground" />
                     </span>
                   )}
                 </div>
@@ -234,15 +228,15 @@ export default async function StageDetailPage({
       )}
 
       <div className="mt-10">
-        <h2 className="mb-1 text-xl font-bold text-foreground">Stage photos</h2>
+        <h2 className="mb-1 text-xl font-bold text-foreground">{t("stages.detail.photos.title")}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          General progress photos for this stage, not tied to one task, delivery, or diary entry.
+          {t("stages.detail.photos.intro")}
         </p>
         <PhotoStrip
           photos={stagePhotos}
           uploadAction={uploadStagePhotoAction.bind(null, id, stageId)}
           deleteAction={deletePhotoAction.bind(null, id, stageId)}
-          emptyLabel="No stage photos yet."
+          emptyLabel={t("stages.detail.photos.empty")}
         />
       </div>
 
@@ -252,6 +246,6 @@ export default async function StageDetailPage({
         entries={diaryEntries}
         photosByEntry={diaryPhotosByEntry}
       />
-    </main>
+    </PageFrame>
   );
 }
