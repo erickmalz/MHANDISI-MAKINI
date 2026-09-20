@@ -164,7 +164,7 @@ export const procurement: Widen<typeof enProcurement> = {
     voidReason: "Sababu ya kubatilisha",
   },
   attachment: {
-    title: "Kiambatisho",
+    title: "Kiambatanisho",
     body: "Ankara, risiti au hati ya uwasilishaji ya msambazaji kwa oda hii.",
     upload: "Pakia kiambatisho",
     replace: "Badilisha kiambatisho",

@@ -9,12 +9,12 @@ export const funding: Widen<typeof enFunding> = {
   loading: "Inapakia maombi ya fedha",
   status: {
     draft: "Rasimu",
-    issued: "Limetumwa",
+    issued: "Imetumwa",
     partiallyDeposited: "Amana ya sehemu",
     deposited: "Amana imewekwa",
     superseded: "Limebadilishwa",
-    cancelled: "Limeghairiwa",
-    closed: "Limefungwa",
+    cancelled: "Imeghairiwa",
+    closed: "Imefungwa",
   },
   method: {
     bankTransfer: "Uhamisho wa benki",
@@ -46,7 +46,7 @@ export const funding: Widen<typeof enFunding> = {
     title: "Andaa ombi la fedha",
     additionalTitle: "Ombi la fedha la ziada",
     subtitleBase:
-      "Weka vifaa na kazi ya vibarua ya hatua hii. Ada ya usimamizi huongezwa kutoka msingi wa ada ya hatua unapotuma, na hutozwa kupitia Ankara yake ya ada.",
+      "Weka vifaa na kazi ya fundi ya hatua hii. Ada ya usimamizi huongezwa kutoka msingi wa ada ya hatua unapotuma, na hutozwa kupitia Ankara yake ya ada.",
     subtitleAdditional:
       "Ombi tofauti kwa ongezeko la kazi lililoidhinishwa katikati ya hatua. Lina namba yake; ombi la awali linabaki hai na mahitaji ya hatua ni jumla ya yote mawili.",
     noFundableStage: "Mradi huu hauna hatua inayoweza kupewa fedha bado. Ongeza hatua kwanza.",
@@ -54,7 +54,7 @@ export const funding: Widen<typeof enFunding> = {
   },
   edit: {
     title: "Hariri rasimu ya ombi la fedha",
-    subtitleBase: "Rekebisha vifaa na kazi ya vibarua ya hatua kabla ya kutuma.",
+    subtitleBase: "Rekebisha vifaa na kazi ya fundi ya hatua kabla ya kutuma.",
     subtitleAdditional:
       "Ombi la ziada — lina namba yake, huongezwa kwenye mahitaji ya hatua.",
     saveDraft: "Hifadhi rasimu",
@@ -75,12 +75,12 @@ export const funding: Widen<typeof enFunding> = {
     lines: "Mistari",
     editDraft: "Hariri rasimu",
     materials: "Vifaa",
-    labour: "Vibarua",
+    labour: "Fundi",
     other: "Nyingine",
     subtotal: "Jumla ndogo: {section}",
     feeLine: "Ada ya usimamizi — hutozwa tofauti kupitia Ankara ya ada",
-    issuedOn: "Limetumwa {date}",
-    issuedWithInvoice: "Limetumwa {date} · Ankara ya ada {number} ({state})",
+    issuedOn: "Imetumwa {date}",
+    issuedWithInvoice: "Imetumwa {date} · Ankara ya ada {number} ({state})",
     invoiceState: {
       issued: "imetumwa",
       paid: "imelipwa",
@@ -140,9 +140,9 @@ export const funding: Widen<typeof enFunding> = {
       add: "Ongeza mstari wa kifaa",
     },
     labour: {
-      title: "Vibarua",
+      title: "Fundi",
       subtitle: "Kiasi kimoja cha jumla kwa kila mkandarasi msaidizi au kikundi.",
-      add: "Ongeza mstari wa vibarua",
+      add: "Ongeza mstari wa fundi",
     },
     other: {
       title: "Gharama nyingine",
@@ -160,7 +160,7 @@ export const funding: Widen<typeof enFunding> = {
     removeLine: "Ondoa mstari wa {section} namba {number}",
     noLines: "Hakuna mistari bado.",
     subtotal: "Jumla ndogo",
-    depositRequested: "Amana inayoombwa (vifaa + vibarua + nyingine)",
+    depositRequested: "Amana inayoombwa (vifaa + fundi + nyingine)",
     paymentInstructions: "Maelekezo ya malipo",
     paymentPlaceholder:
       "Uhamisho wa benki, pesa kwa simu au hundi — maelezo ya akaunti yako kwa mteja.",

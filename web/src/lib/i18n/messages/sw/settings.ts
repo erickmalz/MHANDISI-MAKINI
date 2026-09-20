@@ -16,10 +16,10 @@ export const settings: Widen<typeof enSettings> = {
     save: "Hifadhi mabadiliko",
   },
   logo: {
-    title: "Nembo ya kichwa cha hati",
+    title: "Nembo ya kichwa cha barua",
     intro:
       "Huonekana kwenye kila Ombi la fedha, Ankara ya ada na Oda ya ununuzi unayotuma. PNG au JPEG, hadi 1MB.",
-    alt: "Nembo ya sasa ya kichwa cha hati",
+    alt: "Nembo ya sasa ya kichwa cha barua",
     replace: "Badilisha nembo",
     upload: "Pakia nembo",
     uploading: "Inapakia…",

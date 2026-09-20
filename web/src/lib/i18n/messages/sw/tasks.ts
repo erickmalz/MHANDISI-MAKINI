@@ -13,19 +13,19 @@ export const tasks: Widen<typeof enTasks> = {
     title: "Hariri kazi",
     submit: "Hifadhi mabadiliko",
     cannotDelete:
-      "Kazi hii ina malipo ya vibarua yaliyorekodiwa, kwa hiyo haiwezi kufutwa — weka hali yake iwe {cancelled} badala yake.",
+      "Kazi hii ina malipo ya fundi yaliyorekodiwa, kwa hiyo haiwezi kufutwa — weka hali yake iwe {cancelled} badala yake.",
     delete: "Futa kazi hii",
     deleteNote:
-      "Inaondoa kazi na orodha yake ya vifaa. Makubaliano yake ya vibarua yanaacha kuhesabiwa dhidi ya hatua.",
+      "Inaondoa kazi na orodha yake ya vifaa. Makubaliano yake ya fundi yanaacha kuhesabiwa dhidi ya hatua.",
   },
   labour: {
-    title: "Malipo ya vibarua",
+    title: "Malipo ya fundi",
     outstanding: "Kilichobaki kulipwa",
     none: "Hakuna malipo yaliyorekodiwa bado.",
     voided: "Imebatilishwa",
     voidedWithReason: "Imebatilishwa — {reason}",
     voidPayment: "Batilisha malipo",
-    needAgreement: "Weka kiasi cha makubaliano ya vibarua hapo juu kabla ya kurekodi malipo.",
+    needAgreement: "Weka kiasi cha makubaliano ya fundi hapo juu kabla ya kurekodi malipo.",
     record: {
       title: "Rekodi malipo",
       amount: "Kiasi (TZS)",

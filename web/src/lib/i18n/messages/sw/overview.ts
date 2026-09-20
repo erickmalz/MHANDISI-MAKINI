@@ -66,7 +66,7 @@ export const overview: Widen<typeof enOverview> = {
   },
   breakdown: {
     title: "Mchanganuo",
-    hint: "Vifaa, vibarua na makadirio",
+    hint: "Vifaa, fundi na makadirio",
     materials: {
       title: "Vifaa",
       paid: "Kilicholipwa",
@@ -74,7 +74,7 @@ export const overview: Widen<typeof enOverview> = {
       toProcure: "Vilivyosalia kununuliwa",
     },
     labour: {
-      title: "Vibarua",
+      title: "Fundi",
       paid: "Kilicholipwa",
       outstanding: "Kilichobaki kulipwa (kimesainiwa, hakijalipwa)",
       remainingWork: "Kazi iliyosalia",

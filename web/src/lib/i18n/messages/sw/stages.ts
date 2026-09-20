@@ -23,12 +23,12 @@ export const stages: Widen<typeof enStages> = {
     closeout: "Kufunga hatua",
     addTask: "Ongeza kazi",
     noTasks:
-      "Hakuna kazi katika hatua hii bado. Ongeza kazi zitakazofanywa, kila moja na mkandarasi msaidizi wake, makubaliano ya vibarua na orodha ya vifaa.",
+      "Hakuna kazi katika hatua hii bado. Ongeza kazi zitakazofanywa, kila moja na mkandarasi msaidizi wake, makubaliano ya fundi na orodha ya vifaa.",
     task: {
       unassigned: "Hajapangiwa",
       edit: "Hariri",
       progress: "Maendeleo ya {name}",
-      labourAgreement: "Makubaliano ya vibarua",
+      labourAgreement: "Makubaliano ya fundi",
       materialEstimate: "Makadirio ya vifaa",
       takeOffLines: "Mistari ya orodha ya vifaa",
     },
@@ -39,7 +39,7 @@ export const stages: Widen<typeof enStages> = {
       none: "Hakuna mabadiliko ya kazi yaliyorekodiwa dhidi ya hatua hii bado.",
       draft: "Rasimu",
       material: "Vifaa",
-      labour: "Vibarua",
+      labour: "Fundi",
     },
     photos: {
       title: "Picha za hatua",
@@ -53,7 +53,7 @@ export const stages: Widen<typeof enStages> = {
     intro:
       "Makadirio yaliyoidhinishwa ikilinganishwa na kilichotumika kweli, kwa hatua hii. Chanya = akiba; hasi = matumizi ya ziada.",
     material: "Vifaa",
-    labour: "Vibarua",
+    labour: "Fundi",
     estimated: "Iliyokadiriwa",
     actual: "Halisi",
     agreement: "Makubaliano",

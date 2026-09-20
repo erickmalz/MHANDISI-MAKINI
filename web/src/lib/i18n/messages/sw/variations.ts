@@ -32,7 +32,7 @@ export const variations: Widen<typeof enVariations> = {
     againstTask: "Dhidi ya kazi",
     reason: "Sababu:",
     materialImpact: "Athari kwa vifaa",
-    labourImpact: "Athari kwa vibarua",
+    labourImpact: "Athari kwa fundi",
     feeImpact: "Athari kwa ada (maelezo tu)",
     requested: "Liliombwa {date}",
     approved: "Liliidhinishwa {date}",
@@ -48,7 +48,7 @@ export const variations: Widen<typeof enVariations> = {
     cancelThis: "Ghairi Badiliko hili la kazi",
     approve: {
       title: "Idhinisha",
-      body: "Inarekodi idhini halisi ya mteja na kutoa namba ya Badiliko hili. Inarekebisha makubaliano ya vibarua ya kazi na kuongeza mstari wa vifaa kwa athari zilizo juu — hii haiwezi kutenduliwa kwa kuhariri.",
+      body: "Inarekodi idhini halisi ya mteja na kutoa namba ya Badiliko hili. Inarekebisha makubaliano ya fundi ya kazi na kuongeza mstari wa vifaa kwa athari zilizo juu — hii haiwezi kutenduliwa kwa kuhariri.",
       dateLabel: "Tarehe ya idhini",
       dateHint: "Huwa leo ukiiacha wazi.",
       referenceLabel: "Kumbukumbu ya mteja",
@@ -67,8 +67,8 @@ export const variations: Widen<typeof enVariations> = {
     reasonPlaceholder: "Kwa nini mteja aliomba, au alikubali, badiliko hili",
     materialImpact: "Athari kwa vifaa (TZS)",
     materialHint: "Punguzo linaweza kuwekwa kama kiasi hasi.",
-    labourImpact: "Athari kwa vibarua (TZS)",
-    labourHint: "Linarekebisha makubaliano ya vibarua ya kazi likishaidhinishwa.",
+    labourImpact: "Athari kwa fundi (TZS)",
+    labourHint: "Linarekebisha makubaliano ya fundi ya kazi likishaidhinishwa.",
     feeImpact: "Athari kwa ada (TZS)",
     feeHint:
       "Maelezo ya kubeba — yaweke mwenyewe kwenye mstari wa ada wa Ombi la fedha la ziada.",

@@ -49,7 +49,7 @@ export const forms: Widen<typeof enForms> = {
     descriptionPlaceholder: "mf. Ujenzi wa kuta za ghorofa ya chini hadi boriti ya juu",
     subcontractor: "Mkandarasi msaidizi",
     unassigned: "Hajapangiwa",
-    labourAgreement: "Makubaliano ya vibarua (TZS)",
+    labourAgreement: "Makubaliano ya fundi (TZS)",
     labourHintLocked:
       "Imefungwa — Ombi la fedha la hatua hii limetumwa. Mabadiliko halisi hufanywa kwa kulibadilisha ombi hilo badala yake.",
     labourHintOriginal:

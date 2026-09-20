@@ -10,7 +10,7 @@ export const auth: Widen<typeof enAuth> = {
     password: "Nywila",
     submit: "Ingia",
     submitting: "Inaingia…",
-    forgot: "Umesahau nywila?",
+    forgot: "Umesahau nywila yako?",
     create: "Fungua akaunti",
     emailMissing: "Weka anwani yako ya barua pepe.",
     passwordMissing: "Weka nywila yako.",

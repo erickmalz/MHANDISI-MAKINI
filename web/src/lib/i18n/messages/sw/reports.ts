@@ -81,12 +81,12 @@ export const reports: Widen<typeof enReports> = {
     },
   },
   labour: {
-    pageTitle: "Ripoti ya vibarua",
-    label: "Ripoti ya vibarua",
+    pageTitle: "Ripoti ya fundi",
+    label: "Ripoti ya fundi",
     description:
-      "Mkandarasi msaidizi wa kila Kazi, vibarua vilivyokubaliwa na vilivyorekebishwa, vilivyolipwa na vilivyobaki.",
+      "Mkandarasi msaidizi wa kila Kazi, kiasi cha fundi kilichokubaliwa na kilichorekebishwa, kilicholipwa na kilichobaki.",
     empty: "Hakuna Kazi zilizorekodiwa kwenye mradi huu bado.",
-    caption: "Vibarua kwa kila kazi",
+    caption: "Fundi kwa kila kazi",
     columns: {
       task: "Kazi",
       subcontractor: "Mkandarasi msaidizi",

@@ -8,7 +8,7 @@ export const chrome: Widen<typeof enChrome> = {
   },
   metadata: {
     title: "Mhandisi Makini — Usimamizi wa miradi ya ujenzi",
-    description: "Usimamizi wa miradi ya ujenzi kwa mhandisi wa eneo la kazi. Fedha za mteja, manunuzi na vibarua, kufuatiliwa mradi kwa mradi.",
+    description: "Usimamizi wa miradi ya ujenzi kwa mhandisi wa eneo la kazi. Fedha za mteja, manunuzi na fundi, kufuatiliwa mradi kwa mradi.",
   },
   skipToMain: "Ruka hadi maudhui makuu",
   homeLink: "Mhandisi Makini — chagua mradi",

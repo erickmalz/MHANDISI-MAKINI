@@ -13,21 +13,25 @@ the meaning. Notes on names and terms:
 - Lines with "one / other" are the singular and plural forms.
 - The glossary of agreed terms is in `web/src/lib/i18n/README.md`.
 
-## Questions for the reviewers
+## Reviewer decisions
 
-These are the terms the translators were least sure of. Please answer them first.
+The reviewer answered the terminology questions; the answers are applied in the catalogue.
 
-1. **"Kiasi"** is used for both *Quantity* and *Amount* (money). Should *Amount* be "Kiasi cha fedha" or "Kiasi (TZS)"?
-2. **Variation** is "Badiliko la kazi" (plural "Mabadiliko ya kazi"). Do site teams say this, or keep "Variation" in English?
-3. **Labour** is "Vibarua". Is that right for the cost category, or would you say "Kazi ya mikono" or "Fundi"?
-4. **Available Float** is "Fedha zinazopatikana" and **Commitments** is "Ahadi za malipo". Do these read as clearly as the English?
-5. **Status words agree with the thing they describe** (a funding request "Limetumwa", an order "Imetumwa"). Please check each noun class is right.
-6. **Stage and task states**: "Inaendelea" (in progress), "Tayari kufungwa" (ready for closeout), "Imewekwa kumbukumbu" (archived), "Inasubiri fedha" (awaiting funding).
-7. **Closeout terms**: "Zuio la malipo" (retention), "Weka kwenye kumbukumbu" (archive), "Imehamishwa" and "Imefutwa" (carried forward, written off).
-8. **Delivery** is "Uwasilishaji". Is there a term site engineers use for receiving materials?
-9. **Payment methods**: "Pesa za simu" (mobile money), "Hundi" (cheque).
-10. **Account deletion warning** (`settings.deletion.*`): it must be precise and unambiguous. Please read it carefully.
-11. **Letterhead**: "Nembo ya kichwa cha hati" — is there a more common word?
+| # | Question | Answer | Applied |
+|---|---|---|---|
+| 1 | `Kiasi` is used for both Quantity and Amount (money). Should Amount be "Kiasi cha fedha" or "Kiasi (TZS)"? | "Yes" (did not choose one) | **Open** — labelled money fields keep "Kiasi (TZS)" |
+| 2 | Variation is "Badiliko la kazi" (plural "Mabadiliko ya kazi") | Yes, keep | Kept |
+| 3 | Labour is "Vibarua"; would "Kazi ya mikono" or "Fundi" be better? | "Fundi" | Yes: the labour cost category and phrases such as "Makubaliano ya fundi" now use "Fundi". The line about crews and tradespeople still says "vibarua" because it means the people |
+| 4 | Available Float "Fedha zinazopatikana", Commitments "Ahadi za malipo" | Yes, clear | Kept |
+| 5 | Status words agree with the noun (funding request "Limetumwa", order "Imetumwa") | "Imetumwa" | Yes: funding request statuses now use the "Imetumwa / Imeghairiwa / Imefungwa" forms. Variations keep "Li-" forms (Badiliko is class 5) |
+| 6 | Stage and task states ("Inaendelea", "Tayari kufungwa", "Imewekwa kumbukumbu", "Inasubiri fedha") | Yes | Kept |
+| 7 | Closeout terms ("Zuio la malipo", "Weka kwenye kumbukumbu", "Imehamishwa", "Imefutwa") | Yes | Kept |
+| 8 | Delivery is "Uwasilishaji" | No answer yet | Kept |
+| 9 | Payment methods "Pesa za simu", "Hundi" | No answer yet | Kept |
+| 10 | Account deletion warning (`settings.deletion.*`) | No answer yet | Kept; still needs a careful read |
+| 11 | Letterhead: "Nembo ya kichwa cha hati" — a more common word? | "Nembo ya kichwa cha barua" | Yes |
+
+Also applied from the reviewer's edits in the sheet: "Umesahau nywila yako?" and "Kiambatanisho" (Attachment). Password is "Nywila" throughout, as instructed; the sheet the reviewer edited had "Nenosiri" in seven rows, which was treated as a leftover, not a decision.
 
 Not translated yet: messages the server produces (validation errors from Server Actions, alert texts, issued PDFs/JPGs, e-mails) and the legal pages.
 
@@ -60,7 +64,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `auth.signIn.password` | Password | Nywila | |
 | `auth.signIn.submit` | Sign in | Ingia | |
 | `auth.signIn.submitting` | Signing in… | Inaingia… | |
-| `auth.signIn.forgot` | Forgotten your password? | Umesahau nywila? | |
+| `auth.signIn.forgot` | Forgotten your password? | Umesahau nywila yako? | |
 | `auth.signIn.create` | Create an account | Fungua akaunti | |
 | `auth.signIn.emailMissing` | Enter your email address. | Weka anwani yako ya barua pepe. | |
 | `auth.signIn.passwordMissing` | Enter your password. | Weka nywila yako. | |
@@ -117,7 +121,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `chrome.brand.name` | Mhandisi Makini | Mhandisi Makini | |
 | `chrome.brand.tagline` | Let's build together | Let's build together | |
 | `chrome.metadata.title` | Mhandisi Makini — Construction project management | Mhandisi Makini — Usimamizi wa miradi ya ujenzi | |
-| `chrome.metadata.description` | Construction project management for the site engineer. Client funds, procurement and labour, tracked project by project. | Usimamizi wa miradi ya ujenzi kwa mhandisi wa eneo la kazi. Fedha za mteja, manunuzi na vibarua, kufuatiliwa mradi kwa mradi. | |
+| `chrome.metadata.description` | Construction project management for the site engineer. Client funds, procurement and labour, tracked project by project. | Usimamizi wa miradi ya ujenzi kwa mhandisi wa eneo la kazi. Fedha za mteja, manunuzi na fundi, kufuatiliwa mradi kwa mradi. | |
 | `chrome.skipToMain` | Skip to main content | Ruka hadi maudhui makuu | |
 | `chrome.homeLink` | Mhandisi Makini — choose a project | Mhandisi Makini — chagua mradi | |
 | `chrome.header.switchProject` | Switch project | Badilisha mradi | |
@@ -246,12 +250,12 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `overview.bar.surplusLabel` | Funding surplus: | Ziada ya fedha: | |
 | `overview.bar.surplusNote` | This part of the deposit is not yet needed. | Sehemu hii ya amana bado haihitajiki. | |
 | `overview.breakdown.title` | Breakdown | Mchanganuo | |
-| `overview.breakdown.hint` | Materials, labour and forecast | Vifaa, vibarua na makadirio | |
+| `overview.breakdown.hint` | Materials, labour and forecast | Vifaa, fundi na makadirio | |
 | `overview.breakdown.materials.title` | Materials | Vifaa | |
 | `overview.breakdown.materials.paid` | Paid | Kilicholipwa | |
 | `overview.breakdown.materials.open` | Open commitments | Ahadi za malipo zilizo wazi | |
 | `overview.breakdown.materials.toProcure` | Remaining to procure | Vilivyosalia kununuliwa | |
-| `overview.breakdown.labour.title` | Labour | Vibarua | |
+| `overview.breakdown.labour.title` | Labour | Fundi | |
 | `overview.breakdown.labour.paid` | Paid | Kilicholipwa | |
 | `overview.breakdown.labour.outstanding` | Outstanding (signed, unpaid) | Kilichobaki kulipwa (kimesainiwa, hakijalipwa) | |
 | `overview.breakdown.labour.remainingWork` | Remaining work | Kazi iliyosalia | |
@@ -309,11 +313,11 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `stages.detail.editStage` | Edit stage | Hariri hatua | |
 | `stages.detail.closeout` | Stage closeout | Kufunga hatua | |
 | `stages.detail.addTask` | Add task | Ongeza kazi | |
-| `stages.detail.noTasks` | No tasks in this stage yet. Add the work items, each with its subcontractor, labour agreement and material take-off. | Hakuna kazi katika hatua hii bado. Ongeza kazi zitakazofanywa, kila moja na mkandarasi msaidizi wake, makubaliano ya vibarua na orodha ya vifaa. | |
+| `stages.detail.noTasks` | No tasks in this stage yet. Add the work items, each with its subcontractor, labour agreement and material take-off. | Hakuna kazi katika hatua hii bado. Ongeza kazi zitakazofanywa, kila moja na mkandarasi msaidizi wake, makubaliano ya fundi na orodha ya vifaa. | |
 | `stages.detail.task.unassigned` | Unassigned | Hajapangiwa | |
 | `stages.detail.task.edit` | Edit | Hariri | |
 | `stages.detail.task.progress` | {name} progress | Maendeleo ya {name} | |
-| `stages.detail.task.labourAgreement` | Labour agreement | Makubaliano ya vibarua | |
+| `stages.detail.task.labourAgreement` | Labour agreement | Makubaliano ya fundi | |
 | `stages.detail.task.materialEstimate` | Material estimate | Makadirio ya vifaa | |
 | `stages.detail.task.takeOffLines` | Take-off lines | Mistari ya orodha ya vifaa | |
 | `stages.detail.variations.title` | Variations | Mabadiliko ya kazi | |
@@ -322,14 +326,14 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `stages.detail.variations.none` | No variations logged against this stage yet. | Hakuna mabadiliko ya kazi yaliyorekodiwa dhidi ya hatua hii bado. | |
 | `stages.detail.variations.draft` | Draft | Rasimu | |
 | `stages.detail.variations.material` | Material | Vifaa | |
-| `stages.detail.variations.labour` | Labour | Vibarua | |
+| `stages.detail.variations.labour` | Labour | Fundi | |
 | `stages.detail.photos.title` | Stage photos | Picha za hatua | |
 | `stages.detail.photos.intro` | General progress photos for this stage, not tied to one task, delivery, or diary entry. | Picha za jumla za maendeleo ya hatua hii, zisizohusishwa na kazi moja, uwasilishaji, au ingizo la shajara. | |
 | `stages.detail.photos.empty` | No stage photos yet. | Hakuna picha za hatua bado. | |
 | `stages.budget.title` | Budget Variance | Tofauti ya bajeti | |
 | `stages.budget.intro` | The Approved Estimate against what has actually been spent, for this stage. Positive = a saving; negative = an overspend. | Makadirio yaliyoidhinishwa ikilinganishwa na kilichotumika kweli, kwa hatua hii. Chanya = akiba; hasi = matumizi ya ziada. | |
 | `stages.budget.material` | Material | Vifaa | |
-| `stages.budget.labour` | Labour | Vibarua | |
+| `stages.budget.labour` | Labour | Fundi | |
 | `stages.budget.estimated` | Estimated | Iliyokadiriwa | |
 | `stages.budget.actual` | Actual | Halisi | |
 | `stages.budget.agreement` | Agreement | Makubaliano | |
@@ -388,16 +392,16 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `tasks.edit.pageTitle` | Edit task | Hariri kazi | |
 | `tasks.edit.title` | Edit task | Hariri kazi | |
 | `tasks.edit.submit` | Save changes | Hifadhi mabadiliko | |
-| `tasks.edit.cannotDelete` | This task has recorded labour payments, so it can't be deleted — set its status to {cancelled} instead. | Kazi hii ina malipo ya vibarua yaliyorekodiwa, kwa hiyo haiwezi kufutwa — weka hali yake iwe {cancelled} badala yake. | |
+| `tasks.edit.cannotDelete` | This task has recorded labour payments, so it can't be deleted — set its status to {cancelled} instead. | Kazi hii ina malipo ya fundi yaliyorekodiwa, kwa hiyo haiwezi kufutwa — weka hali yake iwe {cancelled} badala yake. | |
 | `tasks.edit.delete` | Delete this task | Futa kazi hii | |
-| `tasks.edit.deleteNote` | Removes the task and its material take-off. Its labour agreement stops counting against the stage. | Inaondoa kazi na orodha yake ya vifaa. Makubaliano yake ya vibarua yanaacha kuhesabiwa dhidi ya hatua. | |
-| `tasks.labour.title` | Labour payments | Malipo ya vibarua | |
+| `tasks.edit.deleteNote` | Removes the task and its material take-off. Its labour agreement stops counting against the stage. | Inaondoa kazi na orodha yake ya vifaa. Makubaliano yake ya fundi yanaacha kuhesabiwa dhidi ya hatua. | |
+| `tasks.labour.title` | Labour payments | Malipo ya fundi | |
 | `tasks.labour.outstanding` | Outstanding | Kilichobaki kulipwa | |
 | `tasks.labour.none` | No payments recorded yet. | Hakuna malipo yaliyorekodiwa bado. | |
 | `tasks.labour.voided` | Voided | Imebatilishwa | |
 | `tasks.labour.voidedWithReason` | Voided — {reason} | Imebatilishwa — {reason} | |
 | `tasks.labour.voidPayment` | Void payment | Batilisha malipo | |
-| `tasks.labour.needAgreement` | Set a labour agreement amount above before recording a payment. | Weka kiasi cha makubaliano ya vibarua hapo juu kabla ya kurekodi malipo. | |
+| `tasks.labour.needAgreement` | Set a labour agreement amount above before recording a payment. | Weka kiasi cha makubaliano ya fundi hapo juu kabla ya kurekodi malipo. | |
 | `tasks.labour.record.title` | Record a payment | Rekodi malipo | |
 | `tasks.labour.record.amount` | Amount (TZS) | Kiasi (TZS) | |
 | `tasks.labour.record.paidOn` | Paid on | Yalilipwa tarehe | |
@@ -452,7 +456,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `forms.task.descriptionPlaceholder` | e.g. Ground-floor blockwork up to ring beam | mf. Ujenzi wa kuta za ghorofa ya chini hadi boriti ya juu | |
 | `forms.task.subcontractor` | Subcontractor | Mkandarasi msaidizi | |
 | `forms.task.unassigned` | Unassigned | Hajapangiwa | |
-| `forms.task.labourAgreement` | Labour agreement (TZS) | Makubaliano ya vibarua (TZS) | |
+| `forms.task.labourAgreement` | Labour agreement (TZS) | Makubaliano ya fundi (TZS) | |
 | `forms.task.labourHintLocked` | Locked — this stage's Funding Request has been issued. A real change goes through superseding it instead. | Imefungwa — Ombi la fedha la hatua hii limetumwa. Mabadiliko halisi hufanywa kwa kulibadilisha ombi hilo badala yake. | |
 | `forms.task.labourHintOriginal` | The agreed price for this subcontractor's work. Reduces Available Float once set. Original: {amount}. | Bei iliyokubaliwa kwa kazi ya mkandarasi msaidizi huyu. Inapunguza fedha zinazopatikana ikishawekwa. Awali: {amount}. | |
 | `forms.task.labourHint` | The agreed price for this subcontractor's work. Reduces Available Float once set. | Bei iliyokubaliwa kwa kazi ya mkandarasi msaidizi huyu. Inapunguza fedha zinazopatikana ikishawekwa. | |
@@ -498,12 +502,12 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `funding.editPageTitle` | Edit funding request | Hariri ombi la fedha | |
 | `funding.loading` | Loading funding requests | Inapakia maombi ya fedha | |
 | `funding.status.draft` | Draft | Rasimu | |
-| `funding.status.issued` | Issued | Limetumwa | |
+| `funding.status.issued` | Issued | Imetumwa | |
 | `funding.status.partiallyDeposited` | Partially deposited | Amana ya sehemu | |
 | `funding.status.deposited` | Deposited | Amana imewekwa | |
 | `funding.status.superseded` | Superseded | Limebadilishwa | |
-| `funding.status.cancelled` | Cancelled | Limeghairiwa | |
-| `funding.status.closed` | Closed | Limefungwa | |
+| `funding.status.cancelled` | Cancelled | Imeghairiwa | |
+| `funding.status.closed` | Closed | Imefungwa | |
 | `funding.method.bankTransfer` | Bank transfer | Uhamisho wa benki | |
 | `funding.method.mobileMoney` | Mobile money | Pesa za simu | |
 | `funding.method.cheque` | Cheque | Hundi | |
@@ -526,12 +530,12 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `funding.list.deposited` | Deposited | Lililowekwa | |
 | `funding.new.title` | Create funding request | Andaa ombi la fedha | |
 | `funding.new.additionalTitle` | Additional funding request | Ombi la fedha la ziada | |
-| `funding.new.subtitleBase` | Enter the stage's material and labour scope. The supervision fee is added from the stage's fee basis when you issue, and billed through its own Fee Invoice. | Weka vifaa na kazi ya vibarua ya hatua hii. Ada ya usimamizi huongezwa kutoka msingi wa ada ya hatua unapotuma, na hutozwa kupitia Ankara yake ya ada. | |
+| `funding.new.subtitleBase` | Enter the stage's material and labour scope. The supervision fee is added from the stage's fee basis when you issue, and billed through its own Fee Invoice. | Weka vifaa na kazi ya fundi ya hatua hii. Ada ya usimamizi huongezwa kutoka msingi wa ada ya hatua unapotuma, na hutozwa kupitia Ankara yake ya ada. | |
 | `funding.new.subtitleAdditional` | A separate request for approved scope growth mid-stage. It gets its own number; the original request stays live and the stage's requirement is their sum. | Ombi tofauti kwa ongezeko la kazi lililoidhinishwa katikati ya hatua. Lina namba yake; ombi la awali linabaki hai na mahitaji ya hatua ni jumla ya yote mawili. | |
 | `funding.new.noFundableStage` | This project has no stage that can be funded yet. Add a stage first. | Mradi huu hauna hatua inayoweza kupewa fedha bado. Ongeza hatua kwanza. | |
 | `funding.new.saveDraft` | Save draft | Hifadhi rasimu | |
 | `funding.edit.title` | Edit draft funding request | Hariri rasimu ya ombi la fedha | |
-| `funding.edit.subtitleBase` | Adjust the stage's material and labour scope before issuing. | Rekebisha vifaa na kazi ya vibarua ya hatua kabla ya kutuma. | |
+| `funding.edit.subtitleBase` | Adjust the stage's material and labour scope before issuing. | Rekebisha vifaa na kazi ya fundi ya hatua kabla ya kutuma. | |
 | `funding.edit.subtitleAdditional` | Additional request — its own number, added to the stage's requirement. | Ombi la ziada — lina namba yake, huongezwa kwenye mahitaji ya hatua. | |
 | `funding.edit.saveDraft` | Save draft | Hifadhi rasimu | |
 | `funding.detail.draftTitle` | Draft funding request | Rasimu ya ombi la fedha | |
@@ -547,12 +551,12 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `funding.detail.lines` | Lines | Mistari | |
 | `funding.detail.editDraft` | Edit draft | Hariri rasimu | |
 | `funding.detail.materials` | Materials | Vifaa | |
-| `funding.detail.labour` | Labour | Vibarua | |
+| `funding.detail.labour` | Labour | Fundi | |
 | `funding.detail.other` | Other | Nyingine | |
 | `funding.detail.subtotal` | {section} subtotal | Jumla ndogo: {section} | |
 | `funding.detail.feeLine` | Supervision fee — billed separately via Fee Invoice | Ada ya usimamizi — hutozwa tofauti kupitia Ankara ya ada | |
-| `funding.detail.issuedOn` | Issued {date} | Limetumwa {date} | |
-| `funding.detail.issuedWithInvoice` | Issued {date} · Fee Invoice {number} ({state}) | Limetumwa {date} · Ankara ya ada {number} ({state}) | |
+| `funding.detail.issuedOn` | Issued {date} | Imetumwa {date} | |
+| `funding.detail.issuedWithInvoice` | Issued {date} · Fee Invoice {number} ({state}) | Imetumwa {date} · Ankara ya ada {number} ({state}) | |
 | `funding.detail.invoiceState.issued` | issued | imetumwa | |
 | `funding.detail.invoiceState.paid` | paid | imelipwa | |
 | `funding.detail.invoiceState.issuedDelta` | issued, delta | imetumwa, tofauti | |
@@ -592,9 +596,9 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `funding.form.materials.title` | Materials | Vifaa | |
 | `funding.form.materials.subtitle` | Quantity × unit cost. Lump-sum items go under “Other costs”. | Kiasi × bei ya kipimo. Vipengee vya jumla huwekwa chini ya “Gharama nyingine”. | |
 | `funding.form.materials.add` | Add material line | Ongeza mstari wa kifaa | |
-| `funding.form.labour.title` | Labour | Vibarua | |
+| `funding.form.labour.title` | Labour | Fundi | |
 | `funding.form.labour.subtitle` | One lump-sum amount per subcontractor or crew. | Kiasi kimoja cha jumla kwa kila mkandarasi msaidizi au kikundi. | |
-| `funding.form.labour.add` | Add labour line | Ongeza mstari wa vibarua | |
+| `funding.form.labour.add` | Add labour line | Ongeza mstari wa fundi | |
 | `funding.form.other.title` | Other costs | Gharama nyingine | |
 | `funding.form.other.subtitle` | Anything else the client funds for this stage (optional). | Chochote kingine ambacho mteja anagharamia kwa hatua hii (si lazima). | |
 | `funding.form.other.add` | Add other line | Ongeza mstari mwingine | |
@@ -609,7 +613,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `funding.form.removeLine` | Remove {section} line {number} | Ondoa mstari wa {section} namba {number} | |
 | `funding.form.noLines` | No lines yet. | Hakuna mistari bado. | |
 | `funding.form.subtotal` | Subtotal | Jumla ndogo | |
-| `funding.form.depositRequested` | Deposit requested (materials + labour + other) | Amana inayoombwa (vifaa + vibarua + nyingine) | |
+| `funding.form.depositRequested` | Deposit requested (materials + labour + other) | Amana inayoombwa (vifaa + fundi + nyingine) | |
 | `funding.form.paymentInstructions` | Payment instructions | Maelekezo ya malipo | |
 | `funding.form.paymentPlaceholder` | Bank transfer, mobile money or cheque — account details on file with the client. | Uhamisho wa benki, pesa kwa simu au hundi — maelezo ya akaunti yako kwa mteja. | |
 | `funding.form.notesForClient` | Notes for the client | Maelezo kwa mteja | |
@@ -743,7 +747,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `procurement.detail.terminal.cancelAction` | Cancel this order | Ghairi oda hii | |
 | `procurement.detail.terminal.cancelling` | Cancelling… | Inaghairi… | |
 | `procurement.detail.voidReason` | Reason for voiding | Sababu ya kubatilisha | |
-| `procurement.attachment.title` | Attachment | Kiambatisho | |
+| `procurement.attachment.title` | Attachment | Kiambatanisho | |
 | `procurement.attachment.body` | The supplier's invoice, receipt, or delivery note for this order. | Ankara, risiti au hati ya uwasilishaji ya msambazaji kwa oda hii. | |
 | `procurement.attachment.upload` | Upload attachment | Pakia kiambatisho | |
 | `procurement.attachment.replace` | Replace attachment | Badilisha kiambatisho | |
@@ -800,7 +804,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `variations.detail.againstTask` | Against task | Dhidi ya kazi | |
 | `variations.detail.reason` | Reason: | Sababu: | |
 | `variations.detail.materialImpact` | Material impact | Athari kwa vifaa | |
-| `variations.detail.labourImpact` | Labour impact | Athari kwa vibarua | |
+| `variations.detail.labourImpact` | Labour impact | Athari kwa fundi | |
 | `variations.detail.feeImpact` | Fee impact (note only) | Athari kwa ada (maelezo tu) | |
 | `variations.detail.requested` | Requested {date} | Liliombwa {date} | |
 | `variations.detail.approved` | Approved {date} | Liliidhinishwa {date} | |
@@ -815,7 +819,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `variations.detail.raiseFunding` | Raise Additional Funding Request | Andaa Ombi la fedha la ziada | |
 | `variations.detail.cancelThis` | Cancel this Variation | Ghairi Badiliko hili la kazi | |
 | `variations.detail.approve.title` | Approve | Idhinisha | |
-| `variations.detail.approve.body` | Records the client’s real-world sign-off and mints this Variation’s number. Revises the task’s labour agreement and appends a material take-off line for the impacts above — this cannot be undone by editing. | Inarekodi idhini halisi ya mteja na kutoa namba ya Badiliko hili. Inarekebisha makubaliano ya vibarua ya kazi na kuongeza mstari wa vifaa kwa athari zilizo juu — hii haiwezi kutenduliwa kwa kuhariri. | |
+| `variations.detail.approve.body` | Records the client’s real-world sign-off and mints this Variation’s number. Revises the task’s labour agreement and appends a material take-off line for the impacts above — this cannot be undone by editing. | Inarekodi idhini halisi ya mteja na kutoa namba ya Badiliko hili. Inarekebisha makubaliano ya fundi ya kazi na kuongeza mstari wa vifaa kwa athari zilizo juu — hii haiwezi kutenduliwa kwa kuhariri. | |
 | `variations.detail.approve.dateLabel` | Approval date | Tarehe ya idhini | |
 | `variations.detail.approve.dateHint` | Defaults to today if left blank. | Huwa leo ukiiacha wazi. | |
 | `variations.detail.approve.referenceLabel` | Client reference | Kumbukumbu ya mteja | |
@@ -831,8 +835,8 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `variations.form.reasonPlaceholder` | Why the client asked for, or agreed to, this change | Kwa nini mteja aliomba, au alikubali, badiliko hili | |
 | `variations.form.materialImpact` | Material impact (TZS) | Athari kwa vifaa (TZS) | |
 | `variations.form.materialHint` | A reduction can be entered as a negative amount. | Punguzo linaweza kuwekwa kama kiasi hasi. | |
-| `variations.form.labourImpact` | Labour impact (TZS) | Athari kwa vibarua (TZS) | |
-| `variations.form.labourHint` | Revises the task's labour agreement once Approved. | Linarekebisha makubaliano ya vibarua ya kazi likishaidhinishwa. | |
+| `variations.form.labourImpact` | Labour impact (TZS) | Athari kwa fundi (TZS) | |
+| `variations.form.labourHint` | Revises the task's labour agreement once Approved. | Linarekebisha makubaliano ya fundi ya kazi likishaidhinishwa. | |
 | `variations.form.feeImpact` | Fee impact (TZS) | Athari kwa ada (TZS) | |
 | `variations.form.feeHint` | A carried note — key it into the Additional Funding Request's own fee line by hand. | Maelezo ya kubeba — yaweke mwenyewe kwenye mstari wa ada wa Ombi la fedha la ziada. | |
 | `variations.form.notes` | Notes | Maelezo | |
@@ -901,11 +905,11 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `reports.procurement.columns.delivered` | Delivered | Kilichowasilishwa | |
 | `reports.procurement.columns.paid` | Paid | Kilicholipwa | |
 | `reports.procurement.columns.outstanding` | Outstanding | Kilichobaki kulipwa | |
-| `reports.labour.pageTitle` | Labour report | Ripoti ya vibarua | |
-| `reports.labour.label` | Labour Report | Ripoti ya vibarua | |
-| `reports.labour.description` | Every Task's Subcontractor, agreed and revised labour, paid and outstanding. | Mkandarasi msaidizi wa kila Kazi, vibarua vilivyokubaliwa na vilivyorekebishwa, vilivyolipwa na vilivyobaki. | |
+| `reports.labour.pageTitle` | Labour report | Ripoti ya fundi | |
+| `reports.labour.label` | Labour Report | Ripoti ya fundi | |
+| `reports.labour.description` | Every Task's Subcontractor, agreed and revised labour, paid and outstanding. | Mkandarasi msaidizi wa kila Kazi, kiasi cha fundi kilichokubaliwa na kilichorekebishwa, kilicholipwa na kilichobaki. | |
 | `reports.labour.empty` | No Tasks recorded on this project yet. | Hakuna Kazi zilizorekodiwa kwenye mradi huu bado. | |
-| `reports.labour.caption` | Labour by task | Vibarua kwa kila kazi | |
+| `reports.labour.caption` | Labour by task | Fundi kwa kila kazi | |
 | `reports.labour.columns.task` | Task | Kazi | |
 | `reports.labour.columns.subcontractor` | Subcontractor | Mkandarasi msaidizi | |
 | `reports.labour.columns.stage` | Stage | Hatua | |
@@ -988,9 +992,9 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `settings.profile.phone` | Phone | Simu | |
 | `settings.profile.saving` | Saving… | Inahifadhi… | |
 | `settings.profile.save` | Save changes | Hifadhi mabadiliko | |
-| `settings.logo.title` | Letterhead logo | Nembo ya kichwa cha hati | |
+| `settings.logo.title` | Letterhead logo | Nembo ya kichwa cha barua | |
 | `settings.logo.intro` | Shown on every Funding Request, Fee Invoice and Purchase Order you issue. PNG or JPEG, up to 1MB. | Huonekana kwenye kila Ombi la fedha, Ankara ya ada na Oda ya ununuzi unayotuma. PNG au JPEG, hadi 1MB. | |
-| `settings.logo.alt` | Current letterhead logo | Nembo ya sasa ya kichwa cha hati | |
+| `settings.logo.alt` | Current letterhead logo | Nembo ya sasa ya kichwa cha barua | |
 | `settings.logo.replace` | Replace logo | Badilisha nembo | |
 | `settings.logo.upload` | Upload logo | Pakia nembo | |
 | `settings.logo.uploading` | Uploading… | Inapakia… | |
@@ -1082,7 +1086,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `subcontractors.statement.subtitle` | Statement of account, every project | Taarifa ya akaunti, kila mradi | |
 | `subcontractors.statement.editDetails` | Edit details | Hariri maelezo | |
 | `subcontractors.statement.outstanding` | Outstanding balance | Salio lililobaki kulipwa | |
-| `subcontractors.statement.agreedLabour` | Agreed labour | Vibarua vilivyokubaliwa | |
+| `subcontractors.statement.agreedLabour` | Agreed labour | Kiasi cha fundi kilichokubaliwa | |
 | `subcontractors.statement.noTasks` | Not assigned to any Task yet. | Hajapewa Kazi yoyote bado. | |
 | `subcontractors.statement.payments` | Payments | Malipo | |
 | `subcontractors.statement.noPayments` | No payments recorded yet. | Hakuna malipo yaliyorekodiwa bado. | |
@@ -1163,7 +1167,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `financialCheck.sections.passed` | Passed ({count}) | Zilizopita ({count}) | |
 | `financialCheck.nothingPassed` | Nothing passed cleanly this run. | Hakuna kilichopita bila tatizo katika ukaguzi huu. | |
 | `financialCheck.checks.unallocated-deposit` | Client deposits reconcile to funding requests; unallocated client funds are identified (guideline checks 1 & 15) | Amana za mteja zinalingana na maombi ya fedha; fedha za mteja ambazo hazijagawiwa zinatambuliwa (ukaguzi wa mwongozo 1 na 15) | |
-| `financialCheck.checks.labour-exceeds-agreement` | Labour payments do not exceed approved labour (guideline check 7) | Malipo ya vibarua hayazidi vibarua vilivyoidhinishwa (ukaguzi wa mwongozo 7) | |
+| `financialCheck.checks.labour-exceeds-agreement` | Labour payments do not exceed approved labour (guideline check 7) | Malipo ya fundi hayazidi kiasi cha fundi kilichoidhinishwa (ukaguzi wa mwongozo 7) | |
 | `financialCheck.checks.float-negative` | Negative float is highlighted (guideline check 9) | Fedha zinazopatikana zilizo hasi zinaonyeshwa wazi (ukaguzi wa mwongozo 9) | |
 | `financialCheck.checks.po-missing-receipt` | Missing receipts are identified (guideline check 10) | Risiti zinazokosekana zinatambuliwa (ukaguzi wa mwongozo 10) | |
 | `financialCheck.checks.po-missing-delivery-note` | Missing delivery notes are identified (guideline check 11) | Hati za uwasilishaji zinazokosekana zinatambuliwa (ukaguzi wa mwongozo 11) | |
@@ -1173,10 +1177,10 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `financialCheck.checks.additional-funding-required` | Additional funding required | Fedha za ziada zinahitajika | |
 | `financialCheck.checks.fee-outstanding` | Supervisor fee invoice outstanding | Ankara ya ada ya usimamizi bado haijalipwa | |
 | `financialCheck.checks.float-below-upcoming-commitments` | Available Float covers open commitments | Fedha zinazopatikana zinatosha ahadi za malipo zilizo wazi | |
-| `financialCheck.checks.stage-complete-labour-outstanding` | Completed stage has no outstanding labour commitments | Hatua iliyokamilika haina ahadi za vibarua zilizobaki | |
-| `financialCheck.checks.labour-final-payment-incomplete` | Final labour payment recorded only once a task is complete | Malipo ya mwisho ya vibarua hurekodiwa tu kazi inapokamilika | |
+| `financialCheck.checks.stage-complete-labour-outstanding` | Completed stage has no outstanding labour commitments | Hatua iliyokamilika haina ahadi za fundi zilizobaki | |
+| `financialCheck.checks.labour-final-payment-incomplete` | Final labour payment recorded only once a task is complete | Malipo ya mwisho ya fundi hurekodiwa tu kazi inapokamilika | |
 | `financialCheck.checks.over-payment-visibility` | Over-payments against a Purchase Order carry a recorded reason (guideline check 5) | Malipo yanayozidi Oda ya ununuzi yana sababu iliyorekodiwa (ukaguzi wa mwongozo 5) | |
-| `financialCheck.checks.completed-task-labour-balance` | Completed tasks have no unexplained labour balances (guideline check 8) | Kazi zilizokamilika hazina salio la vibarua lisilo na maelezo (ukaguzi wa mwongozo 8) | |
+| `financialCheck.checks.completed-task-labour-balance` | Completed tasks have no unexplained labour balances (guideline check 8) | Kazi zilizokamilika hazina salio la fundi lisilo na maelezo (ukaguzi wa mwongozo 8) | |
 | `financialCheck.checks.duplicate-payment-reference` | Duplicate payment references are flagged (guideline check 13) | Marejeo ya malipo yanayorudiwa yanawekewa alama (ukaguzi wa mwongozo 13) | |
 | `financialCheck.checks.procurement-vs-material-requirement` | Procurement does not exceed material requirements without explanation (guideline check 6) | Manunuzi hayazidi mahitaji ya vifaa bila maelezo (ukaguzi wa mwongozo 6) | |
 | `financialCheck.checks.stale-draft-variations` | Variations without a decision are identified (guideline check 16) | Mabadiliko ya kazi yasiyo na uamuzi yanatambuliwa (ukaguzi wa mwongozo 16) | |
@@ -1232,7 +1236,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `closeout.stage.checkTasks` | Every task is complete or cancelled | Kila kazi imekamilika au imeghairiwa | |
 | `closeout.stage.checkVariations` | No outstanding variations | Hakuna mabadiliko ya kazi yanayosubiri | |
 | `closeout.stage.checkOrders` | No purchase order still ordered (closed or cancelled instead) | Hakuna oda ya ununuzi ambayo bado iko katika hali ya kuagizwa (zimefungwa au kughairiwa badala yake) | |
-| `closeout.stage.checkLabour` | Labour agreements fully paid | Makubaliano ya vibarua yamelipwa yote | |
+| `closeout.stage.checkLabour` | Labour agreements fully paid | Makubaliano ya fundi yamelipwa yote | |
 | `closeout.stage.labourOwed` | {amount} still owed across this stage’s tasks. | {amount} bado zinadaiwa katika kazi za hatua hii. | |
 | `closeout.stage.resolveAll` | Resolve every item above to enable Close Stage. | Tatua kila kipengele hapo juu ili kuwezesha Funga hatua. | |
 | `closeout.stage.clientFunds` | Client Funds | Fedha za mteja | |
@@ -1250,7 +1254,7 @@ Not translated yet: messages the server produces (validation errors from Server 
 | `closeout.stage.surplusOnSite` | Surplus materials on site (project-wide) | Vifaa vya ziada vilivyopo eneo la kazi (mradi mzima) | |
 | `closeout.stage.noneRecorded` | None recorded. | Hakuna vilivyorekodiwa. | |
 | `closeout.stage.viewStock` | View Material Stock | Tazama akiba ya vifaa | |
-| `closeout.stage.labour` | Labour | Vibarua | |
+| `closeout.stage.labour` | Labour | Fundi | |
 | `closeout.stage.retention` | Retention: not used. | Zuio la malipo (retention): halitumiki. | |
 | `closeout.stage.documents` | Documents | Hati | |
 | `closeout.stage.documentsBody` | Receipts and delivery notes attach per Purchase Order — an optional record, not a mandatory one. Every Issued Funding Request is already immutable by construction, so its record is preserved automatically. | Risiti na hati za uwasilishaji huambatishwa kwa kila Oda ya ununuzi — rekodi ya hiari, si ya lazima. Kila Ombi la fedha lililotumwa tayari haliwezi kubadilishwa kwa muundo wake, kwa hiyo rekodi yake huhifadhiwa kiotomatiki. | |

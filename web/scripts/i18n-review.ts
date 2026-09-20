@@ -48,21 +48,25 @@ the meaning. Notes on names and terms:
 - Lines with "one / other" are the singular and plural forms.
 - The glossary of agreed terms is in \`web/src/lib/i18n/README.md\`.
 
-## Questions for the reviewers
+## Reviewer decisions
 
-These are the terms the translators were least sure of. Please answer them first.
+The reviewer answered the terminology questions; the answers are applied in the catalogue.
 
-1. **"Kiasi"** is used for both *Quantity* and *Amount* (money). Should *Amount* be "Kiasi cha fedha" or "Kiasi (TZS)"?
-2. **Variation** is "Badiliko la kazi" (plural "Mabadiliko ya kazi"). Do site teams say this, or keep "Variation" in English?
-3. **Labour** is "Vibarua". Is that right for the cost category, or would you say "Kazi ya mikono" or "Fundi"?
-4. **Available Float** is "Fedha zinazopatikana" and **Commitments** is "Ahadi za malipo". Do these read as clearly as the English?
-5. **Status words agree with the thing they describe** (a funding request "Limetumwa", an order "Imetumwa"). Please check each noun class is right.
-6. **Stage and task states**: "Inaendelea" (in progress), "Tayari kufungwa" (ready for closeout), "Imewekwa kumbukumbu" (archived), "Inasubiri fedha" (awaiting funding).
-7. **Closeout terms**: "Zuio la malipo" (retention), "Weka kwenye kumbukumbu" (archive), "Imehamishwa" and "Imefutwa" (carried forward, written off).
-8. **Delivery** is "Uwasilishaji". Is there a term site engineers use for receiving materials?
-9. **Payment methods**: "Pesa za simu" (mobile money), "Hundi" (cheque).
-10. **Account deletion warning** (\`settings.deletion.*\`): it must be precise and unambiguous. Please read it carefully.
-11. **Letterhead**: "Nembo ya kichwa cha hati" — is there a more common word?
+| # | Question | Answer | Applied |
+|---|---|---|---|
+| 1 | \`Kiasi\` is used for both Quantity and Amount (money). Should Amount be "Kiasi cha fedha" or "Kiasi (TZS)"? | "Yes" (did not choose one) | **Open** — labelled money fields keep "Kiasi (TZS)" |
+| 2 | Variation is "Badiliko la kazi" (plural "Mabadiliko ya kazi") | Yes, keep | Kept |
+| 3 | Labour is "Vibarua"; would "Kazi ya mikono" or "Fundi" be better? | "Fundi" | Yes: the labour cost category and phrases such as "Makubaliano ya fundi" now use "Fundi". The line about crews and tradespeople still says "vibarua" because it means the people |
+| 4 | Available Float "Fedha zinazopatikana", Commitments "Ahadi za malipo" | Yes, clear | Kept |
+| 5 | Status words agree with the noun (funding request "Limetumwa", order "Imetumwa") | "Imetumwa" | Yes: funding request statuses now use the "Imetumwa / Imeghairiwa / Imefungwa" forms. Variations keep "Li-" forms (Badiliko is class 5) |
+| 6 | Stage and task states ("Inaendelea", "Tayari kufungwa", "Imewekwa kumbukumbu", "Inasubiri fedha") | Yes | Kept |
+| 7 | Closeout terms ("Zuio la malipo", "Weka kwenye kumbukumbu", "Imehamishwa", "Imefutwa") | Yes | Kept |
+| 8 | Delivery is "Uwasilishaji" | No answer yet | Kept |
+| 9 | Payment methods "Pesa za simu", "Hundi" | No answer yet | Kept |
+| 10 | Account deletion warning (\`settings.deletion.*\`) | No answer yet | Kept; still needs a careful read |
+| 11 | Letterhead: "Nembo ya kichwa cha hati" — a more common word? | "Nembo ya kichwa cha barua" | Yes |
+
+Also applied from the reviewer's edits in the sheet: "Umesahau nywila yako?" and "Kiambatanisho" (Attachment). Password is "Nywila" throughout, as instructed; the sheet the reviewer edited had "Nenosiri" in seven rows, which was treated as a leftover, not a decision.
 
 Not translated yet: messages the server produces (validation errors from Server Actions, alert texts, issued PDFs/JPGs, e-mails) and the legal pages.
 `;
