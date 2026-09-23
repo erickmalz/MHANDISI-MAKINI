@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FocusFirstInvalid } from "@/components/FocusFirstInvalid";
+import { RouteLoadingOverlay } from "@/components/RouteLoadingOverlay";
 import { catalogues } from "@/lib/i18n/catalogues";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getLocale, getT } from "@/lib/i18n/server";
@@ -24,7 +25,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={locale} className={`${dejaVu.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <I18nProvider locale={locale} messages={catalogues[locale]}>
-          {children}
+          <RouteLoadingOverlay>{children}</RouteLoadingOverlay>
           <FocusFirstInvalid />
         </I18nProvider>
       </body>
