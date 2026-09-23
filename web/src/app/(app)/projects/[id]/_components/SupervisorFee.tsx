@@ -21,7 +21,8 @@ export async function SupervisorFee({ f }: { f: StageFinancials }) {
         {t("overview.fee.intro")}
       </p>
       <Card>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile label={t("overview.fee.recorded")} amount={fee.recorded} />
           <StatTile label={t("overview.fee.invoiced")} amount={fee.invoiced} />
           <StatTile label={t("overview.fee.received")} amount={fee.received} emphasis />
           <StatTile

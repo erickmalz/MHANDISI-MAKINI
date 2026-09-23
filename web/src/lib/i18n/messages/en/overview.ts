@@ -87,6 +87,7 @@ export const overview = {
   fee: {
     title: "Supervisor fee",
     intro: "A separate ledger from the project funds above. Billed to the client through its own Fee Invoice; it never draws on client deposits.",
+    recorded: "Fee recorded",
     invoiced: "Fee invoiced",
     received: "Fee received",
     outstanding: "Fee outstanding",

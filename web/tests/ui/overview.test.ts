@@ -25,6 +25,7 @@ const ZERO: StageFinancials = {
   remainingLabour: 0,
   remainingFee: 0,
   remainingOtherApproved: 0,
+  feeRecorded: 0,
   feeInvoiced: 0,
   feeReceived: 0,
   fundingRequestPending: false,

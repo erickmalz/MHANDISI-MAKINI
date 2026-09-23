@@ -46,6 +46,13 @@ export interface StageFinancials {
   remainingFee: number;
   remainingOtherApproved: number;
 
+  /**
+   * The fee line on the stage's current *draft* Funding Request (base or
+   * additional), before Issue raises it into a Fee Invoice. 0 once that
+   * request is issued or if there is no draft — the figure hands off to
+   * `feeInvoiced` rather than overlapping with it.
+   */
+  feeRecorded: number;
   feeInvoiced: number;
   feeReceived: number;
 

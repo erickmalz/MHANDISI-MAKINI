@@ -90,6 +90,7 @@ export const overview: Widen<typeof enOverview> = {
   fee: {
     title: "Ada ya msimamizi",
     intro: "Hesabu tofauti na fedha za mradi zilizo juu. Inatozwa kwa mteja kupitia ankara yake ya ada; haitumii amana za mteja kamwe.",
+    recorded: "Ada iliyorekodiwa",
     invoiced: "Ada iliyotozwa",
     received: "Ada iliyopokelewa",
     outstanding: "Ada iliyobaki kulipwa",

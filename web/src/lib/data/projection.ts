@@ -39,6 +39,7 @@ export async function computeStageFinancials(
       fr_material: string;
       fr_labour: string;
       fr_fee: string;
+      fr_fee_draft: string;
       fee_invoiced: string;
       fee_received: string;
       funding_request_pending: boolean;
@@ -61,6 +62,11 @@ export async function computeStageFinancials(
         (SELECT COALESCE(SUM(amount), 0) FROM funding_request_lines
           WHERE funding_request_id IN (SELECT id FROM live_fr)
             AND category = 'fee') AS fr_fee,
+        (SELECT COALESCE(SUM(amount), 0) FROM funding_request_lines
+          WHERE funding_request_id IN (
+            SELECT id FROM funding_requests
+             WHERE stage_id = ${stageId} AND status = 'draft'
+          ) AND category = 'fee') AS fr_fee_draft,
         (SELECT COALESCE(SUM(fee_amount), 0) FROM fee_invoices
           WHERE stage_id = ${stageId} AND status IN ('issued', 'paid')) AS fee_invoiced,
         (SELECT COALESCE(SUM(fee_amount), 0) FROM fee_invoices
@@ -174,6 +180,7 @@ export async function computeStageFinancials(
   const frMaterial = Number(fundingRow?.fr_material ?? 0);
   const frLabour = Number(fundingRow?.fr_labour ?? 0);
   const frFee = Number(fundingRow?.fr_fee ?? 0);
+  const feeRecorded = Number(fundingRow?.fr_fee_draft ?? 0);
   const feeInvoiced = Number(fundingRow?.fee_invoiced ?? 0);
   const pettyCashExpenses = Number(otherRow?.petty_cash ?? 0);
   const otherApprovedCommitments = Number(otherRow?.other_commitments ?? 0);
@@ -203,6 +210,7 @@ export async function computeStageFinancials(
     remainingFee: Math.max(0, frFee - feeInvoiced),
     remainingOtherApproved: 0,
 
+    feeRecorded,
     feeInvoiced,
     feeReceived: Number(fundingRow?.fee_received ?? 0),
 

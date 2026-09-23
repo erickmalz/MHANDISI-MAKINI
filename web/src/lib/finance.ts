@@ -59,9 +59,15 @@ export function feeOutstanding(f: StageFinancials): number {
  * shown apart from the project's client-funds figures. Fee Earned equals Fee
  * Received by definition (CONTEXT.md §37). The client still ultimately funds the
  * fee, so Remaining Fee stays inside the Forecast Funding Requirement above.
+ *
+ * Fee Recorded is the fee line on the stage's current draft Funding Request —
+ * shown so the fee appears the moment it's entered, ahead of Issue raising the
+ * Fee Invoice. It never overlaps with Invoiced: a request is either a draft
+ * (Recorded) or issued (Invoiced), never both at once.
  */
 export function supervisorFeePosition(f: StageFinancials) {
   return {
+    recorded: f.feeRecorded,
     invoiced: f.feeInvoiced,
     received: f.feeReceived,
     earned: f.feeReceived,
