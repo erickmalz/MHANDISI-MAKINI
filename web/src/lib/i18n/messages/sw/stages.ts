@@ -29,8 +29,9 @@ export const stages: Widen<typeof enStages> = {
       edit: "Hariri",
       progress: "Maendeleo ya {name}",
       labourAgreement: "Makubaliano ya fundi",
+      outstandingLabour: "Malipo ya fundi yaliyobaki",
       materialEstimate: "Makadirio ya vifaa",
-      takeOffLines: "Mistari ya orodha ya vifaa",
+      recordPayment: "Rekodi malipo",
     },
     variations: {
       title: "Mabadiliko ya kazi",

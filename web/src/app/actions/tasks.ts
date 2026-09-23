@@ -122,6 +122,8 @@ export async function recordLabourPaymentAction(
   projectId: string,
   stageId: string,
   taskId: string,
+  /** Where to send the user after a successful record — the Task edit page from its own form, the Stage page from the quick record-payment button there. */
+  returnTo: string,
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -145,7 +147,7 @@ export async function recordLabourPaymentAction(
   }
 
   revalidateTask(projectId, stageId, taskId);
-  redirect(`/projects/${projectId}/tasks/${taskId}/edit`);
+  redirect(returnTo);
 }
 
 export async function voidLabourPaymentAction(

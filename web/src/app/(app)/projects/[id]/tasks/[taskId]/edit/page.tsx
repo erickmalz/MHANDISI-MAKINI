@@ -78,7 +78,13 @@ export default async function EditTaskPage({
         <LabourPaymentsCard
           labourAmount={task.labourAmount}
           payments={task.payments}
-          paymentAction={recordLabourPaymentAction.bind(null, id, task.stageId, taskId)}
+          paymentAction={recordLabourPaymentAction.bind(
+            null,
+            id,
+            task.stageId,
+            taskId,
+            `/projects/${id}/tasks/${taskId}/edit`,
+          )}
           voidActions={voidActions}
         />
       </div>

@@ -26,8 +26,8 @@ The reviewer answered the terminology questions; the answers are applied in the 
 | 5 | Status words agree with the noun (funding request "Limetumwa", order "Imetumwa") | "Imetumwa" | Yes: funding request statuses now use the "Imetumwa / Imeghairiwa / Imefungwa" forms. Variations keep "Li-" forms (Badiliko is class 5) |
 | 6 | Stage and task states ("Inaendelea", "Tayari kufungwa", "Imewekwa kumbukumbu", "Inasubiri fedha") | Yes | Kept |
 | 7 | Closeout terms ("Zuio la malipo", "Weka kwenye kumbukumbu", "Imehamishwa", "Imefutwa") | Yes | Kept |
-| 8 | Delivery is "Uwasilishaji" | No answer yet | Kept |
-| 9 | Payment methods "Pesa za simu", "Hundi" | No answer yet | Kept |
+| 8 | Delivery is "Uwasilishaji" | Uwasilishaji | Kept |
+| 9 | Payment methods "Pesa za simu", "Hundi" | Njia za malipo | Kept |
 | 10 | Account deletion warning (`settings.deletion.*`) | No answer yet | Kept; still needs a careful read |
 | 11 | Letterhead: "Nembo ya kichwa cha hati" — a more common word? | "Nembo ya kichwa cha barua" | Yes |
 

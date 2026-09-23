@@ -26,8 +26,9 @@ export const stages = {
       edit: "Edit",
       progress: "{name} progress",
       labourAgreement: "Labour agreement",
+      outstandingLabour: "Outstanding labour payment",
       materialEstimate: "Material estimate",
-      takeOffLines: "Take-off lines",
+      recordPayment: "Record payment",
     },
     variations: {
       title: "Variations",

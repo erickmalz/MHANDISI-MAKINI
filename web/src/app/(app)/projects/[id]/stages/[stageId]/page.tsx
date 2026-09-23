@@ -12,6 +12,8 @@ import {
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { estimatedMaterialCost } from "@/lib/tasks";
 import { deletePhotoAction, uploadStagePhotoAction } from "@/app/actions/photos";
+import { recordLabourPaymentAction } from "@/app/actions/tasks";
+import { RecordLabourPaymentButton } from "./_components/RecordLabourPaymentButton";
 import { PhotoStrip } from "@/components/photos/PhotoStrip";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -142,19 +144,31 @@ export default async function StageDetailPage({
                     />
                   </div>
                   <div>
+                    <p className="text-muted-foreground">{t("stages.detail.task.outstandingLabour")}</p>
+                    <Money
+                      amount={task.outstandingLabourAmount}
+                      className="font-bold text-card-foreground"
+                    />
+                  </div>
+                  <div>
                     <p className="text-muted-foreground">{t("stages.detail.task.materialEstimate")}</p>
                     <Money
                       amount={estimatedMaterialCost(task)}
                       className="font-bold text-card-foreground"
                     />
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">{t("stages.detail.task.takeOffLines")}</p>
-                    <p className="font-bold text-card-foreground">
-                      {task.materialLines.length}
-                    </p>
-                  </div>
                 </div>
+
+                <RecordLabourPaymentButton
+                  hasAgreement={task.labourAmount != null}
+                  action={recordLabourPaymentAction.bind(
+                    null,
+                    id,
+                    stageId,
+                    task.id,
+                    `/projects/${id}/stages/${stageId}`,
+                  )}
+                />
               </Card>
             </li>
           ))}

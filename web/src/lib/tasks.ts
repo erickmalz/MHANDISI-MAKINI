@@ -139,8 +139,8 @@ export interface LabourPayment {
   voidReason: string | null;
 }
 
-/** Σ non-voided payments. */
-export function paidLabourTotal(payments: LabourPayment[]): number {
+/** Σ non-voided payments. Accepts any row shape carrying `amount` / `voidedAt` — a caller that only selected those two columns still satisfies this. */
+export function paidLabourTotal(payments: Pick<LabourPayment, "amount" | "voidedAt">[]): number {
   return payments.reduce((sum, p) => (p.voidedAt ? sum : sum + p.amount), 0);
 }
 
@@ -151,7 +151,7 @@ export function paidLabourTotal(payments: LabourPayment[]): number {
  */
 export function outstandingLabour(
   labourAmount: number | null | undefined,
-  payments: LabourPayment[],
+  payments: Pick<LabourPayment, "amount" | "voidedAt">[],
 ): number {
   return Math.max(0, (labourAmount ?? 0) - paidLabourTotal(payments));
 }

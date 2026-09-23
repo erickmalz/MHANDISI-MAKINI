@@ -4,6 +4,7 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import {
   currentTakeOffFigures,
+  outstandingLabour,
   type LabourPayment,
   type MaterialTakeOffLine,
   type PaymentMethod,
@@ -176,7 +177,8 @@ export async function getStageDetail(stageId: string): Promise<
       seq: number;
       status: string;
       completedOn: string | null;
-      tasks: Task[];
+      /** Each Task plus its live `outstandingLabourAmount` (the record-payment button on this page needs it without a trip to the Task edit form). */
+      tasks: (Task & { outstandingLabourAmount: number })[];
       financials: StageFinancials;
     }
   | null
@@ -206,9 +208,31 @@ export async function getStageDetail(stageId: string): Promise<
       .where(eq(tasks.stageId, stageId))
       .orderBy(asc(tasks.seq))) as TaskRow[];
 
+    const taskList = await assemble(tx, rows);
+    const taskIds = taskList.map((t) => t.id);
+    const paymentRows = taskIds.length
+      ? await tx
+          .select({
+            taskId: labourPayments.taskId,
+            amount: labourPayments.amount,
+            voidedAt: labourPayments.voidedAt,
+          })
+          .from(labourPayments)
+          .where(inArray(labourPayments.taskId, taskIds))
+      : [];
+    const paymentsByTask = new Map<string, { amount: number; voidedAt: string | null }[]>();
+    for (const p of paymentRows) {
+      const list = paymentsByTask.get(p.taskId) ?? [];
+      list.push({ amount: p.amount, voidedAt: p.voidedAt ? p.voidedAt.toISOString() : null });
+      paymentsByTask.set(p.taskId, list);
+    }
+
     return {
       ...stage,
-      tasks: await assemble(tx, rows),
+      tasks: taskList.map((t) => ({
+        ...t,
+        outstandingLabourAmount: outstandingLabour(t.labourAmount, paymentsByTask.get(t.id) ?? []),
+      })),
       financials: await computeStageFinancials(tx, stageId),
     };
   });
