@@ -20,7 +20,7 @@ export default async function AdminAccountsPage() {
   return (
     <PageFrame width="working">
       <header className="mb-6">
-        <h1 className="text-[1.75rem] font-bold text-foreground">Accounts</h1>
+        <h1 className="mm-page-title font-bold text-foreground">Accounts</h1>
         <p className="mt-1 text-muted-foreground">
           Every Engineer&rsquo;s Account across the service.
         </p>

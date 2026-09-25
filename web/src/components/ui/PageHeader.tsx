@@ -28,7 +28,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="text-[1.75rem] font-bold text-foreground">{title}</h1>
+            <h1 className="mm-page-title font-bold text-foreground">{title}</h1>
             {meta}
           </div>
           {subtitle && <div className="mt-1 max-w-prose text-muted-foreground">{subtitle}</div>}

@@ -239,6 +239,15 @@
 }
 
 /* ==========================================================================
+   Shared utility classes
+   ========================================================================== */
+/* Page-title heading size, shared by every screen's top-level <h1> so the
+   scale lives in one place instead of being repeated as text-[1.75rem]. */
+.mm-page-title {
+  font-size: var(--mm-size-page-title);
+}
+
+/* ==========================================================================
    Base
    ========================================================================== */
 /* Base rules live in the `base` layer so Tailwind utilities (`border-foreground`,

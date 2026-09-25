@@ -58,7 +58,7 @@ export default function SignInPage() {
         </div>
         <BrandLogo width={200} priority />
 
-        <h1 className="mt-6 text-[1.75rem] font-bold text-foreground">{t("auth.signIn.title")}</h1>
+        <h1 className="mm-page-title mt-6 font-bold text-foreground">{t("auth.signIn.title")}</h1>
         <p className="mt-1 text-muted-foreground">
           {t("auth.signIn.intro")}
         </p>

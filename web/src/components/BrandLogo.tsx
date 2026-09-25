@@ -21,9 +21,9 @@ const ASPECT_H = 364;
  * Light backgrounds get the full-colour lockup (`logo-stacked.svg`); dark
  * backgrounds get the reversed lockup (`logo-stacked-reversed.svg` — yellow
  * hard hat, near-white `#EFEFEF` gear, wordmark and tagline, no white holding
- * panel). Both files are the same artwork from
- * `.claude/skills/mhandisi-makini-design-system/assets/`, cropped to matching
- * framing so the mark does not shift between themes.
+ * panel). Both files are the same artwork, cropped to matching framing so the
+ * mark does not shift between themes — see `web/design-system/mhandisi-makini/MASTER.md`
+ * for the full logo file inventory and usage rules.
  *
  * The swap is driven by `prefers-color-scheme`, the same signal the dark theme
  * in `globals.css` uses — so the mark always matches its surface with no

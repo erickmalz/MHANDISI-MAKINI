@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <article className="prose-mm">
-      <h1 className="text-[1.75rem] font-bold text-foreground">Privacy Policy</h1>
+      <h1 className="mm-page-title font-bold text-foreground">Privacy policy</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Version {PRIVACY_VERSION}
       </p>

@@ -83,8 +83,10 @@ async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
   }
 }
 
+// Font stack must match PRINT_CSS in print-css.ts — "DejaVu Sans" first, since
+// that's the only font installed for headless Chromium (see that file's note).
 const FOOTER_TEMPLATE = `
-  <div style="font-family: Arial, sans-serif; font-size: 8px; color: #5E6872;
+  <div style="font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 8px; color: #5E6872;
               width: 100%; padding: 0 16mm; display: flex;
               justify-content: space-between;">
     <span class="title"></span>

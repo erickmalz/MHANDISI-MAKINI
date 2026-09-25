@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-background px-4 py-16 sm:px-6">
       <div className="w-full max-w-md">
-        <h1 className="text-[1.75rem] font-bold text-foreground">
+        <h1 className="mm-page-title font-bold text-foreground">
           Platform Admin
         </h1>
         <p className="mt-1 text-muted-foreground">
