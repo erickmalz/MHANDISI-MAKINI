@@ -9,6 +9,7 @@ import { stages } from "./stages";
 import { tasks } from "./tasks";
 import { forms } from "./forms";
 import { funding } from "./funding";
+import { feeInvoices } from "./feeInvoices";
 import { procurement } from "./procurement";
 import { variations } from "./variations";
 import { reports } from "./reports";
@@ -34,6 +35,7 @@ export const sw: Messages = {
   tasks,
   forms,
   funding,
+  feeInvoices,
   procurement,
   variations,
   reports,

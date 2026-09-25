@@ -64,7 +64,7 @@ export function ActionMenu({
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("a")) setOpen(false);
           }}
-          className="absolute right-0 z-30 mt-2 flex w-64 flex-col rounded-lg border border-control-border bg-card p-1 shadow-lg"
+          className="absolute right-0 z-30 mt-2 flex w-64 flex-col rounded-lg border border-control-border bg-card p-1 shadow-mm-float"
         >
           {children}
         </ul>

@@ -74,7 +74,7 @@ export function PhotoStrip({
                   type="submit"
                   className="inline-flex min-h-12 cursor-pointer items-center gap-1 px-2 text-sm font-semibold text-destructive hover:underline rounded-lg transition-[background-color,transform] duration-100 active:scale-[0.97] active:bg-accent/10"
                 >
-                  <Trash size={12} aria-hidden="true" />
+                  <Trash size={16} aria-hidden="true" />
                   {t("stages.photos.remove")}
                 </button>
               </form>

@@ -37,6 +37,7 @@ export const chrome = {
     tabs: {
       overview: "Overview",
       funding: "Funding requests",
+      feeInvoices: "Fee invoices",
       procurement: "Purchase orders",
       materialStock: "Material stock",
       reports: "Reports",

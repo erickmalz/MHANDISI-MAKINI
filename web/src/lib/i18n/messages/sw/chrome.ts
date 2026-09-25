@@ -40,6 +40,7 @@ export const chrome: Widen<typeof enChrome> = {
     tabs: {
       overview: "Muhtasari",
       funding: "Maombi ya fedha",
+      feeInvoices: "Ankara za ada",
       procurement: "Oda za ununuzi",
       materialStock: "Akiba ya vifaa",
       reports: "Ripoti",

@@ -35,7 +35,7 @@ export function LanguageSwitcher({
     const other = LOCALES.find((l) => l !== locale) ?? locale;
     const style =
       variant === "header"
-        ? "rounded-lg px-3 text-on-inverse hover:bg-white/10"
+        ? "rounded-lg px-3 text-on-inverse hover:bg-on-inverse/10"
         : "w-full rounded-lg px-3 text-foreground hover:bg-muted";
     return (
       <button

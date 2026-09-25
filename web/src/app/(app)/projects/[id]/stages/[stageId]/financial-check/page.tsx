@@ -162,17 +162,22 @@ function StatTile({
   value: string;
   tone: "green" | "amber" | "red";
 }) {
-  const toneClass = {
-    green: "text-health-green bg-health-green-bg",
-    amber: "text-health-amber bg-health-amber-bg",
-    red: "text-health-red bg-health-red-bg",
+  const bgClass = {
+    green: "bg-health-green-bg",
+    amber: "bg-health-amber-bg",
+    red: "bg-health-red-bg",
+  }[tone];
+  const valueClass = {
+    green: "text-health-green",
+    amber: "text-health-amber",
+    red: "text-health-red",
   }[tone];
   return (
-    <div className={`rounded-lg p-4 ${toneClass}`}>
-      <p className="text-sm font-bold">
+    <div className={`rounded-lg p-4 ${bgClass}`}>
+      <p className="text-sm font-bold text-foreground">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+      <p className={`mt-1 text-2xl font-bold ${valueClass}`}>{value}</p>
     </div>
   );
 }

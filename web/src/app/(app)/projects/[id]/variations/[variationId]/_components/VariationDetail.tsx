@@ -58,7 +58,7 @@ export function VariationDetail({
           </span>
           <VariationStatusBadge status={variation.status} />
           {funded && (
-            <span className="rounded bg-health-green-bg px-2 py-0.5 text-sm font-bold text-health-green">
+            <span className="rounded-full bg-health-green-bg px-2 py-0.5 text-sm font-bold text-foreground">
               {t("variations.detail.funded")}
             </span>
           )}

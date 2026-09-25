@@ -4,7 +4,7 @@ import { RouteLoadingOverlay } from "@/components/RouteLoadingOverlay";
 import { catalogues } from "@/lib/i18n/catalogues";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getLocale, getT } from "@/lib/i18n/server";
-import { dejaVu } from "./fonts/dejavu";
+import { manrope, inter } from "./fonts/brand";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   return (
-    <html lang={locale} className={`${dejaVu.variable} h-full antialiased`}>
+    <html lang={locale} className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <I18nProvider locale={locale} messages={catalogues[locale]}>
           <RouteLoadingOverlay>{children}</RouteLoadingOverlay>

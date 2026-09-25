@@ -1048,6 +1048,123 @@ export async function voidDeposit(
   });
 }
 
+// --- Fee Invoice list / detail (its own ledger, read independent of the
+// Funding Request that raised it) --------------------------------------
+
+/** One row of the project's Fee Invoice ledger. */
+export interface FeeInvoiceListItem {
+  id: string;
+  displayNumber: string;
+  status: "issued" | "paid";
+  isDelta: boolean;
+  feeAmount: number;
+  stageId: string;
+  stageName: string;
+  fundingRequestId: string;
+  fundingRequestDisplayNumber: string | null;
+  issuedAt: string;
+  paidAt: string | null;
+}
+
+/** A Fee Invoice's full detail, for its own page. */
+export interface FeeInvoiceDetail extends FeeInvoiceListItem {
+  projectId: string;
+  feeBasis: "fixed" | "percent";
+  feePercent: string | null;
+  basisValue: number | null;
+  paymentInstructions: string | null;
+}
+
+const feeInvoiceSelection = {
+  id: feeInvoices.id,
+  displayNumber: feeInvoices.displayNumber,
+  status: feeInvoices.status,
+  isDelta: feeInvoices.isDelta,
+  feeAmount: feeInvoices.feeAmount,
+  feeBasis: feeInvoices.feeBasis,
+  feePercent: feeInvoices.feePercent,
+  basisValue: feeInvoices.basisValue,
+  paymentInstructions: feeInvoices.paymentInstructions,
+  stageId: feeInvoices.stageId,
+  stageName: stages.name,
+  projectId: stages.projectId,
+  fundingRequestId: feeInvoices.fundingRequestId,
+  fundingRequestDisplayNumber: fundingRequests.displayNumber,
+  issuedAt: feeInvoices.issuedAt,
+  paidAt: feeInvoices.paidAt,
+} as const;
+
+type FeeInvoiceRow = {
+  id: string;
+  displayNumber: string;
+  status: "issued" | "paid";
+  isDelta: boolean;
+  feeAmount: number;
+  feeBasis: "fixed" | "percent";
+  feePercent: string | null;
+  basisValue: number | null;
+  paymentInstructions: string | null;
+  stageId: string;
+  stageName: string;
+  projectId: string;
+  fundingRequestId: string;
+  fundingRequestDisplayNumber: string | null;
+  issuedAt: Date | string;
+  paidAt: Date | string | null;
+};
+
+function toFeeInvoiceListItem(r: FeeInvoiceRow): FeeInvoiceListItem {
+  return {
+    id: r.id,
+    displayNumber: r.displayNumber,
+    status: r.status,
+    isDelta: r.isDelta,
+    feeAmount: r.feeAmount,
+    stageId: r.stageId,
+    stageName: r.stageName,
+    fundingRequestId: r.fundingRequestId,
+    fundingRequestDisplayNumber: r.fundingRequestDisplayNumber,
+    issuedAt: iso(r.issuedAt) as string,
+    paidAt: iso(r.paidAt),
+  };
+}
+
+/** Every Fee Invoice for a project, most recently issued first — the fee invoice list. */
+export async function listFeeInvoices(projectId: string): Promise<FeeInvoiceListItem[]> {
+  return withAccount(async (tx) => {
+    const rows = (await tx
+      .select(feeInvoiceSelection)
+      .from(feeInvoices)
+      .innerJoin(stages, eq(stages.id, feeInvoices.stageId))
+      .innerJoin(fundingRequests, eq(fundingRequests.id, feeInvoices.fundingRequestId))
+      .where(eq(stages.projectId, projectId))
+      .orderBy(desc(feeInvoices.issuedAt))) as FeeInvoiceRow[];
+    return rows.map(toFeeInvoiceListItem);
+  });
+}
+
+/** One Fee Invoice by opaque id, or `null` (missing or cross-account). */
+export async function getFeeInvoice(feeInvoiceId: string): Promise<FeeInvoiceDetail | null> {
+  return withAccount(async (tx) => {
+    const [row] = (await tx
+      .select(feeInvoiceSelection)
+      .from(feeInvoices)
+      .innerJoin(stages, eq(stages.id, feeInvoices.stageId))
+      .innerJoin(fundingRequests, eq(fundingRequests.id, feeInvoices.fundingRequestId))
+      .where(eq(feeInvoices.id, feeInvoiceId))
+      .limit(1)) as FeeInvoiceRow[];
+    if (!row) return null;
+    return {
+      ...toFeeInvoiceListItem(row),
+      projectId: row.projectId,
+      feeBasis: row.feeBasis,
+      feePercent: row.feePercent,
+      basisValue: row.basisValue,
+      paymentInstructions: row.paymentInstructions,
+    };
+  });
+}
+
 /** Mark an Issued Fee Invoice paid. `false` when missing / already paid. */
 export async function markFeeInvoicePaid(feeInvoiceId: string): Promise<boolean> {
   return withAccount(async (tx) => {

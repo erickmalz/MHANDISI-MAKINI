@@ -117,7 +117,7 @@ export function PurchaseOrderDetail({
         </p>
       )}
       {isCancelled && po.cancelReason && (
-        <p className="mb-6 rounded-lg bg-health-red-bg p-3 text-sm text-health-red">
+        <p className="mb-6 rounded-lg bg-health-red-bg p-3 text-sm font-bold text-foreground">
           {t("procurement.detail.cancelled", { reason: po.cancelReason })}
         </p>
       )}

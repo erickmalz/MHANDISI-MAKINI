@@ -4,6 +4,7 @@ export const common = {
   loading: "Loading",
   total: "Total",
   breadcrumb: "Breadcrumb",
+  steps: "Steps",
   health: {
     comfortable: "Comfortable",
     tight: "Tight",

@@ -1,338 +1,276 @@
 ---
-name: mhandisi-makini-design-system
-description: Apply the MHANDISI MAKINI brand and design system (Site Yellow / Charcoal construction-PM identity, tagline "Let's build together") to any UI, web page, document, report, slide, or marketing asset. Use whenever building or reviewing something that carries the MHANDISI MAKINI brand, or when asked for its colours, typography, spacing, components, logo rules, or English/Swahili interface copy.
+name: "mhandisi-makini-design-system"
+description: "Apply the Mhandisi Makini design system (helmet yellow #FFB800 on charcoal #252A2D, Manrope + Inter, tagline \"Let's build together\") to any UI, component, page, document or marketing asset — tokens, components, logo rules, EN/SW copy."
 ---
 
-# MHANDISI MAKINI Design System
+# Mhandisi Makini Design System
 
-Brand guidelines v1.1 (September 2026), encoded for implementation.
+Implementation source of truth for the Mhandisi Makini web app (September 2026). It supersedes Brand Guidelines v1.1: its colours (#FFBE00 / #292D30 / Concrete #F5F6F7), DejaVu Sans type and 8px radius are retired. Check this file before you invent a colour, spacing value, component variant or interaction pattern.
 
-MHANDISI MAKINI is Swahili for "Very Keen Engineer" — a construction project
-management app for the site engineer. The brand expresses **attentiveness,
-precision and care**. Official tagline: **Let's build together** (exact wording,
-sentence case, straight apostrophe).
+**The name:** Mhandisi Makini is Swahili for "Very Keen Engineer".
+**What it is:** a trusted construction-services platform that connects people with skilled professionals (electrical, plumbing, building, finishing) for safer, smarter, stronger communities.
+**Brand promise:** trusted construction help, made approachable.
+**Personality:** capable, welcoming, practical, optimistic. It should feel like a professional site supervisor who is easy to talk to.
+**Core visual idea:** deep charcoal gives structure and trust, helmet yellow marks action and energy, and light neutral surfaces keep text readable.
+**Tagline:** "Let's build together". Use this exact wording, in sentence case, with a straight apostrophe in code. Keep it in English unless a translation is approved.
 
-**Design intent in one line:** order without clutter — present the current
-situation and the next action.
+## 1. Tokens: always use these CSS variables
 
-## How to use this skill
+```css
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
-1. Read this file for the rules that apply to what you are building.
-2. Pull the exact values from `references/tokens.css` (CSS custom properties) or
-   `references/tailwind-preset.js` — never retype hex values from memory.
-3. For UI work, read `references/components.md` for component specs.
-4. For any user-facing text, read `references/voice-and-copy.md`.
-5. Before you call the work done, run `references/review-checklist.md`.
+:root {
+  /* Brand */
+  --mm-yellow-500: #ffb800;  /* primary action, active nav, rating stars */
+  --mm-yellow-600: #e6a600;  /* hover / pressed */
+  --mm-charcoal-900: #252a2d;/* brand dark, headings, sidebar, hero */
+  --mm-charcoal-800: #343a3f;/* active nav bg, hover on charcoal */
+  /* Neutrals */
+  --mm-white: #ffffff;
+  --mm-canvas: #f7f8f6;      /* page background */
+  --mm-surface: #ffffff;     /* cards, inputs */
+  --mm-border: #dce1e5;
+  --mm-text: #252a2d;
+  --mm-text-muted: #5e6872;  /* Slate: supporting text */
+  --mm-text-subtle: #7b858e; /* large text / non-text marks only */
+  /* Semantic: status only, always with a word or icon */
+  --mm-success: #168a56;  --mm-success-bg: #e9f7ef;
+  --mm-info: #2667d9;     --mm-info-bg: #eaf1ff;
+  --mm-warning: #a96800;  --mm-warning-bg: #fff3db;
+  --mm-error: #d64545;    --mm-error-bg: #feebeb;
+  /* Focus */
+  --mm-focus: #2667d9;
+  --mm-focus-ring: 0 0 0 3px rgba(38, 103, 217, 0.28);
+  /* Spacing: 8px rhythm; 4px only for icon/text alignment */
+  --mm-space-1: 4px;  --mm-space-2: 8px;  --mm-space-3: 12px; --mm-space-4: 16px;
+  --mm-space-5: 20px; --mm-space-6: 24px; --mm-space-8: 32px; --mm-space-10: 40px;
+  --mm-space-12: 48px; --mm-space-16: 64px;
+  /* Shape */
+  --mm-radius-sm: 8px; --mm-radius-md: 12px; --mm-radius-lg: 16px; --mm-radius-pill: 999px;
+  --mm-shadow-card: 0 4px 18px rgba(37, 42, 45, 0.08);
+  --mm-shadow-float: 0 12px 32px rgba(37, 42, 45, 0.14);
+  /* Type */
+  --mm-font-heading: 'Manrope', system-ui, sans-serif;
+  --mm-font-body: 'Inter', system-ui, sans-serif;
+  /* Layout */
+  --mm-sidebar-width: 240px; --mm-content-max: 1440px;
+  --mm-touch-target: 44px;   --mm-input-height: 48px;
+  --mm-duration-fast: 160ms; --mm-duration-overlay: 200ms;
+}
+```
 
-Logo artwork lives in `assets/` — a vector master (`logo-master.svg`),
-single-artboard SVGs, and PNG exports of every lockup (stacked / horizontal /
-symbol, each full-colour and reversed). See "Logo" below. Treat each file as a
-finished image asset — never retype the wordmark.
+Tailwind: map these tokens in `theme.extend` (`colors.mm.yellow.500: 'var(--mm-yellow-500)'`, `borderRadius.mm: 'var(--mm-radius-md)'`, `fontFamily.heading/body` and so on). Don't paste raw hex values into classes.
 
----
-
-## 1. Colour
-
-| Token | Hex | Role |
+| Token | Use | Rule |
 |---|---|---|
-| Site Yellow | `#FFBE00` | Brand accent; primary action fill. Nothing else. |
-| Charcoal | `#292D30` | Text, headings, dark surfaces |
-| White | `#FFFFFF` | Main surfaces and clear space |
-| Concrete | `#F5F6F7` | Page background and panels |
-| Slate | `#56616B` | Secondary text, metadata, borders |
+| `--mm-yellow-500` | Main call to action, active navigation, ratings | Never use it as text on white or canvas (1.7:1), and never put white text on it. Put charcoal text on it (8.4:1). |
+| `--mm-charcoal-900` | Headings, dark header/sidebar/hero, primary text | White text on it (14.5:1). |
+| `--mm-canvas` | Page background | Keep cards white for a clear hierarchy. |
+| Semantic | Status only | Pair every status colour with text or an icon, never colour alone. Keep brand yellow distinct from warnings. |
 
-Status colours — these carry **meaning, never decoration**:
-
-| Token | Hex |
-|---|---|
-| Success | `#18794E` |
-| Warning | `#8A5800` |
-| Error | `#B42318` |
-| Info | `#175CD3` |
-
-**Composition guide: ~70% white or pale neutral, ~20% charcoal, ~10% yellow.**
-It is a balance, not a quota. Dense app screens should use *less* yellow, not
-more. Yellow marks the one thing the engineer should do next; if two things on
-a screen are yellow, one of them is wrong.
-
-### Legible pairings (contrast ratios verified)
-
-Use these:
-
-| Foreground on background | Ratio | Verdict |
-|---|---|---|
-| Charcoal on Site Yellow | 8.34:1 | ✅ primary button |
-| White on Charcoal | 13.89:1 | ✅ dark panels, headers |
-| Charcoal on White | 13.89:1 | ✅ body text |
-| Charcoal on Concrete | 12.83:1 | ✅ body on page bg |
-| Slate on White | 6.33:1 | ✅ secondary text |
-| Slate on Concrete | 5.85:1 | ✅ secondary text |
-| Status colours on White | 5.4–6.6:1 | ✅ all four pass AA |
-| Status colours on Concrete | 5.0–6.1:1 | ✅ all four pass AA |
-
-Never use these:
-
-| Combination | Ratio |
-|---|---|
-| White on Site Yellow | 1.66:1 ❌ |
-| Site Yellow on White | 1.66:1 ❌ |
-
-Yellow text is not a thing in this system. Yellow is a *fill* that carries
-charcoal text. If you need an accent colour for text, use charcoal weight or a
-status colour with a word next to it.
-
-**Colour alone must never carry meaning.** Every status colour is paired with a
-readable label — "Overdue", "Complete", "Action needed" — and, where it helps,
-an icon. A bare coloured dot is a defect.
-
----
+**Composition guide:** mostly white and canvas, charcoal for structure, and a little yellow. Yellow marks the one thing to do next.
 
 ## 2. Typography
 
-Primary family: **DejaVu Sans**. Regular for body, Bold for headings and
-critical labels. One family, used consistently.
+| Style | Font | Weight | Desktop size / line height | Use |
+|---|---|---|---|---|
+| Display | Manrope | 800 | 48 / 56 | Hero title only |
+| H1 | Manrope | 800 | 40 / 48 | Main page title |
+| H2 | Manrope | 700 | 32 / 40 | Section title |
+| H3 | Manrope | 700 | 24 / 32 | Card/feature title |
+| Title | Manrope | 700 | 20 / 28 | Dialogs, key cards |
+| Body | Inter | 400 | 16 / 24 | Default content |
+| Body small | Inter | 400 | 14 / 20 | Supporting text |
+| Label | Inter | 600 | 14 / 20 | Inputs, chips, buttons |
+| Caption | Inter | 500 | 12 / 16 | Metadata only |
 
-- App / web fallback stack: `"DejaVu Sans", -apple-system, BlinkMacSystemFont,
-  "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
-- Office document fallback: **Arial**
+- On mobile (<768px), Display is 36/44, H1 32/40 and H2 28/36.
+- Use Manrope only for headings and Inter for all UI and body text. In Office documents without these fonts, fall back to Arial.
+- Left-align working content and centre only short hero or cover titles. No all-caps paragraphs.
+- Put units next to values (`25 m²`, `12 mm`, `TZS 150,000`) and write dates as `06 Sep 2026`.
 
-The logo lettering is **artwork**, separate from this type system. Never retype
-the wordmark in DejaVu Sans and call it the logo.
+## 3. Layout
 
-| Role | App / web | Print |
-|---|---|---|
-| Hero / campaign headline | 32–40 px Bold | 28–34 pt Bold |
-| Page title | 28 px Bold | 24–27 pt Bold |
-| Section heading | 20 px Bold | 15–18 pt Bold |
-| Body | 16 px Regular, 1.5 line height | 11 pt, 1.15–1.3 |
-| Label / metadata | 14 px Regular or Bold | 9–10 pt Regular |
-
-### Typesetting rules
-
-- **Sentence case** for headings, buttons and navigation. "Daily site report",
-  not "DAILY SITE REPORT".
-- Uppercase is reserved for the logo and short category labels only.
-- Left-align working content. Centre only short cover or campaign titles.
-- Avoid condensed type, italics for long passages, and paragraphs set entirely
-  in capitals.
-- Establish a reading order: strong heading, quieter project details, readable
-  body. If every line is bold and oversized, nothing is emphasised.
-- Regular weight for paragraphs; bold selectively.
-
-### Data and localisation
-
-- Keep units next to values: `25 m²`, `12 mm`, `TZS 150,000`.
-- Unambiguous dates: `06 Sep 2026`. Never `06/09/26`.
-- Align numerical columns consistently.
-- Let text wrap in English **and Swahili** — Swahili strings run longer. Never
-  truncate an essential instruction to fit a fixed box; adjust the layout.
-
----
-
-## 3. Layout and spacing
-
-- **8 px base spacing unit**, 4 px for small adjustments. All spacing is a
-  multiple of 8 (or 4 where genuinely needed).
-- Mobile pages: 16 px outer margins. Larger screens: 24–32 px.
-- Keep related information close; separate major sections by **at least 24 px**.
-- Cards: white surface, subtle border, **8 px corner radius**, **16 px internal
-  padding**.
-- Print: generous margins, consistent left alignment.
-
-The structure comes from plans and site records — clean alignment, useful
-annotation, deliberate emphasis.
-
----
+- **Breakpoints:** mobile 0–767, tablet 768–1023, desktop 1024–1439, wide 1440+. Build mobile-first and collapse to a single column below 768px.
+- **Desktop:** fixed charcoal sidebar 240px wide. Content max width 1440px, page padding 32px, card gap 24px, card padding 24px (16px for compact cards).
+- **Dashboard hero:** a charcoal panel with white text and one yellow primary action.
+- **Mobile:** 16px gutter minimum and touch targets of at least 44×44px. Use a fixed bottom nav only in the main customer app, never in dense expert/admin workflows.
+- **Mobile customer home:** charcoal header with the logo, "Hello, {name}", "What do you need fixed?" and a search field. Below it: a service carousel, "Top rated near you" expert card, a full-width yellow "Book an expert" button, a promo card ("Reliable professionals for a better tomorrow.") and the bottom nav (Home, Explore, Projects, Profile).
+- **Desktop dashboard:** sidebar (Home, Find Experts, My Projects, Messages [count badge], Saved, Payments, Settings, footer "Let's build together"). Top bar with location picker, search, notifications and user menu. Then the hero "Find a skilled expert" / "Get trusted help for your next project.", Popular services, Featured experts and Your project.
 
 ## 4. Components
 
-Full specs in `references/components.md`. The rules that matter most:
+Keep APIs small and predictable. Every component defines these states: default, hover, focus-visible, disabled, loading, error, empty, success.
 
-- **Primary action** — Site Yellow fill, charcoal bold label. **One dominant
-  action per view.** Two equally prominent yellow buttons is a defect.
-- **Secondary action** — white fill, charcoal border and charcoal text.
-- **Cards** — white surface, subtle border, 8 px radius, 16 px padding.
-- **Inputs** — persistent visible label *above* the field, visible border,
-  helper text and error message below. Placeholders never replace labels.
-- **Interaction** — 48 × 48 px minimum target. Visible keyboard focus state on
-  everything interactive.
-- **Navigation** — stable labels and icon positions; indicate the active
-  section with more than colour (weight, underline, indicator bar).
+### Button: `Button({ variant: 'primary'|'secondary'|'tertiary'|'destructive', size: 'sm'|'md'|'lg', icon?, iconRight?, loading?, block?, href? })`
 
-### Icons
+| Variant | Background | Text | Use |
+|---|---|---|---|
+| Primary | `--mm-yellow-500` (hover `-600`) | `--mm-charcoal-900` | One main action per section |
+| Secondary | white + 1px charcoal border | charcoal | Alternative action ("Find expert", "View profile") |
+| Tertiary | transparent | charcoal | Low emphasis ("See all") |
+| Destructive | `--mm-error` | white | Confirmed irreversible actions |
 
-Simple engineering-inspired **outline** icons on a 24 px grid, ~2 px strokes.
-Match stroke weight, corner treatment and optical size across the whole set.
-Use familiar symbols for reports, tasks, people and project information, and
-label unfamiliar ones. **The brand mark is not the default icon for every
-feature.**
+```css
+.mm-button { min-height: 44px; padding: 0 20px; border-radius: var(--mm-radius-md);
+  font: 600 14px/20px var(--mm-font-body);
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+.mm-button--primary { background: var(--mm-yellow-500); color: var(--mm-charcoal-900); }
+.mm-button--primary:hover { background: var(--mm-yellow-600); }
+.mm-button:focus-visible { outline: none; box-shadow: var(--mm-focus-ring); }
+.mm-button:active { transform: translateY(1px); }
+```
 
-### Patterns and graphics
+- `loading` replaces the leading icon with a spinner and sets `aria-busy`.
+- Disabled buttons use opacity .45 and `cursor: not-allowed`.
+- Labels are a specific verb plus an object ("Book an expert"), not "Continue" or "OK".
 
-Faint blueprint grids, linework or restrained yellow bands as *secondary*
-elements — behind non-essential areas, away from small text. Draw technical
-diagrams accurately; a decorative drawing must never resemble an approved
-construction detail.
+### TextField
 
----
+- 48px tall, 12px radius, white surface and a 1px `--mm-border` border. Optional leading icon (search) or trailing icon (location pin) in `--mm-text-muted`.
+- The label is always visible above the input (Label style, 8px gap). A placeholder is an example, never the only label. A visually hidden label is allowed only for an obvious search box.
+- Focus: `--mm-focus` border plus `--mm-focus-ring`.
+- Error: `--mm-error` border, an alert icon and plain-language text under the field, with `aria-invalid`, `aria-describedby` and `role="alert"`.
 
-## 5. Voice and copy
+### Cards
 
-Write like a capable colleague who knows the site engineer has limited time.
-**Start with what happened or what the user needs to do.**
+- Base: `--mm-surface`, `1px solid var(--mm-border)`, 12px radius. Use `--mm-shadow-card` only for featured, interactive or elevated cards; otherwise prefer borders.
+- **ServiceCard:** a simple line/icon illustration, title and chevron, with one clear next action. The whole card is a link or button. Tints: electrical `--mm-warning-bg` with a yellow icon disc, plumbing `--mm-info-bg`, building `--mm-success-bg`, finishing `--mm-canvas`. Hover shows `--mm-shadow-card`.
+- **ExpertCard:** always shows avatar, name, trade, rating, location, availability chip and a secondary "View profile" button. Never convey trust through a star rating alone.
+- **Metric card** (project and admin views): a quiet 14px label above a large bold value.
 
-- Active verbs, specific nouns, short sentences.
-- Describe the problem *and* a useful next step.
-- Personality: capable, attentive, composed, direct.
+### StatusChip and Rating
 
-Avoid: blame, exaggerated urgency, jargon, construction cartoons, and
-unsupported promises — "zero delays", "guaranteed safety", "perfect project
-control", "best app ever".
+- Chip: pill radius, `-bg` tint, a 10px dot in the semantic colour, and the label in `--mm-text` (the semantic colours fail 4.5:1 as small text on their tints).
+- Labels: `Available today`, `In progress`, `Awaiting quote`, `Completed`, `Offline`.
+- Rating: yellow star plus the number, e.g. `aria-label="Rated 4.9 out of 5"`. The badge variant sits on `--mm-warning-bg`.
 
-**Naming:** `MHANDISI MAKINI` in formal brand references; `Mhandisi Makini` in
-running prose where title case is needed. The name is unchanged in English and
-Swahili.
+### Navigation
 
-**Honesty rules:** Never say "Saved" or "Submitted" before the action is
-confirmed. If local saving and syncing both exist, distinguish them. Don't guess
-the cause of an error — for a confirmed connection failure say "Report not
-submitted. Check your connection and try again."; for an unknown failure say
-"Report not submitted. Try again." Never expose a raw error code as the only
-explanation.
+- **Sidebar:** `--mm-charcoal-900`, 240px wide. Inactive items are white at 80–90% opacity. The active item has a `--mm-charcoal-800` background, a yellow icon and `aria-current="page"`. Count badges are yellow pills with charcoal numbers.
+- **Bottom nav:** white with a top border. The active item has a filled yellow icon and a bold label.
+- Keep labels and icon positions stable and labels short: Home, Explore, Projects, Messages, Profile.
 
-Bilingual string table (EN / SW) is in `references/voice-and-copy.md`. Match the
-selected interface language throughout a screen; don't switch languages without
-a reason. Swahili terminology should be reviewed with intended users before
-release.
+### Hero panel
 
----
+Charcoal panel with 16px radius and 48px padding (24px on mobile). Display title in white, one subtitle line, then a search field plus one yellow primary button. Trust row: "Trusted professionals · Quality work · Stronger communities", each with a line icon.
 
-## 6. Logo
+## 5. Iconography and illustration
 
-The mark combines three meanings: the **hard hat** (site work, engineering
-responsibility), the **gear** (coordination, moving parts of a project), and the
-**checkmark** (follow-through, completed work).
+- Icons: rounded line icons, 2px stroke, 24px grid, `currentColor` (Lucide matches well). Use filled icons only for selected states. The brand mark is not an icon for features.
+- Category motifs: bolt = electrical, tap = plumbing, bricks = building, paint roller = finishing.
+- Illustrations: simple and friendly, with charcoal outlines and yellow accents (workers in yellow hard hats, scaffolds, light bulbs, taps). Avoid technical blueprints, hazard imagery and generic stock photos. Decorative drawings must never look like approved construction details.
+- Icon-only controls need an `aria-label`. Decorative icons get `aria-hidden`.
 
-Primary signature is the **stacked** lockup: icon above the two-line uppercase
-name. Preserve the exact spelling `MHANDISI MAKINI`, the existing alignment and
-relative proportions. **Treat it as a single image asset — never retype the
-wordmark.**
+## 6. Motion
 
-- **Clear space:** let X = the visible height of the yellow hard-hat brim. Keep
-  at least **2X** of empty space on every side, including below the wordmark.
-  Measure from the artwork, not the edges of its image canvas.
-- **Minimum size:** stacked logo 160 px on screen / 35 mm in print. Icon-only
-  32 px / 10 mm. These are provisional — test the actual export at final size
-  and enlarge if the letters, checkmark or gear gaps lose clarity.
+Use 160ms by default and 200ms for menus and dialogs. Ease-out on entrance, ease-in on exit, and keep movement under 8px. Respect `prefers-reduced-motion`. Never animate a status into a different meaning without explicit confirmation.
 
-| Placement | Rule |
-|---|---|
-| White or pale background | Primary yellow-and-charcoal signature (`logo-stacked.png` / `.svg`, or `logo-horizontal.png`) |
-| Dark background | Reversed signature — yellow hard hat, near-white (`#EFEFEF`) gear and wordmark (`logo-stacked-reversed.png`, `logo-horizontal-reversed.png`, `logo-symbol-reversed.png`). No white holding panel. |
-| Photography | Reversed signature on a plain darkened area, or the primary signature on a plain white panel, away from busy detail |
-| Single-colour print | Approved one-colour master; never rely on automatic grayscale conversion |
-| App icon / favicon | Reversed symbol on a charcoal field, symbol filling ~65–70% of the canvas (`logo-symbol-reversed.png`). Never squeeze the full name into a tiny square. |
+## 7. Logo
 
-**Never** stretch, rotate, add shadows to, change the wordmark of, move the
-checkmark within, or separate the hat from the gear. The only approved colour
-treatments are the full-colour and reversed masters in `assets/` — never
-recolour the mark yourself. Never place a slogan inside the mark. **Never use the checkmark to imply that a safety
-inspection or technical approval occurred.**
+The mark combines the **hard hat** (site work, responsibility), the **gear** (coordination) and the **checkmark** (follow-through). The wordmark reads MHANDISI MAKINI with "Let's build together" beneath it. Approved files:
 
-**Tagline placement:** "Let's build together" sits *outside* the logo's clear
-space, visually smaller than the brand name. On small applications, omit it
-rather than let it become unreadable.
+- `mhandisi-makini-horizontal-light.png` / `mhandisi-makini-stacked-light.png`: charcoal + yellow, for light backgrounds.
+- `mhandisi-makini-horizontal-dark.png` / `mhandisi-makini-stacked-dark.png`: white + yellow on charcoal, for the sidebar, dark headers and hero.
 
-### Asset status — read before shipping
+Rules:
 
-A **vector master with outlined lettering** now exists: `logo-master.svg`. It
-holds four artboards — stacked and symbol-only, each in full colour and
-reversed. Its default `viewBox` frames the reversed stacked artboard, so a naive
-`<img src="logo-master.svg">` on a white page looks nearly invisible; use the
-single-artboard files below instead, or open the master in a vector editor.
+- Reference the supplied asset. Never redraw, retype or rebuild the mark in CSS, SVG or generated artwork, and never recolour, stretch, rotate, shadow or add effects.
+- Never move the checkmark or separate the hat from the gear, and never put a slogan inside the mark.
+- If the project has no logo file, use a placeholder `<img>` pointing at the expected path and tell the user which file to add.
+- Use the dark logo on light backgrounds and the white/yellow version on charcoal.
+- Clear space equals the height of the helmet brim. Never place the logo on busy imagery (put it on a plain panel), and never use yellow text on white.
+- Test the logo at its final size. Small uses (app icon, decals, embroidery) need a dedicated symbol-only master: don't squeeze the full name into a tiny square, and say so rather than improvising one.
+- The files are raster PNGs, not production vector masters. Flag this when print or large-format work needs vectors.
+- Never use the checkmark to imply that an inspection, certification or technical approval happened.
 
-Colours in every file: hard hat `#FFBE00` (Site Yellow), full-colour gear and
-wordmark `#292D30` (Charcoal), reversed gear and wordmark `#EFEFEF`. The `#EFEFEF`
-is logo artwork only — it is not a UI token and must not appear as a surface or
-text colour elsewhere.
+## 8. Voice and copy
 
-Still outstanding: a true one-colour (mono) master for single-colour print, and
-a horizontal lockup in the SVG master (it exists only as PNG so far).
+- **Direct and human:** "Find a skilled expert", not "Initiate service provider discovery". Address the user as "you" and greet by first name. Start with what happened or what the user needs to do.
+- Use sentence case for all interface labels ("Book an expert", never "BOOK AN EXPERT").
+- No emoji in UI copy, no blame and no manufactured urgency. Never stack competing calls to action.
+- No unsupported promises ("guaranteed", "zero delays", "best experts ever"). Never imply endorsement or certification you can't back up.
+- **Empty states** are friendly and specific: "No experts found in this area yet. Try another location."
+- **Honesty rules:**
+  - Never say "Booked", "Saved" or "Sent" before the server confirms it, and distinguish local saving from syncing.
+  - Don't guess an error's cause. A confirmed connection failure: "Booking not sent. Check your connection and try again." Unknown: "Booking not sent. Try again."
+  - Never show a raw error code as the only explanation.
+- **Naming:** Mhandisi Makini in prose, MHANDISI MAKINI in formal references and inside the logo artwork. The name is the same in English and Swahili.
+- Let text wrap in English **and Swahili** (Swahili runs longer). Never truncate an essential instruction; adjust the layout instead.
+- Match the interface language throughout each screen, and have Swahili reviewed by users before release.
 
-Files in `assets/`:
+| Moment | English | Swahili |
+|---|---|---|
+| Primary action | Book an expert | Weka nafasi ya fundi |
+| Search prompt | What do you need fixed? | Unahitaji kutengenezewa nini? |
+| Availability | Available today | Anapatikana leo |
+| Confirmed booking | Booking confirmed. | Nafasi imethibitishwa. |
+| Confirmed save | Saved. | Imehifadhiwa. |
+| Required field | Enter your location. | Weka eneo lako. |
+| Empty state | No experts found in this area yet. Try another location. | Hakuna mafundi eneo hili bado. Jaribu eneo lingine. |
+| Failed request | Booking not sent. Try again. | Ombi halijatumwa. Jaribu tena. |
 
-| File | Use |
-|---|---|
-| `logo-master.svg` | Vector master — 4 artboards. Editor source, not for direct embedding. |
-| `logo-stacked.svg` | Primary signature, full colour, single artboard. Scalable use on white/pale. |
-| `logo-symbol.svg` | Symbol only, full colour, single artboard. |
-| `logo-stacked.png` | Primary signature, full colour — white/pale backgrounds |
-| `logo-stacked-reversed.png` | Primary signature, reversed — charcoal / dark backgrounds |
-| `logo-horizontal.png` | Horizontal lockup (symbol left, name right), full colour — white/pale |
-| `logo-horizontal-reversed.png` | Horizontal lockup, reversed — charcoal / dark backgrounds |
-| `logo-horizontal-notag.png` | Horizontal lockup, full colour, **no tagline** — small placements where the tagline would be unreadable |
-| `logo-horizontal-reversed-notag.png` | Horizontal lockup, reversed, no tagline — e.g. an app header bar |
-| `logo-symbol.png` | Symbol only, full colour |
-| `logo-symbol-reversed.png` | Symbol only, reversed — source for the app icon / favicon tile |
-| `MHANDISI-MAKINI-brand-guidelines-v1.1.pdf` | Source brand guidelines |
+## 9. Applications beyond the app
 
----
+- **Sign-in / launch:** a white or canvas screen with the stacked light logo and generous clear space. On sign-in the logo is secondary to the form. Prefer an instruction over a slogan.
+- **Reports and documents:**
+  - Logo top-left, then title, project name, date, author and revision.
+  - Charcoal Manrope headings, Inter body, white pages and small yellow accents.
+  - Long reports get page numbers and a project ID, and status and approval fields are explicit.
+- **Social (1080 × 1080):** keep important text within a 64px inset. One headline, one visual, one call to action, and only for things that exist.
+- **Signage and workwear:** full logo on a plain panel. Proof simplified masters at actual size, and keep branding away from required safety markings.
+- **Partner branding:** each logo gets its own clear space. Describe relationships accurately.
 
-## 7. Applications
+## 10. Accessibility (WCAG 2.2 AA)
 
-Every application preserves the same hierarchy: **brand → purpose → essential
-information → next action.**
+- 4.5:1 for normal text; 3:1 for large text, UI boundaries, focus rings and meaningful icons.
+- **Known misses in the palette, to work around rather than re-tint:**
+  - `--mm-text-subtle` on white is 3.8:1: use it only for large text or decoration.
+  - Success, warning and error as small text on their tints are 3.8–4.1:1: put the label in `--mm-text`.
+  - White on `--mm-error` is 4.4:1: keep destructive labels short and bold.
+  - `--mm-border` is 1.3:1: inputs always get a visible label and a strong focus state.
+- Show a visible `:focus-visible` style on every interactive element, and never remove an outline without replacing it.
+- Use semantic HTML: `button` for actions, `a` for navigation, labels tied to inputs, native heading order. Announce validation and status updates (`role="status"` / `aria-live`).
+- Mark the active nav item with more than colour: a background or indicator plus bold weight.
 
-- **App launch / sign-in:** white launch screen, primary signature, generous
-  clear space. On sign-in the logo is secondary to the form. Yellow primary
-  button with charcoal label. Prefer an instruction over a slogan.
-- **Reports and covers:** logo upper-left or centred, above minimum print size.
-  Then report title, project name, report date, author, revision. Charcoal
-  headings, white pages, small yellow accents. Page numbers and project ID on
-  long reports. Status and approval fields explicit.
-- **Social / launch (1080 × 1080):** keep important text within a ≥64 px inset.
-  One headline, one clear visual, one call to action. Example: "A clearer view
-  of your site." / "Construction project management for the site engineer."
-  Only say "Join the waitlist" if a working waitlist exists.
-- **Signage and workwear:** full signature where reading distance permits, on a
-  plain panel with generous clear space. For embroidery or small helmet decals,
-  commission a simplified production master and proof the gear gaps and
-  checkmark at actual size. **Keep branding away from required safety markings
-  and equipment identification.**
-- **Partner branding:** each logo gets its own clear space; align by perceived
-  visual weight, not identical image-box dimensions. Separate identities with
-  space or a subtle divider. Describe the relationship accurately — never imply
-  an endorsement or certification.
-
----
-
-## 8. Do / Don't quick reference
+## 11. Do / Don't
 
 | Do | Don't |
 |---|---|
-| Charcoal text on yellow buttons | White text on yellow |
-| One dominant action per view | Two competing equal-weight actions |
-| Sentence case headings | Blocks of uppercase body copy |
-| Persistent labels above fields | Placeholders standing in for labels |
-| Status colour + word | A coloured dot alone |
-| "Report not submitted. Try again." | "Error 1042" |
-| Quiet surface around the signature | Headlines crossing the mark |
-| Yellow concentrated in symbol + key accents | Decorative yellow on every surface |
-| Claims that match the shipped product | "Zero delays", "best app ever" |
+| Charcoal text on yellow buttons | White text on yellow, or yellow text on white |
+| One yellow primary action per section | Two competing yellow actions |
+| `--mm-*` variables | New hex values in component files |
+| Manrope headings, Inter UI text | Other fonts, or Manrope for body copy |
+| Labels above fields | Placeholders standing in for labels |
+| Status dot + word | A coloured dot alone |
+| Rating beside trade, location and availability | Trust shown by stars alone |
+| "Booking not sent. Try again." | "Error 1042" |
+| The supplied logo file | A redrawn or CSS-built logo |
+| Friendly worker/scaffold illustrations | Hazard imagery, blueprints, stock photos |
 
----
+## 12. Rules when generating code
 
-## 9. Governance
+1. Use the `--mm-*` variables. Never hardcode new hex colours in component files.
+2. Manrope for headings, Inter for everything else.
+3. White cards on `--mm-canvas`. Reserve charcoal for navigation, hero panels and high-trust emphasis.
+4. Yellow is for the primary action only (plus active nav and stars), never a decorative fill.
+5. Defaults: 12px radius, 16px mobile padding, 24px desktop card padding, 24px gaps.
+6. Mobile-first. Collapse multi-column layouts below 768px.
+7. Make every state explicit: default, hover, focus-visible, disabled, loading, error, empty, success.
+8. Reference the approved logo asset. Never recreate it.
 
-One brand owner approves new logo masters, palette changes, taglines and
-external campaign templates. Designers and developers use a **shared component
-and token source** — this skill is that source for code. Record version, date,
-reason and approver for each revision; archive superseded assets so they cannot
-be mistaken for current files.
+## 13. Review before shipping
 
-Open decisions from v1.1: confirm the typeface, appoint the brand owner,
-complete the production logo masters, and validate bilingual interface language
-and real-device usability with site engineers before launch.
+- Exact brand spelling, with the right logo variant and clear space for the background.
+- Correct token values, with no stray hex values or fonts.
+- One primary action per section.
+- Labels on every input, and every status shows a word next to its colour.
+- 44px touch targets and a visible focus state.
+- Contrast checked, including on the charcoal surfaces.
+- Sentence case, correct dates and units, and honest copy that matches what the product actually does.
+- Image permissions obtained.
+- Layout checked at 375px and 1440px, and on a real phone in bright light: experts use it on site.
 
-When something in this system conflicts with a specific request, say so and
-offer the compliant alternative rather than silently breaking the brand.
+One brand owner approves new logo masters, palette changes, taglines and templates. Record the version, date and reason for each revision.
+
+When a request conflicts with this system, say so and offer the compliant alternative rather than silently breaking the brand.

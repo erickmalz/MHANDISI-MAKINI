@@ -43,7 +43,7 @@ export function StageCloseoutReportDoc({ doc }: { doc: StageCloseoutReportDocume
   return (
     <Shell
       profile={profile}
-      title="Stage Closeout Report"
+      title="Stage closeout report"
       number={snapshot.displayNumber}
       stamp={stamp}
       meta={meta}

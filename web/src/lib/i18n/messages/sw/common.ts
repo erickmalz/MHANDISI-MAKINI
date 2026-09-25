@@ -7,6 +7,7 @@ export const common: Widen<typeof enCommon> = {
   loading: "Inapakia",
   total: "Jumla",
   breadcrumb: "Njia ya kurasa",
+  steps: "Hatua",
   health: {
     comfortable: "Hali nzuri",
     tight: "Finyu",

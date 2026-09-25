@@ -2,40 +2,45 @@
 
 /* ==========================================================================
    MHANDISI MAKINI — Design tokens
-   Brand Guidelines v1.1 (September 2026) — "Let's build together"
+   Implementation source of truth: the mhandisi-makini-design-system skill
+   (.claude/Skills/mhandisi-makini-design-system/SKILL.md), September 2026
+   revision. Supersedes Brand Guidelines v1.1 — Site Yellow #FFBE00,
+   Charcoal #292D30, Concrete #F5F6F7, DejaVu Sans and the flat 8px radius
+   are retired.
 
-   Brand values are copied verbatim from the design-system skill
-   (.claude/skills/mhandisi-makini-design-system/references/tokens.css).
-   Never hardcode a brand hex anywhere else in the codebase — read these vars.
+   Names below are kept stable across the revision (--mm-yellow, --mm-radius,
+   --mm-space-N, …) so every component and CSS module that already reads them
+   picks up the new brand values with no per-file edit. Never hardcode a
+   brand hex anywhere else in the codebase — read these vars.
    ========================================================================== */
 
 :root {
   /* --- Brand palette ---------------------------------------------------- */
-  --mm-yellow: #ffbe00; /* Site Yellow — accent + primary action ONLY */
-  --mm-charcoal: #292d30; /* Text, headings, dark surfaces */
+  --mm-yellow: #ffb800; /* Helmet yellow — accent + primary action ONLY */
+  --mm-charcoal: #252a2d; /* Text, headings, dark surfaces */
   --mm-white: #ffffff; /* Main surfaces, clear space */
-  --mm-concrete: #f5f6f7; /* Page background, panels */
-  --mm-slate: #56616b; /* Secondary text, metadata */
+  --mm-concrete: #f7f8f6; /* Page canvas background */
+  --mm-slate: #5e6872; /* Secondary text, metadata */
+  --mm-text-subtle: #7b858e; /* Large text / non-text marks only — 3.8:1 */
 
   /* Support tints — derived, for borders and hover states only. */
-  --mm-yellow-pressed: #e6ab00;
-  --mm-border: #e3e5e7;
-  --mm-border-strong: #c7cbcf;
-  /* Boundary of a form control. WCAG 1.4.11 needs 3:1 against the surface
-     (3.33:1 on white, 3.08:1 on Concrete). Card borders stay subtle. */
-  --mm-control-border: #858e96;
-  --mm-charcoal-hover: #3a3f43;
+  --mm-yellow-pressed: #e6a600;
+  --mm-border: #dce1e5;
+  --mm-border-strong: #7b858e;
+  /* Boundary of a form control. WCAG 1.4.11 needs 3:1 against the surface. */
+  --mm-control-border: #7b858e;
+  --mm-charcoal-hover: #343a3f;
 
   /* --- Status palette — meaning, never decoration --------------------- */
-  --mm-success: #18794e;
-  --mm-warning: #8a5800;
-  --mm-error: #b42318;
-  --mm-info: #175cd3;
+  --mm-success: #168a56;
+  --mm-warning: #a96800;
+  --mm-error: #d64545;
+  --mm-info: #2667d9;
 
-  --mm-success-surface: #ecf6f1;
-  --mm-warning-surface: #fbf3e6;
-  --mm-error-surface: #fdf0ef;
-  --mm-info-surface: #edf2fc;
+  --mm-success-surface: #e9f7ef;
+  --mm-warning-surface: #fff3db;
+  --mm-error-surface: #feebeb;
+  --mm-info-surface: #eaf1ff;
 
   /* --- Semantic roles ------------------------------------------------- */
   --mm-bg: var(--mm-concrete);
@@ -43,20 +48,21 @@
   --mm-surface-inverse: var(--mm-charcoal);
   --mm-text: var(--mm-charcoal);
   --mm-text-secondary: var(--mm-slate);
-  --mm-text-on-yellow: var(--mm-charcoal); /* 8.34:1 — never white */
-  --mm-text-on-charcoal: var(--mm-white); /* 13.89:1 */
+  --mm-text-on-yellow: var(--mm-charcoal); /* 8.4:1 — never white */
+  --mm-text-on-charcoal: var(--mm-white); /* 14.5:1 */
   --mm-action: var(--mm-yellow);
-  --mm-focus-ring: var(--mm-info); /* 5.99:1 on white, 3.60:1 on yellow */
-  /* Info blue is only 2.32:1 on Charcoal, so dark surfaces use white (13.89:1). */
+  --mm-focus-ring: #2667d9; /* --mm-focus — same value as Info blue */
+  /* Focus blue drops below 3:1 on Charcoal, so dark surfaces use white. */
   --mm-focus-ring-on-dark: var(--mm-white);
 
   /* --- Typography ---------------------------------------------------- */
-  /* One family throughout. DejaVu Sans first, then the approved fallback.
-     `--font-dejavu` is the self-hosted WOFF2 pair (Regular 400 + Bold 700)
-     that `next/font/local` in app/layout.tsx puts on <html>; the plain
-     "DejaVu Sans" name still wins on machines that already have it. */
-  --mm-font: var(--font-dejavu), "DejaVu Sans", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Manrope for headings, Inter for all UI and body text — never the other
+     way round. `--font-manrope`/`--font-inter` are self-hosted via
+     `next/font/google` in app/fonts/brand.ts and put on <html>; the plain
+     family names still win on a machine that already has them installed. */
+  --mm-font-heading: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  --mm-font-body: var(--font-inter), "Inter", system-ui, sans-serif;
+  --mm-font: var(--mm-font-body); /* legacy alias — body/UI text */
 
   --mm-size-hero: 2.25rem; /* 36px */
   --mm-size-page-title: 1.75rem; /* 28px */
@@ -69,22 +75,36 @@
   --mm-leading-heading: 1.2;
   --mm-leading-body: 1.5;
 
-  /* --- Spacing — 8px base, 4px micro -------------------------------- */
+  /* --- Spacing — 8px rhythm, 4px only for icon/text alignment -------- */
   --mm-space-1: 4px;
   --mm-space-2: 8px;
   --mm-space-3: 12px;
   --mm-space-4: 16px;
-  --mm-space-5: 24px;
-  --mm-space-6: 32px;
-  --mm-space-7: 40px;
-  --mm-space-8: 48px;
+  --mm-space-5: 20px;
+  --mm-space-6: 24px;
+  --mm-space-7: 28px;
+  --mm-space-8: 32px;
+  --mm-space-10: 40px;
+  --mm-space-12: 48px;
+  --mm-space-16: 64px;
 
   /* --- Shape and interaction -------------------------------------- */
-  --mm-radius: 8px;
-  --mm-radius-sm: 4px;
-  --mm-touch-target: 48px;
-  --mm-focus-width: 2px;
-  --mm-focus-offset: 2px;
+  /* --mm-radius (the old single flat radius) now maps to the new default —
+     mm-radius-md — for buttons, inputs and cards, per the SKILL.md scale:
+     sm 8px, md 12px, lg 16px (hero panels), pill 999px (chips/filters). */
+  --mm-radius-sm: 8px;
+  --mm-radius: 12px;
+  --mm-radius-md: 12px;
+  --mm-radius-lg: 16px;
+  --mm-radius-pill: 999px;
+  --mm-shadow-card: 0 4px 18px rgba(37, 42, 45, 0.08);
+  --mm-shadow-float: 0 12px 32px rgba(37, 42, 45, 0.14);
+  --mm-touch-target: 44px;
+  --mm-input-height: 48px;
+  --mm-focus-width: 3px;
+  --mm-focus-offset: 0px;
+  --mm-duration-fast: 160ms;
+  --mm-duration-overlay: 200ms;
 
   /* ======================================================================
      Semantic app tokens — the names the components already use, remapped
@@ -153,10 +173,23 @@
   --color-health-blue: var(--color-health-blue);
   --color-health-blue-bg: var(--color-health-blue-bg);
 
-  --font-sans: var(--mm-font);
-  --font-heading: var(--mm-font);
+  --font-sans: var(--mm-font-body);
+  --font-heading: var(--mm-font-heading);
 
+  /* Remap Tailwind's own radius scale so every existing `rounded-lg` /
+     `rounded-sm` utility across the app picks up the new brand values
+     without touching each component. */
+  --radius-sm: var(--mm-radius-sm); /* 8px */
+  --radius-lg: var(--mm-radius-md); /* 12px — buttons, inputs, cards */
+  --radius-2xl: var(--mm-radius-lg); /* 16px — hero panels */
+  --radius-mm-sm: var(--mm-radius-sm);
+  --radius-mm-md: var(--mm-radius-md);
+  --radius-mm-lg: var(--mm-radius-lg);
+  --radius-mm-pill: var(--mm-radius-pill);
   --radius-mm: var(--mm-radius);
+
+  --shadow-mm-card: var(--mm-shadow-card);
+  --shadow-mm-float: var(--mm-shadow-float);
 }
 
 /* ==========================================================================
@@ -167,12 +200,12 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --mm-bg: #1b1e20;
-    --mm-surface: #292d30;
-    --mm-text: #f5f6f7;
-    --mm-text-secondary: #aeb6bc;
-    --mm-border: #3a3f43;
+    --mm-surface: #252a2d;
+    --mm-text: #f7f8f6;
+    --mm-text-secondary: #b3bac0;
+    --mm-border: #343a3f;
     --mm-border-strong: #4c5358;
-    --mm-control-border: #7d8790; /* 3.8:1 on the dark card */
+    --mm-control-border: #9aa2a9; /* 3.8:1 on the dark card */
     --mm-focus-ring: #9cc0f4; /* Info blue is 2.8:1 on the dark page */
 
     --mm-success-surface: #10261d;
@@ -181,18 +214,18 @@
     --mm-info-surface: #101f38;
 
     --color-background: #1b1e20;
-    --color-foreground: #f5f6f7;
+    --color-foreground: #f7f8f6;
     --color-primary: #4c5358; /* lighter neutral so fills read on the dark ground */
-    --color-on-primary: #f5f6f7;
-    --color-secondary: #aeb6bc;
-    --color-card: #292d30;
-    --color-card-foreground: #f5f6f7;
-    --color-muted: #23272a;
-    --color-muted-foreground: #aeb6bc;
-    --color-border: #3a3f43;
+    --color-on-primary: #f7f8f6;
+    --color-secondary: #b3bac0;
+    --color-card: #252a2d;
+    --color-card-foreground: #f7f8f6;
+    --color-muted: #202426;
+    --color-muted-foreground: #b3bac0;
+    --color-border: #343a3f;
     --color-border-strong: #4c5358;
     --color-destructive: #f4a19a;
-    --color-surface-inverse: #23272a;
+    --color-surface-inverse: #202426;
 
     --color-health-green: #7fd0a9;
     --color-health-green-bg: #10261d;
@@ -215,7 +248,7 @@
   body {
     background: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--mm-font);
+    font-family: var(--mm-font-body);
     font-size: var(--mm-size-body);
     line-height: var(--mm-leading-body);
     font-weight: var(--mm-weight-regular);
@@ -227,7 +260,7 @@
   h4,
   h5,
   h6 {
-    font-family: var(--mm-font);
+    font-family: var(--mm-font-heading);
     font-weight: var(--mm-weight-bold);
     line-height: var(--mm-leading-heading);
     /* Sentence case. Never text-transform: uppercase. */

@@ -101,7 +101,7 @@ export function FundingRequestDetail({
         </p>
       )}
       {fr.supersedesDisplayNumber && (
-        <p className="mb-6 rounded-lg bg-health-amber-bg p-3 text-sm text-health-amber">
+        <p className="mb-6 rounded-lg bg-health-amber-bg p-3 text-sm font-bold text-foreground">
           {fr.revisionReason
             ? t("funding.detail.revisesWithReason", {
                 number: fr.supersedesDisplayNumber,

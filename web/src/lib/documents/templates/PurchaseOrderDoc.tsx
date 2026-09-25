@@ -38,7 +38,7 @@ export function PurchaseOrderDoc({ doc }: { doc: PurchaseOrderDocument }) {
   return (
     <Shell
       profile={profile}
-      title="Purchase Order"
+      title="Purchase order"
       number={snapshot.displayNumber}
       stamp={stamp}
       meta={meta}

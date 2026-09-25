@@ -104,7 +104,11 @@ export {
   recordDeposit,
   voidDeposit,
   markFeeInvoicePaid,
+  listFeeInvoices,
+  getFeeInvoice,
   type IssueResult,
+  type FeeInvoiceListItem,
+  type FeeInvoiceDetail,
 } from "./funding";
 export { exportAccountData, type AccountDataExport } from "./export";
 export {

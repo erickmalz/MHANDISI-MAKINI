@@ -1,4 +1,8 @@
+"use client";
+
 import { Check } from "@phosphor-icons/react/dist/ssr";
+
+import { useT } from "@/lib/i18n/client";
 
 export function StepIndicator({
   steps,
@@ -7,8 +11,9 @@ export function StepIndicator({
   steps: readonly string[];
   currentStep: number;
 }) {
+  const t = useT();
   return (
-    <ol className="mb-6 flex flex-wrap gap-x-2 gap-y-3" aria-label="Steps">
+    <ol className="mb-6 flex flex-wrap gap-x-2 gap-y-3" aria-label={t("common.steps")}>
       {steps.map((label, i) => {
         const stepNum = i + 1;
         const isDone = stepNum < currentStep;

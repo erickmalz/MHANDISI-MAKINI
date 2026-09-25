@@ -47,8 +47,8 @@ export function FundingRequestDoc({ doc }: { doc: FundingRequestDocument }) {
       ))}
 
       <Callout title="Supervision fee" variant="fee">
-        {formatTZS(snapshot.feeAmount)} — billed separately through the Fee
-        Invoice. It is not drawn from your project deposits.
+        {formatTZS(snapshot.feeAmount)} — billed separately through the fee
+        invoice. It is not drawn from your project deposits.
       </Callout>
 
       <GrandTotal label="Total requested (deposit target)" amount={snapshot.total} />

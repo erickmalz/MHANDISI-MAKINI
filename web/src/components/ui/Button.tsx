@@ -7,7 +7,7 @@ const BASE =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-6 py-3 text-base font-bold transition-[background-color,border-color,transform] duration-100 cursor-pointer active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50";
 
 const VARIANTS: Record<Variant, string> = {
-  // The ONE dominant action per view: Site Yellow fill, charcoal bold label.
+  // The ONE dominant action per view: helmet yellow fill, charcoal bold label.
   // Pressed state reuses the brand's own --mm-yellow-pressed token.
   primary:
     "bg-accent text-on-accent hover:bg-[var(--mm-yellow-pressed)] active:bg-[var(--mm-yellow-pressed)]",

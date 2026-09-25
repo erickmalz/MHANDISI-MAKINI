@@ -18,7 +18,7 @@ that fails rather than shipping it quietly.
 
 ## Colour
 
-- [ ] Only Site Yellow, Charcoal, White, Concrete, Slate + the four status
+- [ ] Only helmet yellow, Charcoal, White, Concrete, Slate + the four status
       colours. No stray hexes.
 - [ ] No white text on yellow (1.66:1). No yellow text on white (1.66:1).
 - [ ] Roughly 70% white/pale, 20% charcoal, 10% yellow.

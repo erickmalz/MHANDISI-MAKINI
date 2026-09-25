@@ -5,7 +5,7 @@ import { catalogues } from "@/lib/i18n/catalogues";
 import { I18nProvider } from "@/lib/i18n/client";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/lib/i18n/locales";
 
-import { dejaVu } from "./fonts/dejavu";
+import { manrope, inter } from "./fonts/brand";
 import "./globals.css";
 
 /** The layout is gone here, so read the saved language straight from the cookie. */
@@ -25,7 +25,7 @@ export default function GlobalError(props: {
 }) {
   const locale = savedLocale();
   return (
-    <html lang={locale} className={`${dejaVu.variable} h-full antialiased`}>
+    <html lang={locale} className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <I18nProvider locale={locale} messages={catalogues[locale]}>
           <ErrorScreen {...props} />

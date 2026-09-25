@@ -84,7 +84,7 @@ async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
 }
 
 const FOOTER_TEMPLATE = `
-  <div style="font-family: Arial, sans-serif; font-size: 8px; color: #56616B;
+  <div style="font-family: Arial, sans-serif; font-size: 8px; color: #5E6872;
               width: 100%; padding: 0 16mm; display: flex;
               justify-content: space-between;">
     <span class="title"></span>

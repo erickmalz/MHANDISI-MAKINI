@@ -105,7 +105,10 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="mt-4 text-sm">
-          <Link href="/sign-in" className="font-bold text-foreground underline">
+          <Link
+            href="/sign-in"
+            className="inline-flex min-h-12 items-center font-bold text-foreground underline"
+          >
             Back to sign in
           </Link>
         </p>

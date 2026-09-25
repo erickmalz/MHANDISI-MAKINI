@@ -20,10 +20,10 @@ const REGISTERS: { href: string; label: MessageKey; Icon: typeof Truck }[] = [
 
 /** Header controls on the charcoal: 48px tall, white text, a subtle outline. */
 const HEADER_CONTROL =
-  "inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-bold text-on-inverse hover:bg-white/10";
+  "inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-bold text-on-inverse hover:bg-on-inverse/10";
 /** The section the person is in gets a stronger outline, a wash and an underline — never colour alone. */
-const HEADER_ACTIVE = "border-white bg-white/10 underline decoration-2 underline-offset-4";
-const HEADER_IDLE = "border-white/40";
+const HEADER_ACTIVE = "border-on-inverse bg-on-inverse/10 underline decoration-2 underline-offset-4";
+const HEADER_IDLE = "border-on-inverse/40";
 
 const isWithin = (pathname: string, href: string) =>
   pathname === href || pathname.startsWith(`${href}/`);
@@ -106,14 +106,14 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
                 </ActionMenuItem>
               ))}
             </ActionMenu>
-            <span className="hidden max-w-[16ch] truncate text-sm text-white/70 lg:block">
+            <span className="hidden max-w-[16ch] truncate text-sm text-on-inverse/70 lg:block">
               {userEmail}
             </span>
             <Link
               href="/settings"
               aria-current={inSettings ? "page" : undefined}
-              className={`inline-flex min-h-12 shrink-0 items-center rounded-lg px-3 text-sm font-bold text-on-inverse hover:bg-white/10 ${
-                inSettings ? "bg-white/10 underline decoration-2 underline-offset-4" : ""
+              className={`inline-flex min-h-12 shrink-0 items-center rounded-lg px-3 text-sm font-bold text-on-inverse hover:bg-on-inverse/10 ${
+                inSettings ? "bg-on-inverse/10 underline decoration-2 underline-offset-4" : ""
               }`}
             >
               {t("chrome.header.settings")}

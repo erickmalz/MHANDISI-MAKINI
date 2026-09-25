@@ -71,7 +71,7 @@ export function SignOutButton({
       type="button"
       onClick={signOut}
       disabled={pending}
-      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center rounded-lg px-3 text-sm font-bold text-on-inverse hover:bg-white/10 disabled:opacity-60"
+      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center rounded-lg px-3 text-sm font-bold text-on-inverse hover:bg-on-inverse/10 disabled:opacity-60"
     >
       {label}
     </button>

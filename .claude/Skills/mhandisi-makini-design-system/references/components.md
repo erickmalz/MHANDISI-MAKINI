@@ -11,7 +11,7 @@ predictable controls, honest feedback.
 
 | | Primary | Secondary |
 |---|---|---|
-| Fill | Site Yellow `#FFBE00` | White |
+| Fill | helmet yellow `#FFB800` | White |
 | Label | Charcoal, Bold, 16 px | Charcoal, Bold, 16 px |
 | Border | none | 1 px Charcoal |
 | Radius | 8 px | 8 px |
@@ -78,10 +78,10 @@ Colour never travels alone. Every status is `colour + word`, optionally an icon.
 
 | Meaning | Colour | Example label (EN) | Example label (SW) |
 |---|---|---|---|
-| Success | `#18794E` | Complete | Imekamilika |
-| Warning | `#8A5800` | Action needed | Hatua inahitajika |
-| Error | `#B42318` | Overdue | Imechelewa |
-| Info | `#175CD3` | In progress | Inaendelea |
+| Success | `#168A56` | Complete | Imekamilika |
+| Warning | `#A96800` | Action needed | Hatua inahitajika |
+| Error | `#D64545` | Overdue | Imechelewa |
+| Info | `#2667D9` | In progress | Inaendelea |
 
 Keep brand yellow **distinct from warning messages** — yellow means "this is the
 primary action", not "caution". If something needs attention, use the warning
@@ -105,7 +105,7 @@ colour and an explicit label such as "Action needed" or "Overdue".
 ## Interaction and accessibility
 
 - **48 × 48 px** minimum target for anything tappable.
-- Visible keyboard focus on every interactive element — 2 px `#175CD3` outline
+- Visible keyboard focus on every interactive element — 2 px `#2667D9` outline
   with 2 px offset. Never `outline: none` without a replacement.
 - Support text resizing; layouts must reflow rather than clip.
 - Screen-reader labels on icon-only controls.

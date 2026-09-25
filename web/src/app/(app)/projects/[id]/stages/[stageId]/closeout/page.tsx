@@ -89,8 +89,8 @@ export default async function StageCloseoutPage({
 
       {errorMessage && (
         <Card className="mb-6 border-health-red bg-health-red-bg">
-          <p className="flex items-center gap-2 text-sm font-bold text-health-red">
-            <WarningCircle size={18} aria-hidden="true" />
+          <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <WarningCircle size={18} className="shrink-0 text-health-red" aria-hidden="true" />
             {errorMessage}
           </p>
         </Card>
@@ -98,8 +98,8 @@ export default async function StageCloseoutPage({
 
       {isClosed && (
         <Card className="mb-6 border-health-green bg-health-green-bg">
-          <p className="flex items-center gap-2 text-sm font-bold text-health-green">
-            <CheckCircle size={18} aria-hidden="true" />
+          <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <CheckCircle size={18} className="shrink-0 text-health-green" aria-hidden="true" />
             {stage.completedOn
               ? t("closeout.stage.closedOn", { date: formatDate(stage.completedOn, locale) })
               : t("closeout.stage.closed")}
@@ -136,8 +136,8 @@ export default async function StageCloseoutPage({
 
       {!isClosed && !closeableFromStatus && (
         <Card className="mb-6 border-health-amber bg-health-amber-bg">
-          <p className="flex items-center gap-2 text-sm font-bold text-health-amber">
-            <Info size={18} aria-hidden="true" />
+          <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <Info size={18} className="shrink-0 text-health-amber" aria-hidden="true" />
             {t("closeout.stage.notCloseable", { status: stageStatusText(t, stage.status) })}
           </p>
         </Card>

@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 
 /**
- * Card: white surface, 1px subtle border, 8px radius, 16px padding.
+ * Card: white surface, 1px subtle border, 12px radius, 16px padding.
  * No shadow — the border carries the separation. Group related information
  * inside one card; separate cards by 24px.
  */

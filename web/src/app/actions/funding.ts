@@ -8,6 +8,7 @@ import {
   deleteFundingRequestDraft,
   issueFundingRequest,
   linkVariationsToFundingRequest,
+  markFeeInvoicePaid,
   recordDeposit,
   supersedeFundingRequest,
   updateFundingRequestDraft,
@@ -234,4 +235,16 @@ export async function voidDepositAction(
 
   revalidateFunding(projectId, frId);
   redirect(`/projects/${projectId}/funding/${frId}`);
+}
+
+/** Mark an Issued Fee Invoice paid — the supervisor's own ledger, separate from Deposits. */
+export async function markFeeInvoicePaidAction(
+  projectId: string,
+  feeInvoiceId: string,
+): Promise<void> {
+  await markFeeInvoicePaid(feeInvoiceId);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/fee-invoices`);
+  revalidatePath(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+  redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
 }

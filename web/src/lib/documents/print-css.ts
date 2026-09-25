@@ -2,11 +2,18 @@
  * The print stylesheet for the three issued documents (ticket 10 §2 / ADR 0005).
  *
  * The `--mm-*` brand primitives are copied **verbatim** from the single source
- * of truth, `.claude/skills/mhandisi-makini-design-system/references/tokens.css`
+ * of truth, the mhandisi-makini-design-system skill (September 2026 revision)
  * — the same values `src/app/globals.css` copies for the app screens. This is
  * the one sanctioned duplication: a headless-Chromium document cannot `@import`
  * the Tailwind-built `globals.css`, so the primitives are inlined here. Never
  * hardcode a brand hex anywhere in a template — read these variables.
+ *
+ * Font family is deliberately NOT part of this rebrand: it stays "DejaVu Sans"
+ * because the container only has `fonts-dejavu-core` installed for headless
+ * Chromium to render text with no network access (see `browser.ts` and
+ * `web/Dockerfile`). Moving documents to Manrope/Inter needs those font
+ * packages added to the image first — flag this to the brand owner rather
+ * than swapping the family here.
  *
  * Layout is deliberately plain: normal document flow, no `position: fixed`
  * running elements. Page furniture (the business name and "page X of Y") is
@@ -16,19 +23,19 @@
 
 export const PRINT_CSS = `
 :root {
-  /* --- Brand palette (verbatim from tokens.css) ----------------------- */
-  --mm-yellow: #FFBE00;
-  --mm-charcoal: #292D30;
+  /* --- Brand palette (verbatim from the design-system skill) ---------- */
+  --mm-yellow: #FFB800;
+  --mm-charcoal: #252A2D;
   --mm-white: #FFFFFF;
-  --mm-concrete: #F5F6F7;
-  --mm-slate: #56616B;
-  --mm-yellow-pressed: #E6AB00;
-  --mm-border: #E3E5E7;
-  --mm-border-strong: #C7CBCF;
-  --mm-success: #18794E;
-  --mm-warning: #8A5800;
-  --mm-error: #B42318;
-  --mm-error-surface: #FDF0EF;
+  --mm-concrete: #F7F8F6;
+  --mm-slate: #5E6872;
+  --mm-yellow-pressed: #E6A600;
+  --mm-border: #DCE1E5;
+  --mm-border-strong: #7B858E;
+  --mm-success: #168A56;
+  --mm-warning: #A96800;
+  --mm-error: #D64545;
+  --mm-error-surface: #FEEBEB;
 
   /* --- Semantic roles ---------------------------------------------------- */
   --mm-bg: var(--mm-white);
@@ -37,6 +44,7 @@ export const PRINT_CSS = `
   --mm-text-secondary: var(--mm-slate);
 
   /* --- Typography ------------------------------------------------------ */
+  /* Kept as DejaVu Sans — see the file-level note on the Dockerfile constraint. */
   --mm-font: "DejaVu Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
   --mm-size-page-title: 1.75rem;
@@ -53,10 +61,10 @@ export const PRINT_CSS = `
   --mm-space-2: 8px;
   --mm-space-3: 12px;
   --mm-space-4: 16px;
-  --mm-space-5: 24px;
-  --mm-space-6: 32px;
-  --mm-radius: 8px;
-  --mm-radius-sm: 4px;
+  --mm-space-5: 20px;
+  --mm-space-6: 24px;
+  --mm-radius: 12px;
+  --mm-radius-sm: 8px;
 }
 
 * { box-sizing: border-box; }

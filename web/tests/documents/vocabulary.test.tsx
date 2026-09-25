@@ -114,7 +114,7 @@ describe("document templates — vocabulary + number formats", () => {
     expect(html).toContain("FR-PRJ-2026-001-004 v2");
     expect(html).toContain("Funding request");
     expect(html).toContain("TZS 12,000,000");
-    expect(html).toContain("billed separately through the Fee Invoice");
+    expect(html).toContain("billed separately through the fee invoice");
     expect(html).toContain("not drawn from your project deposits");
     expect(html).toContain("Supersedes FR-PRJ-2026-001-004");
     expect(html).toContain("06 Sep 2026");
@@ -123,9 +123,9 @@ describe("document templates — vocabulary + number formats", () => {
   it("Fee Invoice states it is billed separately from project funds", async () => {
     const html = await renderDocumentHtml(feeInvoice);
     expect(html).toContain("FI-PRJ-2026-001-002");
-    expect(html).toContain("Fee Invoice");
+    expect(html).toContain("Fee invoice");
     expect(html).toContain(
-      "This fee is billed separately from the project funds in Funding Request FR-PRJ-2026-001-004 v2",
+      "This fee is billed separately from the project funds in funding request FR-PRJ-2026-001-004 v2",
     );
     expect(html).toContain("It is not paid from your project deposits");
     expect(html).toContain("3.5% of stage value TZS 12,000,000");
@@ -137,7 +137,7 @@ describe("document templates — vocabulary + number formats", () => {
   it("Purchase Order shows the order as issued, with a CANCELLED stamp", async () => {
     const html = await renderDocumentHtml(purchaseOrder);
     expect(html).toContain("PO-PRJ-2026-001-007");
-    expect(html).toContain("Purchase Order");
+    expect(html).toContain("Purchase order");
     expect(html).toContain("Deliver to");
     expect(html).toContain("Order total");
     expect(html).toContain("CANCELLED");

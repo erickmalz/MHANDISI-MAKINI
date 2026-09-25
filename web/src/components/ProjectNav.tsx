@@ -10,6 +10,7 @@ import type { MessageKey } from "@/lib/i18n/types";
 const TABS: { label: MessageKey; segment: string }[] = [
   { label: "chrome.project.tabs.overview", segment: "" },
   { label: "chrome.project.tabs.funding", segment: "funding" },
+  { label: "chrome.project.tabs.feeInvoices", segment: "fee-invoices" },
   { label: "chrome.project.tabs.procurement", segment: "procurement" },
   { label: "chrome.project.tabs.materialStock", segment: "material-stock" },
   { label: "chrome.project.tabs.reports", segment: "reports" },

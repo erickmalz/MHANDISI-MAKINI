@@ -40,7 +40,7 @@ export function RecordLabourPaymentButton({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="inline-flex min-h-10 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
+        className="inline-flex min-h-12 cursor-pointer items-center gap-1 text-sm font-bold text-muted-foreground hover:text-foreground"
       >
         <Wallet size={16} aria-hidden="true" />
         {t("stages.detail.task.recordPayment")}

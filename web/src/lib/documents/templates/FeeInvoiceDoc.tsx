@@ -40,7 +40,7 @@ export function FeeInvoiceDoc({ doc }: { doc: FeeInvoiceDocument }) {
   return (
     <Shell
       profile={profile}
-      title="Fee Invoice"
+      title="Fee invoice"
       number={snapshot.displayNumber}
       stamp={stamp}
       meta={meta}
@@ -63,7 +63,7 @@ export function FeeInvoiceDoc({ doc }: { doc: FeeInvoiceDocument }) {
       <GrandTotal label="Fee due" amount={snapshot.total} />
 
       <Callout title="Billed separately from project funds" variant="fee">
-        This fee is billed separately from the project funds in Funding Request{" "}
+        This fee is billed separately from the project funds in funding request{" "}
         {snapshot.fundingRequestNumber}. It is not paid from your project
         deposits.
       </Callout>

@@ -31,6 +31,7 @@ const SAME_IN_BOTH = new Set<string>([
   // Pure number/name/status templates: nothing to translate.
   "closeout.project.stageLink",
   "closeout.stage.taskLink",
+  "feeInvoices.list.forRequest",
 ]);
 
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
