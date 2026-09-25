@@ -5,6 +5,7 @@
 export * from "./auth";
 export * from "./accounts";
 export * from "./platform-admins";
+export * from "./admin-audit-log";
 
 // Phase 2 domain schema (multi-tenancy ticket 08). Every table here is
 // account-scoped and gets the standard RLS treatment (ENABLE + FORCE + the

@@ -15,6 +15,7 @@ const PUBLIC_PREFIXES = [
   "/reset-password",
   "/legal",
   "/loading-studies",
+  "/admin/login",
 ];
 
 function isPublic(pathname: string): boolean {
@@ -29,6 +30,13 @@ export default function proxy(request: NextRequest): NextResponse {
 
   if (!hasSession && !isPublic(pathname)) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // A signed-in visitor revisiting the admin login has nowhere useful to go
+  // but /admin — unlike the Engineer auth pages below, "/" would 404 them
+  // out of Choose Project for an admin-only identity with no Account.
+  if (hasSession && pathname === "/admin/login") {
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   if (

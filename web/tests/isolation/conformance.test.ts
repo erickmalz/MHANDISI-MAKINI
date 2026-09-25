@@ -17,18 +17,22 @@ import { startIsolationDb, type IsolationDb } from "./harness";
  *
  * A new table (or a new FK) that skips any of this fails here — that is the
  * point. `accounts` keeps its documented exception (ENABLE, not FORCE — ADR
- * 0004). `platform_admins` (`.scratch/platform-admin/` ticket 01) is a
- * second, differently-shaped exception: no RLS at all, because a Platform
- * Admin owns no Account and there is no `account_id` to scope by.
+ * 0004). `platform_admins` (`.scratch/platform-admin/` ticket 01) and
+ * `admin_audit_log` (`.scratch/admin-portal/` ticket 05) are a second and
+ * third, differently-shaped exception: no RLS at all, because neither a
+ * Platform Admin nor an audit-log entry belongs to an Account, and there is
+ * no `account_id` to scope by.
  */
 
 const AUTH_PREFIX = "auth_";
 const TENANT_TABLE = "accounts";
 const PLATFORM_ADMIN_TABLE = "platform_admins";
+const ADMIN_AUDIT_LOG_TABLE = "admin_audit_log";
 // Tables that are not account-scoped and are exempt from the domain sweep.
 const NON_DOMAIN = new Set([
   TENANT_TABLE,
   PLATFORM_ADMIN_TABLE,
+  ADMIN_AUDIT_LOG_TABLE,
   "__drizzle_migrations",
 ]);
 
@@ -225,12 +229,47 @@ describe("schema conformance", () => {
     const { rows } = await owner.query<{ proname: string }>(
       `SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
        WHERE n.nspname = 'app'
-         AND proname IN ('list_accounts_for_admin', 'schedule_account_deletion_for_admin')`,
+         AND proname IN (
+           'list_accounts_for_admin', 'schedule_account_deletion_for_admin',
+           'cancel_account_deletion_for_admin', 'add_platform_admin',
+           'remove_platform_admin', 'list_platform_admins',
+           'list_admin_audit_log', 'log_admin_action'
+         )`,
     );
     expect(rows.map((r) => r.proname).sort()).toEqual([
+      "add_platform_admin",
+      "cancel_account_deletion_for_admin",
       "list_accounts_for_admin",
+      "list_admin_audit_log",
+      "list_platform_admins",
+      "log_admin_action",
+      "remove_platform_admin",
       "schedule_account_deletion_for_admin",
     ]);
+  });
+
+  it("admin_audit_log has no RLS and no account_id (not Account-scoped data)", async () => {
+    const { rows: relRows } = await owner.query<{
+      relrowsecurity: boolean;
+      relforcerowsecurity: boolean;
+    }>(
+      `SELECT relrowsecurity, relforcerowsecurity
+       FROM pg_class WHERE oid = 'public.admin_audit_log'::regclass`,
+    );
+    expect(relRows[0]!.relrowsecurity).toBe(false);
+    expect(relRows[0]!.relforcerowsecurity).toBe(false);
+
+    const { rows: policyRows } = await owner.query(
+      `SELECT 1 FROM pg_policy WHERE polrelid = 'public.admin_audit_log'::regclass`,
+    );
+    expect(policyRows).toHaveLength(0);
+
+    const { rows: colRows } = await owner.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'admin_audit_log'
+         AND column_name = 'account_id'`,
+    );
+    expect(colRows).toHaveLength(0);
   });
 
   it("uuid v7 helper produces a version-7 variant-2 uuid", async () => {

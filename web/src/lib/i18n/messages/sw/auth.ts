@@ -12,6 +12,7 @@ export const auth: Widen<typeof enAuth> = {
     submitting: "Inaingia…",
     forgot: "Umesahau nywila yako?",
     create: "Fungua akaunti",
+    adminLogin: "Ingia kama msimamizi",
     emailMissing: "Weka anwani yako ya barua pepe.",
     passwordMissing: "Weka nywila yako.",
     wrong: "Barua pepe au nywila si sahihi.",

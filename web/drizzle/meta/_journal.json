@@ -85,6 +85,13 @@
       "when": 1789675540628,
       "tag": "0011_platform_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790325472268,
+      "tag": "0012_admin_portal",
+      "breakpoints": true
     }
   ]
 }

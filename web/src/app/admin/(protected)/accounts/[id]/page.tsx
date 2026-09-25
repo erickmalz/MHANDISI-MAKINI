@@ -3,7 +3,10 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { scheduleAccountDeletionAction } from "@/app/admin/actions";
+import {
+  cancelAccountDeletionAction,
+  scheduleAccountDeletionAction,
+} from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { requirePlatformAdmin } from "@/lib/auth/session";
@@ -63,7 +66,7 @@ export default async function AdminAccountDetailPage({
         />
       </Card>
 
-      {!account.deletionScheduledAt && (
+      {!account.deletionScheduledAt ? (
         <Card className="flex flex-col gap-3">
           <h2 className="text-lg font-bold text-card-foreground">
             Danger zone
@@ -71,11 +74,26 @@ export default async function AdminAccountDetailPage({
           <p className="text-sm text-muted-foreground">
             Schedules this Account for permanent deletion 30 days from now —
             the same grace period the Engineer&rsquo;s own self-serve
-            deletion uses. Signing back in before then cancels it.
+            deletion uses. Signing back in before then cancels it. The
+            Engineer is notified by email either way.
           </p>
           <form action={scheduleAccountDeletionAction.bind(null, account.accountId)}>
             <Button variant="danger-quiet" type="submit">
               Schedule deletion
+            </Button>
+          </form>
+        </Card>
+      ) : (
+        <Card className="flex flex-col gap-3">
+          <h2 className="text-lg font-bold text-card-foreground">
+            Deletion scheduled
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Cancelling notifies the Engineer by email that support undid it.
+          </p>
+          <form action={cancelAccountDeletionAction.bind(null, account.accountId)}>
+            <Button variant="secondary" type="submit">
+              Cancel scheduled deletion
             </Button>
           </form>
         </Card>
