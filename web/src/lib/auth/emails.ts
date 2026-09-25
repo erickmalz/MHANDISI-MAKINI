@@ -87,6 +87,43 @@ export async function sendDeletionScheduledEmail(to: string, deleteAt: Date) {
   );
 }
 
+/**
+ * Sent when a Platform Admin (not the Engineer themselves) schedules the
+ * deletion (`.scratch/admin-portal/` ticket 04) — deliberately a separate
+ * function from `sendDeletionScheduledEmail` rather than a reused template,
+ * since that one's copy assumes the Engineer asked for this themselves.
+ */
+export async function sendAdminScheduledDeletionEmail(to: string, deleteAt: Date) {
+  await send(
+    to,
+    "Your account is scheduled for deletion — Mhandisi Makini",
+    [
+      "Mhandisi Makini support has scheduled your account for deletion.",
+      "",
+      `Unless you sign back in before ${formatDate(deleteAt)}, your account`,
+      "and every Project, financial record and document in it will be",
+      "permanently deleted.",
+      "",
+      "Changed your mind, or think this was a mistake? Sign in again to",
+      "cancel it, or reply to this email.",
+    ].join("\n"),
+  );
+}
+
+/** The admin-triggered mirror of the above, sent when a Platform Admin cancels a scheduled deletion (ticket 04). There is no self-serve equivalent — signing in already cancels it silently — so this is the only "cancel" email in the app. */
+export async function sendAdminCancelledDeletionEmail(to: string) {
+  await send(
+    to,
+    "Your account deletion has been cancelled — Mhandisi Makini",
+    [
+      "Mhandisi Makini support has cancelled the scheduled deletion of your",
+      "account. It is no longer set to be deleted.",
+      "",
+      "If you have any questions, reply to this email.",
+    ].join("\n"),
+  );
+}
+
 /** Sent by the maintenance sweep right before the row is hard-deleted (email #4b). */
 export async function sendDeletionCompletedEmail(to: string) {
   await send(

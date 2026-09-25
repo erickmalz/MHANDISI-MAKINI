@@ -82,12 +82,130 @@ export async function getAccountForAdmin(
   return rows.find((r) => r.accountId === accountId) ?? null;
 }
 
-/** Schedules the target Account for deletion, reusing the same 30-day grace period column the self-serve flow writes (`src/lib/data/account-deletion.ts`). No-op if deletion is already scheduled. */
+/** Schedules the target Account for deletion, reusing the same 30-day grace period column the self-serve flow writes (`src/lib/data/account-deletion.ts`). No-op (returns `false`) if deletion is already scheduled. */
 export async function scheduleAccountDeletionForAdmin(
   authUserId: string,
   accountId: string,
+): Promise<boolean> {
+  const result = await db.execute<{ result: boolean }>(
+    sql`SELECT app.schedule_account_deletion_for_admin(${authUserId}, ${accountId}) AS result`,
+  );
+  return result.rows[0]?.result ?? false;
+}
+
+/** The admin-side mirror of the Engineer's own "sign in to cancel" (`.scratch/admin-portal/` ticket 03). No-op (returns `false`) if deletion isn't scheduled. */
+export async function cancelAccountDeletionForAdmin(
+  authUserId: string,
+  accountId: string,
+): Promise<boolean> {
+  const result = await db.execute<{ result: boolean }>(
+    sql`SELECT app.cancel_account_deletion_for_admin(${authUserId}, ${accountId}) AS result`,
+  );
+  return result.rows[0]?.result ?? false;
+}
+
+export interface PlatformAdminRow {
+  authUserId: string;
+  email: string;
+  createdAt: Date;
+  addedByEmail: string | null;
+}
+
+interface ListPlatformAdminsRow {
+  [key: string]: unknown;
+  auth_user_id: string;
+  email: string;
+  created_at: string;
+  added_by_email: string | null;
+}
+
+/** Every current Platform Admin, for the Admins view (`.scratch/admin-portal/` ticket 02). Caller must already be a verified Platform Admin. */
+export async function listPlatformAdmins(
+  authUserId: string,
+): Promise<PlatformAdminRow[]> {
+  const rows = await db.execute<ListPlatformAdminsRow>(
+    sql`SELECT * FROM app.list_platform_admins(${authUserId})`,
+  );
+  return rows.rows.map((r) => ({
+    authUserId: r.auth_user_id,
+    email: r.email,
+    createdAt: new Date(r.created_at),
+    addedByEmail: r.added_by_email,
+  }));
+}
+
+export type AddPlatformAdminError = "not-found" | "already-admin";
+
+/** Grants Platform Admin access to an existing user by email. Throws `AddPlatformAdminError` as the `message` on failure (translated by the caller). */
+export async function addPlatformAdmin(
+  authUserId: string,
+  targetEmail: string,
+): Promise<string> {
+  try {
+    const result = await db.execute<{ result: string }>(
+      sql`SELECT app.add_platform_admin(${authUserId}, ${targetEmail}) AS result`,
+    );
+    return result.rows[0]!.result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("user not found")) {
+      throw new Error("not-found" satisfies AddPlatformAdminError);
+    }
+    if (message.includes("already an admin")) {
+      throw new Error("already-admin" satisfies AddPlatformAdminError);
+    }
+    throw error;
+  }
+}
+
+/** Revokes Platform Admin access. Throws if the caller targets their own row (self-removal guard, ticket 02). */
+export async function removePlatformAdmin(
+  authUserId: string,
+  targetAuthUserId: string,
 ): Promise<void> {
   await db.execute(
-    sql`SELECT app.schedule_account_deletion_for_admin(${authUserId}, ${accountId})`,
+    sql`SELECT app.remove_platform_admin(${authUserId}, ${targetAuthUserId})`,
   );
+}
+
+export interface AdminAuditLogRow {
+  id: string;
+  actorEmail: string;
+  action: string;
+  targetAccountId: string | null;
+  targetAccountName: string | null;
+  targetAuthUserId: string | null;
+  targetUserEmail: string | null;
+  createdAt: Date;
+}
+
+interface ListAdminAuditLogRow {
+  [key: string]: unknown;
+  id: string;
+  actor_email: string;
+  action: string;
+  target_account_id: string | null;
+  target_account_name: string | null;
+  target_auth_user_id: string | null;
+  target_user_email: string | null;
+  created_at: string;
+}
+
+/** Every admin action ever taken, newest first, for the Activity view (`.scratch/admin-portal/` ticket 05). Caller must already be a verified Platform Admin. */
+export async function listAdminAuditLog(
+  authUserId: string,
+): Promise<AdminAuditLogRow[]> {
+  const rows = await db.execute<ListAdminAuditLogRow>(
+    sql`SELECT * FROM app.list_admin_audit_log(${authUserId})`,
+  );
+  return rows.rows.map((r) => ({
+    id: r.id,
+    actorEmail: r.actor_email,
+    action: r.action,
+    targetAccountId: r.target_account_id,
+    targetAccountName: r.target_account_name,
+    targetAuthUserId: r.target_auth_user_id,
+    targetUserEmail: r.target_user_email,
+    createdAt: new Date(r.created_at),
+  }));
 }
