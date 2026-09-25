@@ -9,6 +9,7 @@ export const auth = {
     submitting: "Signing in…",
     forgot: "Forgotten your password?",
     create: "Create an account",
+    adminLogin: "Admin sign in",
     emailMissing: "Enter your email address.",
     passwordMissing: "Enter your password.",
     wrong: "Email or password is incorrect.",

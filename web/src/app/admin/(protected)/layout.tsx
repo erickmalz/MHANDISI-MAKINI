@@ -21,9 +21,20 @@ export default async function AdminLayout({
   return (
     <>
       <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
-        <Link href="/admin" className="font-bold text-foreground">
-          Platform Admin
-        </Link>
+        <nav className="flex items-center gap-6">
+          <Link href="/admin" className="font-bold text-foreground">
+            Platform Admin
+          </Link>
+          <Link href="/admin" className="text-sm font-bold text-muted-foreground hover:text-foreground">
+            Accounts
+          </Link>
+          <Link href="/admin/admins" className="text-sm font-bold text-muted-foreground hover:text-foreground">
+            Admins
+          </Link>
+          <Link href="/admin/activity" className="text-sm font-bold text-muted-foreground hover:text-foreground">
+            Activity
+          </Link>
+        </nav>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>{user.email}</span>
           <SignOutButton variant="inline" />
