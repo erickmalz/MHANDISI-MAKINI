@@ -39,6 +39,16 @@ export const reports = {
       availableFloat: "Available float",
       forecastRequirement: "Forecast requirement",
     },
+    printSheet: {
+      action: "Print",
+      notes: "Notes",
+      client: "Client",
+      site: "Site",
+      printedOn: "Printed {date} · live figures, not an issued document",
+      reviewedBy: "Reviewed by",
+      date: "Date",
+      signature: "Signature",
+    },
   },
   materialCost: {
     pageTitle: "Material cost report",

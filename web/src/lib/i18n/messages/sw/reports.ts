@@ -42,6 +42,16 @@ export const reports: Widen<typeof enReports> = {
       availableFloat: "Fedha zinazopatikana",
       forecastRequirement: "Mahitaji yanayokadiriwa",
     },
+    printSheet: {
+      action: "Chapisha",
+      notes: "Maelezo",
+      client: "Mteja",
+      site: "Eneo",
+      printedOn: "Imechapishwa {date} · takwimu za sasa, si hati iliyotolewa rasmi",
+      reviewedBy: "Imepitiwa na",
+      date: "Tarehe",
+      signature: "Sahihi",
+    },
   },
   materialCost: {
     pageTitle: "Ripoti ya gharama ya vifaa",

@@ -59,7 +59,7 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
   const inSettings = isWithin(pathname, "/settings");
 
   return (
-    <header className="sticky top-0 z-20 bg-surface-inverse text-on-inverse">
+    <header className="sticky top-0 z-20 bg-surface-inverse text-on-inverse print:hidden">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-30 focus:inline-flex focus:min-h-12 focus:items-center focus:rounded-lg focus:bg-accent focus:px-4 focus:font-bold focus:text-on-accent"
