@@ -90,6 +90,19 @@ independent ones.
   through CI on the PR, same as every prior migration in this repo — land
   and verify there before treating this as done.
 
-Not yet committed or pushed — this session built and self-checked
-(typecheck/lint/unit tests) but has not opened a branch/PR. Next step is a
-branch + PR so CI can run the migration, the isolation suite, and the build.
+Committed and pushed on branch `admin-portal`; PR #9
+(`https://github.com/erickmalz/MHANDISI-MAKINI/pull/9`).
+
+**First CI run (`36116238823`) failed** on "Apply migrations": Postgres
+refused `CREATE OR REPLACE FUNCTION app.schedule_account_deletion_for_admin`
+because its return type changed (`void` in migration `0011` → `boolean`
+here) — Postgres doesn't allow `CREATE OR REPLACE` to change a function's
+return type, only `CREATE OR REPLACE FUNCTION ... RETURNS boolean` on a
+function that already returns `boolean`. This wasn't catchable by local
+`tsc`/`eslint`/`vitest` — it's a Postgres-only constraint, exactly the class
+of thing this repo's migrations rely on CI to catch (this local WSL session
+has no Docker, so the isolation-suite/`db:migrate` step could not be run
+before pushing, same as every prior migration in this repo). Fixed by
+adding `DROP FUNCTION app.schedule_account_deletion_for_admin(text, uuid);`
+immediately before the `CREATE OR REPLACE`, per Postgres's own error hint.
+Pushed as a fixup commit; awaiting the next CI run.

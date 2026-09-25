@@ -51,8 +51,12 @@ GRANT EXECUTE ON FUNCTION app.log_admin_action(text, text, uuid, text) TO app_ru
 -- parameters) to also write the audit log and report back whether it
 -- actually changed anything, only when the update did (an already-scheduled
 -- Account is a no-op — not worth an audit entry or a confirmation email,
--- see `sendAdminScheduledDeletionEmail` in `src/lib/auth/emails.ts`).
+-- see `sendAdminScheduledDeletionEmail` in `src/lib/auth/emails.ts`). The
+-- return type is changing (void -> boolean), which Postgres won't allow via
+-- CREATE OR REPLACE — migration 0011's version is dropped first.
 -- ---------------------------------------------------------------------------
+DROP FUNCTION app.schedule_account_deletion_for_admin(text, uuid);
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION app.schedule_account_deletion_for_admin(p_admin_user_id text, p_account_id uuid)
 RETURNS boolean
 LANGUAGE plpgsql
