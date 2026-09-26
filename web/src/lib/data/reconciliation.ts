@@ -14,7 +14,7 @@ import {
 import type { ProjectAlert, Stage, StageFinancials } from "@/lib/types";
 
 import { computeStageAlerts, deriveProjectAlerts } from "./alerts";
-import { computeStageFinancials } from "./projection";
+import { readStageFinancials } from "./stage-financials";
 import { projects, stages } from "./schema";
 import { withAccount, type AccountTx } from "./with-account";
 
@@ -22,7 +22,7 @@ import { withAccount, type AccountTx } from "./with-account";
  * The Financial Reconciliation Engine ("Run Financial Check", guidelines §34;
  * ticket 04, `.scratch/phase3/issues/04-financial-reconciliation-engine.md`).
  * Computed **live, on demand — nothing stored** (same posture as
- * `computeStageFinancials`): a fresh transaction runs every time this is
+ * `readStageFinancials`): a fresh transaction runs every time this is
  * called, so a stale score can never be shown.
  *
  * Ticket 04 walked all 17 guideline checks: 8 are already answered by the
@@ -69,7 +69,7 @@ export async function getStageReconciliationReport(
       .limit(1);
     if (!stageRow) return null;
 
-    const financials = await computeStageFinancials(tx, stageId);
+    const financials = await readStageFinancials(tx, stageId);
     const stageView: Stage = {
       id: stageRow.id,
       name: stageRow.name,

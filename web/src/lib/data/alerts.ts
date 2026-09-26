@@ -23,7 +23,7 @@ import type { AccountTx } from "./with-account";
  *   alerts), which needs per-record detail (a specific overdue PO, a specific
  *   task over its labour agreement) that the `StageFinancials` aggregate
  *   doesn't carry. Runs its own targeted queries inside the caller's
- *   `withAccount` transaction, same pattern as `./projection.ts`.
+ *   `withAccount` transaction, same pattern as `./stage-financials.ts`.
  *
  * "Missing receipt" / "missing delivery note" (§33) both key off whether a
  * Purchase Order has an attachment (Operational Control decision 1) — with

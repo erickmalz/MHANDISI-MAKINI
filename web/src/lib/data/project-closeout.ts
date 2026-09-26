@@ -10,12 +10,11 @@ import {
   type ProjectCloseoutGates,
   type ProjectCloseoutOpenStageRef,
 } from "@/lib/project-closeout";
-import type { StageFinancials } from "@/lib/types";
 
 import { getCurrentAccountId } from "./account-context";
 import { claimDocumentNumber, pad3 } from "./document-numbers";
-import { computeStageFinancials } from "./projection";
 import { projectCloseouts, projects, stages } from "./schema";
+import { readProjectFinancials } from "./stage-financials";
 import type {
   DocumentSnapshotLine,
   DocumentSnapshotSection,
@@ -81,59 +80,6 @@ export async function getProjectCloseoutGates(
   projectId: string,
 ): Promise<ProjectCloseoutGates | null> {
   return withAccount((tx) => loadCloseoutGates(tx, projectId));
-}
-
-/**
- * Elementwise sum of every stage's already-computed `StageFinancials`
- * (ticket 04's Answer: "assembled by summing the already-computed per-stage
- * figures ... rather than a new project-wide financial calculation engine").
- * The result is itself a valid `StageFinancials`, so `@/lib/finance`'s
- * `availableFloat`/`materialVariance`/`labourVariance` apply to it directly
- * — "one authoritative calculation path" (guidelines §51), reused rather
- * than re-derived at project scope.
- */
-function sumFinancials(list: StageFinancials[]): StageFinancials {
-  const zero: StageFinancials = {
-    clientDeposits: 0,
-    openPurchaseCommitments: 0,
-    paidPurchases: 0,
-    openLabourCommitments: 0,
-    labourPayments: 0,
-    labourAgreementTotal: 0,
-    materialEstimated: 0,
-    pettyCashExpenses: 0,
-    otherApprovedCommitments: 0,
-    remainingMaterial: 0,
-    remainingLabour: 0,
-    remainingFee: 0,
-    remainingOtherApproved: 0,
-    feeRecorded: 0,
-    feeInvoiced: 0,
-    feeReceived: 0,
-    fundingRequestPending: false,
-  };
-  return list.reduce(
-    (acc, f) => ({
-      clientDeposits: acc.clientDeposits + f.clientDeposits,
-      openPurchaseCommitments: acc.openPurchaseCommitments + f.openPurchaseCommitments,
-      paidPurchases: acc.paidPurchases + f.paidPurchases,
-      openLabourCommitments: acc.openLabourCommitments + f.openLabourCommitments,
-      labourPayments: acc.labourPayments + f.labourPayments,
-      labourAgreementTotal: acc.labourAgreementTotal + f.labourAgreementTotal,
-      materialEstimated: acc.materialEstimated + f.materialEstimated,
-      pettyCashExpenses: acc.pettyCashExpenses + f.pettyCashExpenses,
-      otherApprovedCommitments: acc.otherApprovedCommitments + f.otherApprovedCommitments,
-      remainingMaterial: acc.remainingMaterial + f.remainingMaterial,
-      remainingLabour: acc.remainingLabour + f.remainingLabour,
-      remainingFee: acc.remainingFee + f.remainingFee,
-      remainingOtherApproved: acc.remainingOtherApproved + f.remainingOtherApproved,
-      feeRecorded: acc.feeRecorded + f.feeRecorded,
-      feeInvoiced: acc.feeInvoiced + f.feeInvoiced,
-      feeReceived: acc.feeReceived + f.feeReceived,
-      fundingRequestPending: acc.fundingRequestPending || f.fundingRequestPending,
-    }),
-    zero,
-  );
 }
 
 /**
@@ -328,11 +274,7 @@ async function assembleCloseoutSnapshot(
   displayNumber: string,
   issuedOn: string,
 ): Promise<ProjectCloseoutReportSnapshot> {
-  const stageFinancials: StageFinancials[] = [];
-  for (const s of stageRows) {
-    stageFinancials.push(await computeStageFinancials(tx, s.id));
-  }
-  const totals = sumFinancials(stageFinancials);
+  const { totals } = await readProjectFinancials(tx, project.id);
   const finalProjectVariance = materialVariance(totals) + labourVariance(totals);
 
   // Sequential, not Promise.all — every call shares the one Postgres client
@@ -401,11 +343,11 @@ export type CompleteProjectResult =
  * `closeStage` to freeze its own `stage_closeout_report` snapshot per Stage.
  * That snapshot is not available in this worktree. Per the build brief, this
  * function falls back to computing the equivalent figures directly from
- * `computeStageFinancials` / live stage data (exactly what
+ * `readProjectFinancials` / live stage data (exactly what
  * `assembleCloseoutSnapshot` does above) rather than reading a Stage
  * Closeout Report snapshot that doesn't exist here yet. Since both this
  * report and Slice 4.2's are ultimately sourced from the same
- * `computeStageFinancials` figures, the numbers should already agree; the
+ * `readProjectFinancials` figures, the numbers should already agree; the
  * integrator should double-check for drift once Slice 4.2 lands and decide
  * whether Project Closeout should switch to reading Slice 4.2's frozen
  * per-stage figures instead of re-deriving them live. See the Slice 4.3

@@ -16,7 +16,7 @@ import type { TakeOffLineInput, TaskInput } from "@/lib/validation/tasks";
 
 import { getCurrentAccountId } from "./account-context";
 import { drawFromStock, type StockLine } from "./material-stock";
-import { computeStageFinancials } from "./projection";
+import { readStageFinancials } from "./stage-financials";
 import {
   labourPayments,
   materialLines,
@@ -233,7 +233,7 @@ export async function getStageDetail(stageId: string): Promise<
         ...t,
         outstandingLabourAmount: outstandingLabour(t.labourAmount, paymentsByTask.get(t.id) ?? []),
       })),
-      financials: await computeStageFinancials(tx, stageId),
+      financials: await readStageFinancials(tx, stageId),
     };
   });
 }

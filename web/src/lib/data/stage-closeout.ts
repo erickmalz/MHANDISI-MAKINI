@@ -21,8 +21,7 @@ import type { SurplusLineInput } from "@/lib/validation/stage-closeout";
 import { getCurrentAccountId } from "./account-context";
 import { claimDocumentNumber, pad3 } from "./document-numbers";
 import { carryForwardSurplus, stockBalancesTx, writeOffStock, type StockLine } from "./material-stock";
-import { computeStageFinancials } from "./projection";
-import { accumulatedMaterialVarianceTx } from "./projects";
+import { readProjectFinancials, readStageFinancials } from "./stage-financials";
 import { getStageReconciliationReport } from "./reconciliation";
 import { projects, purchaseOrders, stageCloseouts, stages, tasks, variations } from "./schema";
 import type { DocumentSnapshotSection, StageCloseoutReportSnapshot } from "./schema/snapshot";
@@ -83,7 +82,7 @@ async function loadCloseoutGates(
     .where(and(eq(purchaseOrders.stageId, stageId), eq(purchaseOrders.status, "ordered")))
     .orderBy(asc(purchaseOrders.createdAt))) as StageCloseoutPORef[];
 
-  const financials = await computeStageFinancials(tx, stageId);
+  const financials = await readStageFinancials(tx, stageId);
 
   return {
     openTasks,
@@ -123,7 +122,7 @@ export type CloseStageResult =
  * `claimDocumentNumber` counter every other issued document uses) and write
  * one `stage_closeouts` row carrying a `document_snapshot`-shaped blob built
  * from the exact figures the checklist screen already showed the Engineer
- * read-only — `computeStageFinancials`, `accumulatedMaterialVarianceTx`,
+ * read-only — `readStageFinancials`, `readProjectFinancials`,
  * `stockBalancesTx` — no new calculation engine. Close Stage *is* issuing the
  * report; there is no separate "Run Report" action.
  */
@@ -184,8 +183,10 @@ export async function closeStage(stageId: string): Promise<CloseStageResult> {
       .where(eq(stages.id, stageId));
 
     // --- Freeze the Stage Closeout Report snapshot (Phase 4 ticket 03) ---
-    const financials = await computeStageFinancials(tx, stageId);
-    const accumulatedVariance = await accumulatedMaterialVarianceTx(tx, stage.projectId);
+    const financials = await readStageFinancials(tx, stageId);
+    const accumulatedVariance = materialVariance(
+      (await readProjectFinancials(tx, stage.projectId)).totals,
+    );
     const stockSurplus = await stockBalancesTx(tx, stage.projectId);
 
     const material = materialVariance(financials);

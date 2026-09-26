@@ -37,6 +37,12 @@ export interface StageFinancials {
    * against `paidPurchases`.
    */
   materialEstimated: number;
+  /**
+   * The take-off as first estimated: Σ original qty × original unit cost over
+   * the same lines as `materialEstimated`, never the revised pair (the
+   * Material Cost Report's "Estimated (original)" column).
+   */
+  materialEstimatedOriginal: number;
   pettyCashExpenses: number;
   otherApprovedCommitments: number;
 

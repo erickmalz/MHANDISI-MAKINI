@@ -84,7 +84,7 @@ async function balanceFor(
  * `tx`-scoped so a caller already inside its own transaction (Phase 4 Slice
  * 4.2's `closeStage`, freezing this same balance into the Stage Closeout
  * Report snapshot) can call it directly, same posture as
- * `computeStageFinancials` — avoids nesting a second `withAccount`/
+ * `readStageFinancials` — avoids nesting a second `withAccount`/
  * `db.transaction()` inside the caller's own.
  */
 export async function stockBalancesTx(

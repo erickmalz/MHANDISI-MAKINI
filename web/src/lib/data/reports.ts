@@ -9,6 +9,7 @@ import {
   financialHealth,
   forecastFundingRequirement,
   materialVariance,
+  paymentsMade,
   totalCommitted,
 } from "@/lib/finance";
 import {
@@ -107,7 +108,7 @@ export interface ProjectFinancialSummary {
   /**
    * Σ Available Float across every stage — informational only: a stage's
    * float is not fungible with another stage's (deposits are Funding-Request-
-   * and therefore stage-scoped, per `computeStageFinancials`). The
+   * and therefore stage-scoped, per `readStageFinancials`). The
    * stage-by-stage table below is the figure to act on.
    */
   availableFloat: number;
@@ -155,8 +156,7 @@ export async function getProjectFinancialSummary(
       health: financialHealth(f),
       clientDeposits: f.clientDeposits,
       commitments: totalCommitted(f),
-      payments:
-        f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments,
+      payments: paymentsMade(f),
       availableFloat: availableFloat(f),
       forecastFundingRequirement: forecastFundingRequirement(f),
     };
@@ -213,13 +213,10 @@ export interface MaterialCostReport {
  * Take-Off line and a free-text Purchase Order line, so "Actual" and
  * "Variance" cannot be shown any finer than this.
  *
- * `estimatedRevised` / `actual` / `variance` are pure reuse of
- * `StageFinancials.materialEstimated` / `paidPurchases` and
- * `materialVariance` (via `getProjectOverview`). `estimatedOriginal` is the
- * one new figure this report needs — no existing projection separates the
- * *original* take-off total from the current (revised-if-set) one, so it is
- * a small dedicated query, grouped the same way `computeStageFinancials`'s
- * own material query already is.
+ * Pure reuse, no query of its own: `estimatedOriginal` / `estimatedRevised` /
+ * `actual` / `variance` are `StageFinancials.materialEstimatedOriginal` /
+ * `materialEstimated` / `paidPurchases` and `materialVariance` (via
+ * `getProjectOverview`), so every figure comes from one read.
  */
 export async function getMaterialCostReport(
   projectId: string,
@@ -227,30 +224,12 @@ export async function getMaterialCostReport(
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
-  const originalByStage = await withAccount(async (tx) => {
-    const { rows } = await tx.execute<{
-      stage_id: string;
-      original_estimated: string;
-    }>(sql`
-      SELECT s.id AS stage_id,
-             COALESCE(SUM(COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)), 0) AS original_estimated
-      FROM stages s
-      JOIN tasks t ON t.stage_id = s.id
-      JOIN material_lines ml ON ml.task_id = t.id
-      WHERE s.project_id = ${projectId}
-      GROUP BY s.id
-    `);
-    const map = new Map<string, number>();
-    for (const r of rows) map.set(r.stage_id, Number(r.original_estimated));
-    return map;
-  });
-
   const rows: MaterialCostReportRow[] = project.stages.map((s) => {
     const f = s.financials;
     return {
       stageId: s.id,
       stageName: s.name,
-      estimatedOriginal: originalByStage.get(s.id) ?? 0,
+      estimatedOriginal: f.materialEstimatedOriginal,
       estimatedRevised: f.materialEstimated,
       actual: f.paidPurchases,
       variance: materialVariance(f),
@@ -391,7 +370,7 @@ export interface LabourReport {
  * new query in this file, since no existing DAL function lists every task in
  * a *project* (`listTasksForStage` is per-stage, `getSubcontractorStatement`
  * is per-subcontractor account-wide). The agreed/paid/outstanding math itself
- * is identical to `computeStageFinancials`'s own labour query and
+ * is identical to `readStageFinancials`'s own labour query and
  * `getSubcontractorStatement`'s task rows — no new formula, just a wider scope.
  */
 export async function getLabourReport(

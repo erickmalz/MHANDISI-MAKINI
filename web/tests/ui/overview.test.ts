@@ -18,6 +18,7 @@ const ZERO: StageFinancials = {
   labourPayments: 0,
   labourAgreementTotal: 0,
   materialEstimated: 0,
+  materialEstimatedOriginal: 0,
   pettyCashExpenses: 0,
   otherApprovedCommitments: 0,
   remainingMaterial: 0,

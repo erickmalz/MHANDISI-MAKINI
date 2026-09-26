@@ -33,6 +33,15 @@ export function totalCommitted(f: StageFinancials): number {
   );
 }
 
+/**
+ * Money actually paid out of the project's funds: Paid Purchases + Labour
+ * Payments + Petty Cash Expenses + Other Approved Commitments (the Financial
+ * Summary's "Payments" column). The unpaid remainder is Total Committed − this.
+ */
+export function paymentsMade(f: StageFinancials): number {
+  return f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments;
+}
+
 /** Remaining Material + Remaining Labour + Remaining Fee + Remaining Other (§9's positive terms). */
 export function remainingStageRequirement(f: StageFinancials): number {
   return (
@@ -151,8 +160,7 @@ export function aggregateStageFinancials(
   for (const f of stages) {
     clientDeposits += f.clientDeposits;
     commitments += totalCommitted(f);
-    payments +=
-      f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments;
+    payments += paymentsMade(f);
     remaining += remainingStageRequirement(f);
     floatSum += availableFloat(f);
     forecastShortfall += Math.max(0, forecastFundingRequirement(f));
@@ -166,6 +174,47 @@ export function aggregateStageFinancials(
     availableFloat: floatSum,
     forecastShortfall,
   };
+}
+
+/**
+ * Field-by-field sum of several stages' `StageFinancials` — the one roll-up
+ * path (`@/lib/data/stage-financials`' `readProjectFinancials` returns it as
+ * `totals`). Every linear figure (Available Float, Total Committed, the
+ * variances) is correct when applied to the result; the Forecast Funding
+ * Requirement is not — use `aggregateStageFinancials`' `forecastShortfall`,
+ * which never lets a surplus stage offset a shortfall stage.
+ */
+export function sumStageFinancials(list: StageFinancials[]): StageFinancials {
+  const total: StageFinancials = {
+    clientDeposits: 0,
+    openPurchaseCommitments: 0,
+    paidPurchases: 0,
+    openLabourCommitments: 0,
+    labourPayments: 0,
+    labourAgreementTotal: 0,
+    materialEstimated: 0,
+    materialEstimatedOriginal: 0,
+    pettyCashExpenses: 0,
+    otherApprovedCommitments: 0,
+    remainingMaterial: 0,
+    remainingLabour: 0,
+    remainingFee: 0,
+    remainingOtherApproved: 0,
+    feeRecorded: 0,
+    feeInvoiced: 0,
+    feeReceived: 0,
+    fundingRequestPending: false,
+  };
+  for (const f of list) {
+    for (const key of Object.keys(total) as (keyof StageFinancials)[]) {
+      if (key === "fundingRequestPending") {
+        total.fundingRequestPending ||= f.fundingRequestPending;
+      } else {
+        total[key] += f[key];
+      }
+    }
+  }
+  return total;
 }
 
 export function formatTZS(amount: number): string {

@@ -47,6 +47,10 @@ A per-stage traffic-light status derived from Available Float and Forecast Fundi
 **Remaining Stage Requirement**:
 Remaining Material + Remaining Labour + Remaining Fee + Approved Other Commitments for a stage — the positive terms of the Forecast Funding Requirement formula, before subtracting Available Float. Used as the basis for the Financial Health Indicator's Green/Amber/Red buffer.
 
+**Stage Financials**:
+The raw per-stage money figures (deposits, open and paid purchase and labour amounts, petty cash, other commitments, the take-off estimate, fee recorded, invoiced and received, and the remaining-requirement terms), summed live from the atomic records with no stored totals. Every money position above is derived from these by formula; a project figure is the sum of its stages' Stage Financials, except the Forecast Funding Requirement, where a surplus stage never offsets a shortfall stage.
+_Avoid_: Stage totals, stage balance (nothing is stored; these are always re-summed)
+
 **Reconciliation Score**:
 An informational percentage produced by the Financial Reconciliation Engine's checklist run; explicitly not an accounting certification.
 

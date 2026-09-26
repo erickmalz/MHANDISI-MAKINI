@@ -176,7 +176,7 @@ export interface StageCloseoutReportSnapshot extends DocumentSnapshotBase {
   materialEstimated: number;
   materialActual: number;
   materialVariance: number;
-  /** Σ Material Variance across every stage of the *project* (`@/lib/data/projects`'s `accumulatedMaterialVarianceTx`) — the Budget Variance card's own second figure, frozen alongside the stage-level one. */
+  /** Σ Material Variance across every stage of the *project* (`materialVariance` over `@/lib/data/stage-financials`' project `totals`) — the Budget Variance card's own second figure, frozen alongside the stage-level one. */
   accumulatedMaterialVariance: number;
 
   labourAgreement: number;

@@ -1,18 +1,28 @@
 import "server-only";
 
-import { sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 
+import { sumStageFinancials } from "@/lib/finance";
 import type { StageFinancials } from "@/lib/types";
 
+import { stages } from "./schema";
 import type { AccountTx } from "./with-account";
 
 /**
- * The projection (multi-tenancy ticket 08 §1): build a stage's `StageFinancials`
- * by summing the atomic records — Deposits, Funding Request lines, Fee Invoices,
- * Purchase Orders (+ lines + payments), Labour Payments, Petty Cash Expenses,
- * Other Commitments — inside the caller's RLS transaction. There are **no
- * denormalised stage totals**; `finance.ts` then derives Available Float, the
- * Financial Health Indicator, etc. from this, unchanged.
+ * Stage Financials (`CONTEXT.md`) — the one module that reads the raw money
+ * figures every money position derives from. Every SQL read that produces a
+ * `StageFinancials` figure, or a project total of one, lives here; callers
+ * never re-sum stages or copy these queries (`.scratch/stage-financials/map.md`).
+ * `@/lib/finance` then derives Available Float, the Financial Health
+ * Indicator, the variances, etc. from what this returns.
+ *
+ * Both reads take the caller's `tx`, so a caller already inside its own
+ * transaction (closeout, reconciliation) reads the same snapshot it writes.
+ *
+ * Built by summing the atomic records — Deposits, Funding Request lines, Fee
+ * Invoices, Purchase Orders (+ lines + payments), Labour Payments, Petty Cash
+ * Expenses, Other Commitments — inside the caller's RLS transaction. There are
+ * **no denormalised stage totals** (multi-tenancy ticket 08 §1).
  *
  * Money columns come back from `execute` as strings (bigint / numeric) — every
  * value is `Number()`-ed here. TZS amounts are whole numbers well inside the
@@ -21,13 +31,42 @@ import type { AccountTx } from "./with-account";
  * `remainingOtherApproved` is 0 — see `.scratch/phase2/slice-2.2-runbook.md`.
  *
  * `materialEstimated` / `labourAgreementTotal` (Phase 3 ticket 03 — Budget
- * Variance Analysis) are additive: the stage-level Approved Estimate each
- * side of the variance reconciles against. `@/lib/finance`'s
- * `materialVariance`/`labourVariance`/`budgetVarianceTotal` derive the actual
- * variance figures from these plus the existing `paidPurchases`/
- * `labourPayments` — "one authoritative calculation path" (guidelines §51).
+ * Variance Analysis) are the stage-level Approved Estimate each side of the
+ * variance reconciles against; `@/lib/finance`'s `materialVariance`/
+ * `labourVariance` derive the variance figures from these plus
+ * `paidPurchases`/`labourPayments` — "one authoritative calculation path"
+ * (guidelines §51).
  */
-export async function computeStageFinancials(
+
+export interface ProjectFinancials {
+  /** Every stage of the project, in `seq` order. */
+  byStage: Map<string, StageFinancials>;
+  /**
+   * The project roll-up — the one place stages are summed. Every field is a
+   * plain sum; a project-level Forecast Funding Requirement must still come
+   * from `aggregateStageFinancials` over `byStage`, never from `totals`.
+   */
+  totals: StageFinancials;
+}
+
+export async function readProjectFinancials(
+  tx: AccountTx,
+  projectId: string,
+): Promise<ProjectFinancials> {
+  const stageRows = await tx
+    .select({ id: stages.id })
+    .from(stages)
+    .where(eq(stages.projectId, projectId))
+    .orderBy(asc(stages.seq));
+
+  const byStage = new Map<string, StageFinancials>();
+  for (const s of stageRows) {
+    byStage.set(s.id, await readStageFinancials(tx, s.id));
+  }
+  return { byStage, totals: sumStageFinancials([...byStage.values()]) };
+}
+
+export async function readStageFinancials(
   tx: AccountTx,
   stageId: string,
 ): Promise<StageFinancials> {
@@ -150,7 +189,7 @@ export async function computeStageFinancials(
   //     per-line matching against actual purchases that would otherwise read
   //     it as a spurious 100% saving. -----------------------------------
   const materialRow = (
-    await tx.execute<{ material_estimated: string }>(sql`
+    await tx.execute<{ material_estimated: string; material_estimated_original: string }>(sql`
       SELECT COALESCE(SUM(
         CASE
           WHEN ml.qty_revised IS NOT NULL OR ml.est_unit_cost_revised IS NOT NULL
@@ -158,13 +197,17 @@ export async function computeStageFinancials(
                  * COALESCE(ml.est_unit_cost_revised, ml.est_unit_cost_original, 0)
           ELSE COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)
         END
-      ), 0) AS material_estimated
+      ), 0) AS material_estimated,
+      COALESCE(SUM(
+        COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)
+      ), 0) AS material_estimated_original
       FROM material_lines ml
       JOIN tasks t ON t.id = ml.task_id
       WHERE t.stage_id = ${stageId}
     `)
   ).rows[0];
   const materialEstimated = Number(materialRow?.material_estimated ?? 0);
+  const materialEstimatedOriginal = Number(materialRow?.material_estimated_original ?? 0);
 
   // --- Petty cash + other approved commitments for the stage. ---------------
   const otherRow = (
@@ -193,6 +236,7 @@ export async function computeStageFinancials(
     labourPayments,
     labourAgreementTotal,
     materialEstimated,
+    materialEstimatedOriginal,
     pettyCashExpenses,
     otherApprovedCommitments,
 

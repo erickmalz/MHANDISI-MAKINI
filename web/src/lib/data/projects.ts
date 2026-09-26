@@ -1,13 +1,14 @@
 import "server-only";
 
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
+import { materialVariance } from "@/lib/finance";
 import { getCurrentStage, stageStatusLabel } from "@/lib/project-view";
 import type { Project, Stage } from "@/lib/types";
 
 import { computeStageAlerts, deriveProjectAlerts } from "./alerts";
-import { computeStageFinancials } from "./projection";
 import { projects, stages } from "./schema";
+import { readProjectFinancials } from "./stage-financials";
 import { withAccount, type AccountTx } from "./with-account";
 
 /**
@@ -35,19 +36,16 @@ async function buildStages(tx: AccountTx, projectId: string): Promise<Stage[]> {
     .from(stages)
     .where(eq(stages.projectId, projectId))
     .orderBy(asc(stages.seq));
+  const { byStage } = await readProjectFinancials(tx, projectId);
 
-  const built: Stage[] = [];
-  for (const s of rows) {
-    built.push({
-      id: s.id,
-      name: s.name,
-      seq: s.seq,
-      status: stageStatusLabel(s.status),
-      progressPercent: s.progressPercent,
-      financials: await computeStageFinancials(tx, s.id),
-    });
-  }
-  return built;
+  return rows.map((s) => ({
+    id: s.id,
+    name: s.name,
+    seq: s.seq,
+    status: stageStatusLabel(s.status),
+    progressPercent: s.progressPercent,
+    financials: byStage.get(s.id)!,
+  }));
 }
 
 async function toProject(
@@ -126,53 +124,13 @@ export async function getProjectOverview(
  * across every stage of the project, live-computed, never stored: what
  * "credited to Petty Cash" means given Petty Cash was never a separately
  * tracked balance (`CONTEXT.md`) — an underspend against the estimate simply
- * shows up here as reporting headroom, not a posted ledger event. One SQL
- * aggregate rather than looping `computeStageFinancials` per stage.
- *
- * `tx`-scoped so a caller already inside its own transaction (Phase 4 Slice
- * 4.2's `closeStage`, freezing this same figure into the Stage Closeout
- * Report snapshot) can call it directly, same posture as
- * `computeStageFinancials` — avoids nesting a second `withAccount`/
- * `db.transaction()` inside the caller's own.
+ * shows up here as reporting headroom, not a posted ledger event. Material
+ * Variance is linear, so it is the formula applied to the project roll-up.
  */
-export async function accumulatedMaterialVarianceTx(
-  tx: AccountTx,
-  projectId: string,
-): Promise<number> {
-  const row = (
-    await tx.execute<{ material_estimated: string; paid_purchases: string }>(sql`
-        SELECT
-          COALESCE((
-            SELECT SUM(
-              CASE
-                WHEN ml.qty_revised IS NOT NULL OR ml.est_unit_cost_revised IS NOT NULL
-                  THEN COALESCE(ml.qty_revised, ml.qty_original, 0)
-                       * COALESCE(ml.est_unit_cost_revised, ml.est_unit_cost_original, 0)
-                ELSE COALESCE(ml.qty_original, 0) * COALESCE(ml.est_unit_cost_original, 0)
-              END
-            )
-            FROM material_lines ml
-            JOIN tasks t ON t.id = ml.task_id
-            JOIN stages s ON s.id = t.stage_id
-            WHERE s.project_id = ${projectId}
-          ), 0) AS material_estimated,
-          COALESCE((
-            SELECT SUM(p.amount)
-            FROM payment_records p
-            JOIN purchase_orders po ON po.id = p.purchase_order_id
-            JOIN stages s ON s.id = po.stage_id
-            WHERE s.project_id = ${projectId}
-              AND po.status IN ('ordered', 'closed')
-              AND p.voided_at IS NULL
-          ), 0) AS paid_purchases
-      `)
-  ).rows[0];
-  return Number(row?.material_estimated ?? 0) - Number(row?.paid_purchases ?? 0);
-}
-
-/** `withAccount`-wrapped read for screens — wraps `accumulatedMaterialVarianceTx`. */
 export async function getAccumulatedMaterialVariance(
   projectId: string,
 ): Promise<number> {
-  return withAccount((tx) => accumulatedMaterialVarianceTx(tx, projectId));
+  return withAccount(async (tx) =>
+    materialVariance((await readProjectFinancials(tx, projectId)).totals),
+  );
 }
