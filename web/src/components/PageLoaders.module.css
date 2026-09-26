@@ -42,7 +42,10 @@
 
 .surveyOrbitInner {
   inset: 14px;
-  border-bottom-color: var(--mm-charcoal);
+  /* --color-foreground, not the fixed --mm-charcoal: the page behind this
+     loader goes dark in dark mode, and charcoal-on-charcoal drops to ~1.16:1
+     (invisible). --color-foreground already flips to near-white there. */
+  border-bottom-color: var(--color-foreground);
   animation: survey-orbit 1.8s linear infinite reverse;
 }
 
@@ -210,7 +213,7 @@
   }
 
   .surveyOrbitInner {
-    border-bottom-color: var(--mm-charcoal);
+    border-bottom-color: var(--color-foreground);
   }
 
   .riseLine {
