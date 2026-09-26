@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Redefines Tailwind's `dark:` variant to key off an explicit `data-theme`
+   attribute on <html> instead of only `prefers-color-scheme` — the manual
+   toggle (`ThemeToggle.tsx`) sets this attribute, and it always wins. Used
+   sparingly, for the handful of things a CSS variable can't express (which
+   of two logo files is visible). Every colour still comes from the
+   `--color-*` tokens below, which already respond to the same attribute. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ==========================================================================
    MHANDISI MAKINI — Design tokens
    Implementation source of truth: the mhandisi-makini-design-system skill
@@ -15,6 +23,10 @@
    ========================================================================== */
 
 :root {
+  /* Light is the default; explicit dark lives in the two blocks below.
+     Native form controls and scrollbars follow this. */
+  color-scheme: light;
+
   /* --- Brand palette ---------------------------------------------------- */
   --mm-yellow: #ffb800; /* Helmet yellow — accent + primary action ONLY */
   --mm-charcoal: #252a2d; /* Text, headings, dark surfaces */
@@ -193,12 +205,22 @@
 }
 
 /* ==========================================================================
-   Dark variant — an improvised charcoal-based extension.
+   Dark theme — an improvised charcoal-based extension.
    NOT part of Brand Guidelines v1.1; review with the brand owner.
    Yellow is unchanged (charcoal text on it still passes contrast).
+
+   Applies two ways, so light/dark is always ONE consistent theme end to end
+   (never a dark sidebar beside a light page): automatically from the OS
+   (media query below, unless the person has explicitly chosen light), and
+   from the explicit toggle in `ThemeToggle.tsx`, which stamps
+   `data-theme="dark"`/`"light"` on `<html>` and always wins. The two blocks
+   below must stay identical — there is no CSS mixin for this without a
+   preprocessor, so a value changed in one belongs in both.
    ========================================================================== */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
     --mm-bg: #1b1e20;
     --mm-surface: #252a2d;
     --mm-text: #f7f8f6;
@@ -236,6 +258,47 @@
     --color-health-blue: #9cc0f4;
     --color-health-blue-bg: #101f38;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --mm-bg: #1b1e20;
+  --mm-surface: #252a2d;
+  --mm-text: #f7f8f6;
+  --mm-text-secondary: #b3bac0;
+  --mm-border: #343a3f;
+  --mm-border-strong: #4c5358;
+  --mm-control-border: #9aa2a9;
+  --mm-focus-ring: #9cc0f4;
+
+  --mm-success-surface: #10261d;
+  --mm-warning-surface: #2a1f0c;
+  --mm-error-surface: #2c1210;
+  --mm-info-surface: #101f38;
+
+  --color-background: #1b1e20;
+  --color-foreground: #f7f8f6;
+  --color-primary: #4c5358;
+  --color-on-primary: #f7f8f6;
+  --color-secondary: #b3bac0;
+  --color-card: #252a2d;
+  --color-card-foreground: #f7f8f6;
+  --color-muted: #202426;
+  --color-muted-foreground: #b3bac0;
+  --color-border: #343a3f;
+  --color-border-strong: #4c5358;
+  --color-destructive: #f4a19a;
+  --color-surface-inverse: #202426;
+
+  --color-health-green: #7fd0a9;
+  --color-health-green-bg: #10261d;
+  --color-health-amber: #e6b566;
+  --color-health-amber-bg: #2a1f0c;
+  --color-health-red: #f4a19a;
+  --color-health-red-bg: #2c1210;
+  --color-health-blue: #9cc0f4;
+  --color-health-blue-bg: #101f38;
 }
 
 /* ==========================================================================

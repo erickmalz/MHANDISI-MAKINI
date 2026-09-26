@@ -1,9 +1,11 @@
 "use client";
 
+import Script from "next/script";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { catalogues } from "@/lib/i18n/catalogues";
 import { I18nProvider } from "@/lib/i18n/client";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/lib/i18n/locales";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 import { manrope, inter } from "./fonts/brand";
 import "@/styles/mhandisi-makini/tokens.css";
@@ -28,7 +30,16 @@ export default function GlobalError(props: {
 }) {
   const locale = savedLocale();
   return (
-    <html lang={locale} className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
+    <html
+      lang={locale}
+      className={`${manrope.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <I18nProvider locale={locale} messages={catalogues[locale]}>
           <ErrorScreen {...props} />

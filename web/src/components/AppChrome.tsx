@@ -6,11 +6,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { GearSix, House, List, Stack, Truck, Users, X } from "@phosphor-icons/react/dist/ssr";
 
+import { buttonClassName } from "@/components/ui/Button";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/types";
 
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { SignOutButton } from "./SignOutButton";
+import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_ITEMS: { href: string; label: MessageKey; Icon: typeof House }[] = [
   { href: "/", label: "chrome.header.projects", Icon: House },
@@ -19,9 +21,6 @@ const NAV_ITEMS: { href: string; label: MessageKey; Icon: typeof House }[] = [
   { href: "/stage-templates", label: "chrome.registers.stageTemplates", Icon: Stack },
   { href: "/settings", label: "chrome.header.settings", Icon: GearSix },
 ];
-
-const SWITCH_PROJECT_CLASS =
-  "inline-flex min-h-12 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-on-inverse/40 px-3 text-sm font-bold text-on-inverse hover:bg-on-inverse/10";
 
 const isWithin = (pathname: string, href: string) =>
   pathname === href || pathname.startsWith(`${href}/`);
@@ -36,6 +35,12 @@ const isWithin = (pathname: string, href: string) =>
  * with a slide-in drawer holding the same content, so the full nav is
  * always one tap away. The engineer works one project at a time — when a
  * project is open, "Switch project" sits above the nav list.
+ *
+ * Uses the same `bg-card`/`text-foreground`/`border` tokens as the rest of
+ * the page, not a permanently-charcoal "inverse" surface: the sidebar must
+ * land in the same light-or-dark theme as the content beside it (never a
+ * dark rail next to a light page, or the reverse), so it follows
+ * `ThemeToggle` exactly like everything else instead of opting out of it.
  */
 export function AppChrome({ userEmail }: { userEmail: string }) {
   const t = useT();
@@ -90,8 +95,8 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
                 aria-current={current ? "page" : undefined}
                 className={`flex min-h-12 items-center gap-3 rounded-lg border-l-[3px] px-3 text-sm font-bold ${
                   current
-                    ? "border-accent bg-on-inverse/10 text-on-inverse"
-                    : "border-transparent text-on-inverse/80 hover:bg-on-inverse/10 hover:text-on-inverse"
+                    ? "border-accent bg-muted text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 <Icon size={20} aria-hidden="true" className={current ? "text-accent" : undefined} />
@@ -106,26 +111,41 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
 
   function footer() {
     return (
-      <div className="flex flex-col gap-3 border-t border-on-inverse/15 px-4 py-4">
-        <span className="truncate text-sm text-on-inverse/70">{userEmail}</span>
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher variant="header" />
-          <SignOutButton variant="header" />
-        </div>
-        <p className="text-sm text-on-inverse/55">{t("chrome.brand.tagline")}</p>
+      <div className="flex flex-col gap-1 border-t border-border px-4 py-4">
+        <span className="truncate px-3 pb-2 text-sm text-muted-foreground">{userEmail}</span>
+        <LanguageSwitcher variant="menu" />
+        <ThemeToggle />
+        <SignOutButton variant="menu" />
+        <p className="px-3 pt-2 text-sm text-muted-foreground">{t("chrome.brand.tagline")}</p>
       </div>
     );
   }
 
+  const switchProjectLink = (
+    <Link href="/" className={buttonClassName("secondary", "w-full justify-center")}>
+      {t("chrome.header.switchProject")}
+    </Link>
+  );
+
   const logo = (heightClass: string) => (
-    <Image
-      src="/brand/logo-horizontal-reversed-notag.png"
-      alt=""
-      width={1600}
-      height={561}
-      priority
-      className={`w-auto ${heightClass}`}
-    />
+    <>
+      <Image
+        src="/brand/logo-horizontal-notag.png"
+        alt=""
+        width={1600}
+        height={561}
+        priority
+        className={`w-auto dark:hidden ${heightClass}`}
+      />
+      <Image
+        src="/brand/logo-horizontal-reversed-notag.png"
+        alt=""
+        width={1600}
+        height={561}
+        priority
+        className={`hidden w-auto dark:block ${heightClass}`}
+      />
+    </>
   );
 
   return (
@@ -140,24 +160,20 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
       {/* Desktop: persistent sidebar */}
       <nav
         aria-label="Main"
-        className="hidden shrink-0 flex-col justify-between bg-surface-inverse text-on-inverse print:hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60"
+        className="hidden shrink-0 flex-col justify-between border-r border-border bg-card text-card-foreground print:hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60"
       >
         <div className="flex flex-col gap-3 px-4 pt-6">
           <Link href="/" className="inline-flex min-h-12 items-center" aria-label={t("chrome.homeLink")}>
             {logo("h-8")}
           </Link>
-          {inProject && (
-            <Link href="/" className={SWITCH_PROJECT_CLASS}>
-              {t("chrome.header.switchProject")}
-            </Link>
-          )}
+          {inProject && switchProjectLink}
         </div>
         {navList()}
         {footer()}
       </nav>
 
       {/* Phones and tablets: compact bar + drawer */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 bg-surface-inverse px-4 py-2 text-on-inverse print:hidden lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-4 py-2 text-card-foreground print:hidden lg:hidden">
         <button
           ref={openRef}
           type="button"
@@ -165,7 +181,7 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
           aria-controls={open ? drawerId : undefined}
           aria-label={t("chrome.header.openMenu")}
           onClick={() => setOpen(true)}
-          className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-on-inverse/10"
+          className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-muted"
         >
           <List size={22} aria-hidden="true" />
         </button>
@@ -184,7 +200,7 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
           <nav
             id={drawerId}
             aria-label="Main"
-            className="fixed inset-y-0 left-0 z-40 flex w-[272px] max-w-[80%] flex-col justify-between bg-surface-inverse text-on-inverse lg:hidden"
+            className="fixed inset-y-0 left-0 z-40 flex w-[272px] max-w-[80%] flex-col justify-between bg-card text-card-foreground shadow-mm-float lg:hidden"
           >
             <div className="flex flex-col gap-3 px-4 pt-4">
               <div className="flex items-center justify-between">
@@ -196,16 +212,12 @@ export function AppChrome({ userEmail }: { userEmail: string }) {
                   type="button"
                   aria-label={t("chrome.header.closeMenu")}
                   onClick={closeAndReturnFocus}
-                  className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-on-inverse/10"
+                  className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-muted"
                 >
                   <X size={20} aria-hidden="true" />
                 </button>
               </div>
-              {inProject && (
-                <Link href="/" className={SWITCH_PROJECT_CLASS}>
-                  {t("chrome.header.switchProject")}
-                </Link>
-              )}
+              {inProject && switchProjectLink}
             </div>
             {navList()}
             {footer()}

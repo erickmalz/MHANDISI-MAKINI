@@ -32,6 +32,11 @@ export const chrome: Widen<typeof enChrome> = {
   language: {
     switchTo: "Badilisha lugha iwe {language}",
   },
+  theme: {
+    light: "Mandhari nyepesi",
+    dark: "Mandhari nyeusi",
+    switchTo: "Badilisha kuwa {theme}",
+  },
   project: {
     actions: "Vitendo vya mradi",
     edit: "Hariri mradi",

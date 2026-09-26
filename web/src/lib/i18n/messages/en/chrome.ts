@@ -29,6 +29,11 @@ export const chrome = {
   language: {
     switchTo: "Switch language to {language}",
   },
+  theme: {
+    light: "Light theme",
+    dark: "Dark theme",
+    switchTo: "Switch to {theme}",
+  },
   project: {
     actions: "Project actions",
     edit: "Edit project",
