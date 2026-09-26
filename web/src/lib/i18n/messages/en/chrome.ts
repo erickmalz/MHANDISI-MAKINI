@@ -10,10 +10,11 @@ export const chrome = {
   skipToMain: "Skip to main content",
   homeLink: "Mhandisi Makini — choose a project",
   header: {
+    projects: "Projects",
     switchProject: "Switch project",
-    registers: "Registers",
     settings: "Settings",
-    menu: "Menu",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
     signOut: {
       idle: "Sign out",
       pending: "Signing out…",

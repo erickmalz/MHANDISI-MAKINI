@@ -18,10 +18,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <>
+    <div className="lg:flex lg:min-h-full">
       <AppChrome userEmail={user.email} />
-      {!user.emailVerified && <VerifyEmailBanner email={user.email} />}
-      {children}
-    </>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {!user.emailVerified && <VerifyEmailBanner email={user.email} />}
+        {children}
+      </div>
+    </div>
   );
 }

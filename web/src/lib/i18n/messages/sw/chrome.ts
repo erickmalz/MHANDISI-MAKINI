@@ -13,10 +13,11 @@ export const chrome: Widen<typeof enChrome> = {
   skipToMain: "Ruka hadi maudhui makuu",
   homeLink: "Mhandisi Makini — chagua mradi",
   header: {
+    projects: "Miradi",
     switchProject: "Badilisha mradi",
-    registers: "Orodha",
     settings: "Mipangilio",
-    menu: "Menyu",
+    openMenu: "Fungua menyu",
+    closeMenu: "Funga menyu",
     signOut: {
       idle: "Toka",
       pending: "Inatoka…",

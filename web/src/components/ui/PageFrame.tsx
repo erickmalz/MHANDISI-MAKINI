@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
 /**
- * The one page frame. Every screen sits in the same 6xl container as the app
- * header, so its left edge lines up with the logo. `width` decides how much of
- * that container the content uses:
+ * The one page frame. Every screen's content sits in the same 6xl container,
+ * so line length and margins stay consistent from page to page. `width`
+ * decides how much of that container the content uses:
  *
  * - `reading` — forms and single records, capped at 4xl (paragraphs still cap
  *   themselves at a comfortable line length) and left-aligned, never centred
