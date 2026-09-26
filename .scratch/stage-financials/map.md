@@ -131,7 +131,7 @@ gets its own commit.
       tests written (`55f9bd9`).
 - [x] D8 step 3: set-based queries. Both reads share four queries that
       differ only in their stage filter.
-- [ ] `tests/financials` not yet run: Docker isn't available in this WSL
-      distro. It needs to be run locally with Docker, or in CI, before merge.
-      Tests run against `55f9bd9` first check the old queries; tests run at the
-      head of the branch check the set-based ones.
+- [x] `tests/financials` ran in CI on `main` (run 36264474571, commit
+      `4403afd`). All 5 tests passed against the set-based queries. They were
+      never run against the pre-rewrite queries (`2514f00`), so old-versus-new
+      equivalence is shown only by the hand-worked expected values.
