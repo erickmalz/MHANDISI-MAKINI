@@ -123,3 +123,15 @@ Cases to cover:
 **D11. Fixed separately, first:** `export.ts:118` runs `Promise.all` over one
 `tx`. That is the f7b8465 bug class, fixed by making the reads sequential. It
 gets its own commit.
+
+## Build status
+
+- [x] D11: `export.ts` reads made sequential (`f32c7ca`).
+- [x] D1–D7, D9: module, one roll-up, callers moved, characterization
+      tests written (`55f9bd9`).
+- [x] D8 step 3: set-based queries. Both reads share four queries that
+      differ only in their stage filter.
+- [ ] `tests/financials` not yet run: Docker isn't available in this WSL
+      distro. It needs to be run locally with Docker, or in CI, before merge.
+      Tests run against `55f9bd9` first check the old queries; tests run at the
+      head of the branch check the set-based ones.
