@@ -1,0 +1,54 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mhandisi Makini</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--mm-canvas); color:var(--mm-text); font-family:var(--mm-font-body); overflow:hidden; }
+  .cover { position:relative; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:288px; }
+  .y { fill:var(--mm-yellow-500); }
+  .c { fill:var(--mm-charcoal-900); }
+  .s { fill:var(--mm-text-muted); }
+  .g { fill:var(--mm-success); }
+  .blk { rx:var(--mm-radius-lg); }
+  .sm { rx:var(--mm-radius-sm); }
+  .bar { rx:var(--mm-space-2); }
+  .words { position:absolute; left:var(--mm-space-8); bottom:var(--mm-space-8); max-width:440px; }
+  .name { margin:0; font-family:var(--mm-font-heading); font-size:80px; line-height:.95; font-weight:800; letter-spacing:-.02em; color:var(--mm-text); }
+  .tag { margin:var(--mm-space-3) 0 0 4px; font-size:14px; line-height:20px; color:var(--mm-text-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      mm-yellow-500 144×272 slab bled off the top (the helmet yellow people know the brand by) · mm-charcoal-900 320×192 bleeding off the right (structure, trust) · mm-text-muted 64×32 and mm-success 32×32 as small satellites — ≈30% of 960×288
+  arrangement one tall yellow slab beside a wide charcoal slab, bottoms on one line mm-space-8 above the edge, mm-space-4 gutter
+  pattern     stripes — "loud, bold, poster type": the brand sheet's slanted yellow bars and the helmet's ribs; seven 16-wide pills tilted 30° at an mm-space-8 pitch, cut across the charcoal slab
+  scales      sides in mm-space-4 multiples; gutter mm-space-4; pitch mm-space-8; slab corners mm-radius-lg, satellites mm-radius-sm, bar rx mm-space-2 (half of 16)
+-->
+<rect class="y blk" x="16" y="-16" width="144" height="272" rx="16"/>
+<rect class="c blk" x="176" y="64" width="320" height="192" rx="16"/>
+<rect class="s sm" x="176" y="16" width="64" height="32" rx="8"/>
+<rect class="g sm" x="256" y="16" width="32" height="32" rx="8"/>
+<rect class="y bar" x="-8" y="-40" width="16" height="80" rx="8" transform="translate(240 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-52" width="16" height="104" rx="8" transform="translate(272 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-60" width="16" height="120" rx="8" transform="translate(304 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-60" width="16" height="120" rx="8" transform="translate(336 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-60" width="16" height="120" rx="8" transform="translate(368 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-52" width="16" height="104" rx="8" transform="translate(400 160) rotate(30)"/>
+<rect class="y bar" x="-8" y="-40" width="16" height="80" rx="8" transform="translate(432 160) rotate(30)"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Mhandisi<br>Makini</h1>
+<p class="tag">Let’s build together — trusted construction help, made approachable.</p>
+</div>
+</div>
+</body>
+</html>

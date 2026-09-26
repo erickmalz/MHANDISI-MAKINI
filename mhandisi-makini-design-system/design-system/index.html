@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mhandisi Makini components</title>
+<link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="components/bundle.css">
+<style>body{margin:0;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}main{max-width:1100px;margin:0 auto;padding:32px 16px;display:grid;gap:32px}h2{font:700 24px/32px var(--mm-font-heading);margin:0 0 12px}.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}header{background:var(--mm-charcoal-900);padding:16px 24px}header img{height:56px}</style></head>
+<body><header><img src="assets/logos/mhandisi-makini-horizontal-dark.png" alt="Mhandisi Makini"></header><main id="root"></main>
+<script src="components/lib/react.production.min.js"></script><script src="components/lib/react-dom.production.min.js"></script><script src="components/bundle.js"></script>
+<script>
+var M=window.MhandisiMakini,h=React.createElement;function S(t){return h('section',null,h('h2',null,t),[].slice.call(arguments,1))}
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment,null,
+h(M.HeroPanel,{title:'Find a skilled expert',subtitle:'Get trusted help for your next project.',trust:[{icon:'shield',label:'Trusted professionals'},{icon:'users',label:'Quality work'},{icon:'gear',label:'Stronger communities'}]},h(M.TextField,{label:'Search',hideLabel:true,icon:'search',placeholder:'Search by service or location'}),h(M.Button,{size:'lg'},'Book an expert')),
+S('Buttons',h('div',{className:'row'},h(M.Button,{iconRight:'arrow'},'Book service'),h(M.Button,{variant:'secondary',iconRight:'arrow'},'Find expert'),h(M.Button,{variant:'tertiary'},'See all'),h(M.Button,{variant:'destructive'},'Cancel booking'),h(M.Button,{loading:true},'Booking…'))),
+S('Form fields',h('div',{className:'grid'},h(M.TextField,{label:'Location',trailingIcon:'pin',placeholder:'Enter your location'}),h(M.TextField,{label:'Phone number',defaultValue:'0712',error:'Enter a full phone number so the expert can reach you.'}))),
+S('Status',h('div',{className:'row'},['available','progress','awaiting','completed','offline'].map(function(s){return h(M.StatusChip,{key:s,status:s})}),h(M.Rating,{value:4.8,badge:true}))),
+S('Popular services',h('div',{className:'grid'},['electrical','plumbing','building','finishing'].map(function(c){return h(M.ServiceCard,{key:c,category:c})}))),
+S('Featured experts',h('div',{className:'grid'},h(M.ExpertCard,{name:'Daniel K.',trade:'Electrical',rating:4.9,location:'Nairobi, Kenya',availability:'available'}),h(M.ExpertCard,{name:'Grace M.',trade:'Plumbing',rating:4.8,location:'Dar es Salaam, Tanzania',availability:'awaiting'}))),
+S('Bottom navigation',h('div',{style:{maxWidth:420}},h(M.BottomNav,{items:[{label:'Home',icon:'home',active:true},{label:'Explore',icon:'search'},{label:'Projects',icon:'clipboard'},{label:'Profile',icon:'user'}]})))));
+</script></body></html>

@@ -1,0 +1,20 @@
+<!-- @dsCard group="Actions" height=150 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Button — preview</title>
+<style>body{margin:0;padding:16px;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}</style></head>
+<body>
+<div id="root"></div>
+<script>
+var M = window.MhandisiMakini, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' } },
+  h(M.Button, { variant: 'primary', iconRight: 'arrow' }, 'Book service'),
+  h(M.Button, { variant: 'secondary', iconRight: 'arrow' }, 'Find expert'),
+  h(M.Button, { variant: 'tertiary' }, 'See all'),
+  h(M.Button, { variant: 'destructive' }, 'Cancel booking'),
+  h(M.Button, { variant: 'primary', loading: true }, 'Booking…'),
+  h(M.Button, { variant: 'primary', disabled: true }, 'Unavailable'),
+  h(M.Button, { variant: 'primary', size: 'lg', icon: 'calendar', iconRight: 'chevron' }, 'Book an expert')));
+</script>
+</body>
+</html>

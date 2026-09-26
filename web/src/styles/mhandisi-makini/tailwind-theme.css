@@ -1,0 +1,28 @@
+/* Tailwind v4: @import "tailwindcss"; @import "./tokens.css"; @import "./mhandisi-makini.v4.css"; */
+@theme inline {
+  --color-mm-yellow-500: var(--mm-yellow-500);
+  --color-mm-yellow-600: var(--mm-yellow-600);
+  --color-mm-charcoal-800: var(--mm-charcoal-800);
+  --color-mm-charcoal-900: var(--mm-charcoal-900);
+  --color-mm-canvas: var(--mm-canvas);
+  --color-mm-surface: var(--mm-surface);
+  --color-mm-border: var(--mm-border);
+  --color-mm-text: var(--mm-text);
+  --color-mm-muted: var(--mm-text-muted);
+  --color-mm-subtle: var(--mm-text-subtle);
+  --color-mm-success: var(--mm-success);
+  --color-mm-success-bg: var(--mm-success-bg);
+  --color-mm-info: var(--mm-info);
+  --color-mm-info-bg: var(--mm-info-bg);
+  --color-mm-warning: var(--mm-warning);
+  --color-mm-warning-bg: var(--mm-warning-bg);
+  --color-mm-error: var(--mm-error);
+  --color-mm-error-bg: var(--mm-error-bg);
+  --font-heading: var(--mm-font-heading);
+  --font-body: var(--mm-font-body);
+  --radius-mm-sm: 8px;
+  --radius-mm-md: 12px;
+  --radius-mm-lg: 16px;
+  --shadow-mm-card: var(--mm-shadow-card);
+  --shadow-mm-float: var(--mm-shadow-float);
+}

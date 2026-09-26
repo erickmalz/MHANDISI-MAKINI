@@ -1,0 +1,15 @@
+<!-- @dsCard group="Navigation" height=460 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>SidebarNav — preview</title>
+<style>body{margin:0;padding:16px;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}</style></head>
+<body>
+<div id="root" style="height:428px"></div>
+<script>
+var M = window.MhandisiMakini, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(M.SidebarNav, { logoSrc: '../../assets/logos/mhandisi-makini-horizontal-dark.png', items: [
+  { label: 'Home', icon: 'home', active: true }, { label: 'Find Experts', icon: 'search' }, { label: 'My Projects', icon: 'briefcase' },
+  { label: 'Messages', icon: 'chat', badge: 3 }, { label: 'Saved', icon: 'heart' }, { label: 'Payments', icon: 'card' }, { label: 'Settings', icon: 'gear' }] }));
+</script>
+</body>
+</html>

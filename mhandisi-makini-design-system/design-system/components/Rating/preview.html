@@ -1,0 +1,14 @@
+<!-- @dsCard group="Status" height=64 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Rating — preview</title>
+<style>body{margin:0;padding:16px;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}</style></head>
+<body>
+<div id="root" style="display:flex;gap:24px;align-items:center"></div>
+<script>
+var M = window.MhandisiMakini, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(M.Rating, { value: 4.9 }), h(M.Rating, { value: 4.8, count: 126 }), h(M.Rating, { value: 4.8, badge: true })));
+</script>
+</body>
+</html>

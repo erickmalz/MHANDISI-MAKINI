@@ -1,0 +1,15 @@
+<!-- @dsCard group="Status" height=64 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>StatusChip — preview</title>
+<style>body{margin:0;padding:16px;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}</style></head>
+<body>
+<div id="root" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+<script>
+var M = window.MhandisiMakini, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(M.StatusChip, { status: 'available' }), h(M.StatusChip, { status: 'progress' }), h(M.StatusChip, { status: 'awaiting' }),
+  h(M.StatusChip, { status: 'completed' }), h(M.StatusChip, { status: 'error' }, 'Payment failed'), h(M.StatusChip, { status: 'offline' })));
+</script>
+</body>
+</html>

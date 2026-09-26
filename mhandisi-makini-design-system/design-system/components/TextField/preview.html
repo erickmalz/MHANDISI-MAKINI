@@ -1,0 +1,16 @@
+<!-- @dsCard group="Forms" height=330 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>TextField — preview</title>
+<style>body{margin:0;padding:16px;background:var(--mm-canvas);font-family:var(--mm-font-body);color:var(--mm-text)}</style></head>
+<body>
+<div id="root" style="display:grid;gap:16px;max-width:380px"></div>
+<script>
+var M = window.MhandisiMakini, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(M.TextField, { label: 'Search services', hideLabel: true, icon: 'search', placeholder: 'Search services…' }),
+  h(M.TextField, { label: 'Location', trailingIcon: 'pin', placeholder: 'Enter your location', hint: 'e.g. Kinondoni, Dar es Salaam' }),
+  h(M.TextField, { label: 'Phone number', defaultValue: '0712', error: 'Enter a full phone number so the expert can reach you.' })));
+</script>
+</body>
+</html>
