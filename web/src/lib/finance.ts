@@ -115,6 +115,59 @@ export function budgetVarianceTotal(f: StageFinancials): number {
   return materialVariance(f) + labourVariance(f);
 }
 
+export interface ProjectFinancialTotals {
+  clientDeposits: number;
+  commitments: number;
+  payments: number;
+  remainingStageRequirement: number;
+  availableFloat: number;
+  /**
+   * Σ max(0, per-stage Forecast Funding Requirement) — a negative (surplus)
+   * stage never offsets a shortfall stage's own requirement, since a stage's
+   * deposits are Funding-Request-scoped and cannot fund another stage's
+   * shortfall (see `availableFloat`'s doc comment).
+   */
+  forecastShortfall: number;
+}
+
+/**
+ * The project-wide roll-up of every stage's `StageFinancials` — the one
+ * aggregation path both the Overview's "Project financial position" card and
+ * the Financial Summary report read from (guidelines §51: "one authoritative
+ * calculation path"). Every field but `forecastShortfall` is a plain sum
+ * across stages; `forecastShortfall` is deliberately not `forecastFundingRequirement`
+ * applied to the summed totals, to preserve the non-fungibility rule above.
+ */
+export function aggregateStageFinancials(
+  stages: StageFinancials[],
+): ProjectFinancialTotals {
+  let clientDeposits = 0;
+  let commitments = 0;
+  let payments = 0;
+  let remaining = 0;
+  let floatSum = 0;
+  let forecastShortfall = 0;
+
+  for (const f of stages) {
+    clientDeposits += f.clientDeposits;
+    commitments += totalCommitted(f);
+    payments +=
+      f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments;
+    remaining += remainingStageRequirement(f);
+    floatSum += availableFloat(f);
+    forecastShortfall += Math.max(0, forecastFundingRequirement(f));
+  }
+
+  return {
+    clientDeposits,
+    commitments,
+    payments,
+    remainingStageRequirement: remaining,
+    availableFloat: floatSum,
+    forecastShortfall,
+  };
+}
+
 export function formatTZS(amount: number): string {
   const sign = amount < 0 ? "-" : "";
   return `${sign}TZS ${Math.abs(Math.round(amount)).toLocaleString("en-US")}`;

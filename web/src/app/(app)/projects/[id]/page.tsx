@@ -46,7 +46,7 @@ export default async function ProjectOverviewPage({
         <div className="flex flex-col gap-6">
           <StatusBand financials={stage.financials} alerts={project.alerts} />
 
-          <FinancialPosition f={stage.financials} />
+          <FinancialPosition projectId={project.id} stages={project.stages} />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <StageList

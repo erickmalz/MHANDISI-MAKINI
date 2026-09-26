@@ -6,6 +6,9 @@ import { I18nProvider } from "@/lib/i18n/client";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/lib/i18n/locales";
 
 import { manrope, inter } from "./fonts/brand";
+import "@/styles/mhandisi-makini/tokens.css";
+import "@/styles/mhandisi-makini/tailwind-theme.css";
+import "@/styles/mhandisi-makini/components.css";
 import "./globals.css";
 
 /** The layout is gone here, so read the saved language straight from the cookie. */

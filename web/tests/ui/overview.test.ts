@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  fundingPosition,
   pickTopAlert,
   sortAlertsBySeverity,
   statusSentence,
 } from "@/app/(app)/projects/[id]/_components/overview";
-import { financialHealth, forecastFundingRequirement } from "@/lib/finance";
+import { financialHealth } from "@/lib/finance";
 import { catalogues } from "@/lib/i18n/catalogues";
 import { createT } from "@/lib/i18n/translate";
 import type { ProjectAlert, StageFinancials } from "@/lib/types";
@@ -36,43 +35,6 @@ const alert = (id: string, severity: ProjectAlert["severity"]): ProjectAlert => 
   id,
   severity,
   message: id,
-});
-
-describe("fundingPosition", () => {
-  it("splits spend into paid / open / remaining and compares with the deposit", () => {
-    const f = fin({
-      clientDeposits: 1_000,
-      paidPurchases: 200,
-      labourPayments: 100,
-      pettyCashExpenses: 50,
-      openPurchaseCommitments: 150,
-      openLabourCommitments: 50,
-      otherApprovedCommitments: 25,
-      remainingMaterial: 300,
-      remainingLabour: 200,
-      remainingFee: 50,
-      remainingOtherApproved: 25,
-    });
-    const p = fundingPosition(f);
-    expect(p.paid).toBe(350);
-    expect(p.open).toBe(225);
-    expect(p.remaining).toBe(575);
-    expect(p.forecast).toBe(1_150);
-    expect(p.scale).toBe(1_150);
-    // The bar's gap is exactly the finance module's Forecast Funding Requirement.
-    expect(p.gap).toBe(forecastFundingRequirement(f));
-    expect(p.gap).toBe(150);
-  });
-
-  it("uses the deposit as the scale when the deposit exceeds the forecast (surplus)", () => {
-    const p = fundingPosition(fin({ clientDeposits: 1_000, paidPurchases: 300, remainingMaterial: 200 }));
-    expect(p.scale).toBe(1_000);
-    expect(p.gap).toBe(-500);
-  });
-
-  it("has zero scale for a stage with nothing in it", () => {
-    expect(fundingPosition(fin({})).scale).toBe(0);
-  });
 });
 
 const t = createT("en", catalogues.en);

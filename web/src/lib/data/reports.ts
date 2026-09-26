@@ -3,6 +3,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 
 import {
+  aggregateStageFinancials,
   availableFloat,
   feeOutstanding,
   financialHealth,
@@ -140,10 +141,6 @@ export async function getProjectFinancialSummary(
   let feesInvoiced = 0;
   let feesReceived = 0;
   let feesOutstanding = 0;
-  let commitments = 0;
-  let payments = 0;
-  let floatSum = 0;
-  let forecastShortfall = 0;
 
   const stages: ProjectFinancialSummaryStageRow[] = project.stages.map((s) => {
     const f = s.financials;
@@ -151,29 +148,21 @@ export async function getProjectFinancialSummary(
     feesReceived += f.feeReceived;
     feesOutstanding += feeOutstanding(f);
 
-    const stageCommitments = totalCommitted(f);
-    const stagePayments =
-      f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments;
-    const stageFloat = availableFloat(f);
-    const stageForecast = forecastFundingRequirement(f);
-
-    commitments += stageCommitments;
-    payments += stagePayments;
-    floatSum += stageFloat;
-    forecastShortfall += Math.max(0, stageForecast);
-
     return {
       stageId: s.id,
       stageName: s.name,
       status: s.status,
       health: financialHealth(f),
       clientDeposits: f.clientDeposits,
-      commitments: stageCommitments,
-      payments: stagePayments,
-      availableFloat: stageFloat,
-      forecastFundingRequirement: stageForecast,
+      commitments: totalCommitted(f),
+      payments:
+        f.paidPurchases + f.labourPayments + f.pettyCashExpenses + f.otherApprovedCommitments,
+      availableFloat: availableFloat(f),
+      forecastFundingRequirement: forecastFundingRequirement(f),
     };
   });
+
+  const totals = aggregateStageFinancials(project.stages.map((s) => s.financials));
 
   return {
     projectId: project.id,
@@ -184,10 +173,10 @@ export async function getProjectFinancialSummary(
     feesInvoiced,
     feesReceived,
     feesOutstanding,
-    commitments,
-    payments,
-    availableFloat: floatSum,
-    forecastShortfall,
+    commitments: totals.commitments,
+    payments: totals.payments,
+    availableFloat: totals.availableFloat,
+    forecastShortfall: totals.forecastShortfall,
     stages,
   };
 }

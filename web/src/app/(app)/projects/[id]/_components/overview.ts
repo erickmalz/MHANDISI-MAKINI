@@ -1,15 +1,14 @@
 /**
- * Pure helpers behind the project Overview: what the status sentence says, how
- * the funding bar is divided, and which alert leads. Everything is derived from
- * `StageFinancials` and `ProjectAlert` through the single calculation path in
- * `@/lib/finance` — nothing here invents a figure.
+ * Pure helpers behind the project Overview: what the status sentence says and
+ * which alert leads. Everything is derived from `StageFinancials` and
+ * `ProjectAlert` through the single calculation path in `@/lib/finance` —
+ * nothing here invents a figure.
  */
 import {
   HEALTH_BUFFER,
   availableFloat,
   forecastFundingRequirement,
   formatTZS,
-  remainingStageRequirement,
 } from "@/lib/finance";
 import type { Translator } from "@/lib/i18n/translate";
 import type {
@@ -71,41 +70,4 @@ export function statusSentence(
     case "green":
       return t("overview.status.sentence.comfortable", { margin });
   }
-}
-
-export interface FundingPosition {
-  /** Paid out already: purchases, labour payments, petty cash. */
-  paid: number;
-  /** Committed but not yet paid: open orders, outstanding labour, other approved. */
-  open: number;
-  /** Still expected to be spent this stage (the Remaining Stage Requirement). */
-  remaining: number;
-  /** What the client has deposited. */
-  deposited: number;
-  /** paid + open + remaining. */
-  forecast: number;
-  /** Full width of the bar: the larger of the deposit and the forecast. */
-  scale: number;
-  /** Forecast minus deposit. Positive = shortfall, negative = surplus. */
-  gap: number;
-}
-
-export function fundingPosition(f: StageFinancials): FundingPosition {
-  const paid = f.paidPurchases + f.labourPayments + f.pettyCashExpenses;
-  const open =
-    f.openPurchaseCommitments +
-    f.openLabourCommitments +
-    f.otherApprovedCommitments;
-  const remaining = remainingStageRequirement(f);
-  const deposited = f.clientDeposits;
-  const forecast = paid + open + remaining;
-  return {
-    paid,
-    open,
-    remaining,
-    deposited,
-    forecast,
-    scale: Math.max(deposited, forecast, 0),
-    gap: forecast - deposited,
-  };
 }

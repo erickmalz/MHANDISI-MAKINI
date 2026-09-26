@@ -5,6 +5,9 @@ import { catalogues } from "@/lib/i18n/catalogues";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getLocale, getT } from "@/lib/i18n/server";
 import { manrope, inter } from "./fonts/brand";
+import "@/styles/mhandisi-makini/tokens.css";
+import "@/styles/mhandisi-makini/tailwind-theme.css";
+import "@/styles/mhandisi-makini/components.css";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
