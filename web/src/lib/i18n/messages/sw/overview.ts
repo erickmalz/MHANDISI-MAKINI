@@ -12,9 +12,6 @@ export const overview: Widen<typeof enOverview> = {
   },
   status: {
     label: "Hali ya mradi",
-    noAlerts: "Hakuna tahadhari ambazo hazijashughulikiwa katika mradi huu.",
-    moreAlerts: { one: "Tahadhari {count} nyingine", other: "Tahadhari {count} nyingine" },
-    view: "Angalia",
     sentence: {
       pending: "Ombi la fedha liko kwa mteja.",
       pendingShortfall: "Ombi la fedha liko kwa mteja. Upungufu unaotabiriwa ni {amount}.",
@@ -25,7 +22,11 @@ export const overview: Widen<typeof enOverview> = {
     },
   },
   alerts: {
-    title: "Tahadhari",
+    title: "Ya kufanya",
+    summary: {
+      one: "{count} haijashughulikiwa · za dharura kwanza",
+      other: "{count} hazijashughulikiwa · za dharura kwanza",
+    },
     none: "Hakuna tahadhari ambazo hazijashughulikiwa katika mradi huu.",
     view: "Angalia",
     severity: {
@@ -36,33 +37,23 @@ export const overview: Widen<typeof enOverview> = {
   },
   position: {
     title: "Hali ya kifedha ya mradi",
-    subtitle:
-      "Fedha za mradi za mteja pekee, zikijumlishwa katika hatua zote. Haziwezi kuhamishwa kati ya hatua — angalia hapa chini kwa nambari ya kutenda nayo.",
+    subtitle: "Hatua zote, fedha za mteja pekee. Haziwezi kuhamishwa kati ya hatua — shughulikia nyongeza ya kila hatua.",
     float: "Fedha zinazopatikana",
     deposited: "Amana ya mteja",
     commitments: "Ahadi za malipo",
     remaining: "Gharama zilizosalia",
-    allFunded: "Kila hatua iko ndani ya fedha zake — hakuna inayohitaji nyongeza kwa sasa.",
-    needsTopUp: { one: "Hatua 1 inahitaji nyongeza", other: "Hatua {count} zinahitaji nyongeza" },
-    viewStage: "Angalia hatua",
   },
   breakdown: {
     title: "Mchanganuo",
-    hint: "Vifaa, fundi na makadirio",
-    materials: {
-      title: "Vifaa",
+    current: "{name}, hatua ya sasa",
+    materials: "Vifaa",
+    labour: "Fundi",
+    rows: {
       paid: "Kilicholipwa",
-      open: "Ahadi za malipo zilizo wazi",
-      toProcure: "Vilivyosalia kununuliwa",
-    },
-    labour: {
-      title: "Fundi",
-      paid: "Kilicholipwa",
-      outstanding: "Kilichobaki kulipwa (kimesainiwa, hakijalipwa)",
-      remainingWork: "Kazi iliyosalia",
+      committed: "Ahadi, hakijalipwa",
+      remaining: "Kilichosalia kufanywa",
     },
     forecast: {
-      title: "Makadirio",
       remainingCost: "Gharama zilizosalia zinazotarajiwa",
       float: "Fedha zinazopatikana",
       surplus: "Ziada ya fedha",
@@ -76,6 +67,8 @@ export const overview: Widen<typeof enOverview> = {
     invoiced: "Ada iliyotozwa",
     received: "Ada iliyopokelewa",
     outstanding: "Ada iliyobaki kulipwa",
+    separate: "Hesabu tofauti",
+    invoices: "Nenda kwenye ankara za ada",
     earned: "Ada iliyopatikana ni sawa na ada iliyopokelewa.",
     remaining: "Ada iliyosalia ya hatua hii:",
     remainingNote: "Bado inahesabiwa katika fedha zinazohitajika za mradi zinazotabiriwa, kwa sababu mteja ndiye anayeigharamia mwishowe.",
@@ -83,7 +76,15 @@ export const overview: Widen<typeof enOverview> = {
   stages: {
     title: "Hatua",
     add: "Ongeza hatua",
-    current: "hatua ya sasa",
+    current: "Ya sasa",
+    columns: {
+      stage: "Hatua",
+      progress: "Maendeleo",
+      funding: "Fedha",
+      topUp: "Nyongeza inayohitajika",
+    },
+    topUpNone: "Hakuna",
+    topUpLink: "{name} inahitaji nyongeza ya {amount}. Fungua ukaguzi wake wa fedha.",
     tasks: "Kazi",
     edit: "Hariri",
     work: "Fanyia kazi hatua hii",

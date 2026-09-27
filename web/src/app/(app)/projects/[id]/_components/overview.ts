@@ -1,8 +1,8 @@
 /**
  * Pure helpers behind the project Overview: what the status sentence says and
- * which alert leads. Everything is derived from `StageFinancials` and
- * `ProjectAlert` through the single calculation path in `@/lib/finance` —
- * nothing here invents a figure.
+ * the order the alerts are listed in. Everything is derived from
+ * `StageFinancials` and `ProjectAlert` through the single calculation path in
+ * `@/lib/finance` — nothing here invents a figure.
  */
 import {
   HEALTH_BUFFER,
@@ -34,11 +34,6 @@ export function sortAlertsBySeverity(alerts: ProjectAlert[]): ProjectAlert[] {
         a.index - b.index,
     )
     .map(({ alert }) => alert);
-}
-
-/** The alert the engineer should look at first, if there is one. */
-export function pickTopAlert(alerts: ProjectAlert[]): ProjectAlert | undefined {
-  return sortAlertsBySeverity(alerts)[0];
 }
 
 /**

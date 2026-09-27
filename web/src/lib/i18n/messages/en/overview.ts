@@ -9,9 +9,6 @@ export const overview = {
   },
   status: {
     label: "Project status",
-    noAlerts: "No unresolved alerts for this project.",
-    moreAlerts: { one: "{count} more alert", other: "{count} more alerts" },
-    view: "View",
     sentence: {
       pending: "A funding request is with the client.",
       pendingShortfall: "A funding request is with the client. The forecast shortfall is {amount}.",
@@ -22,7 +19,11 @@ export const overview = {
     },
   },
   alerts: {
-    title: "Alerts",
+    title: "To do",
+    summary: {
+      one: "{count} unresolved · most urgent first",
+      other: "{count} unresolved · most urgent first",
+    },
     none: "No unresolved alerts for this project.",
     view: "View",
     severity: {
@@ -33,33 +34,23 @@ export const overview = {
   },
   position: {
     title: "Project financial position",
-    subtitle:
-      "Client project funds only, summed across every stage. Not fungible between stages — see below for the number to act on.",
+    subtitle: "All stages, client funds only. Not fungible between stages — act on each stage's top-up.",
     float: "Available Float",
     deposited: "Client deposited",
     commitments: "Commitments",
     remaining: "Remaining expected",
-    allFunded: "Every stage is within its own funding — nothing needs a top-up right now.",
-    needsTopUp: { one: "1 stage needs a top-up", other: "{count} stages need a top-up" },
-    viewStage: "View stage",
   },
   breakdown: {
     title: "Breakdown",
-    hint: "Materials, labour and forecast",
-    materials: {
-      title: "Materials",
+    current: "{name}, the current stage",
+    materials: "Materials",
+    labour: "Labour",
+    rows: {
       paid: "Paid",
-      open: "Open commitments",
-      toProcure: "Remaining to procure",
-    },
-    labour: {
-      title: "Labour",
-      paid: "Paid",
-      outstanding: "Outstanding (signed, unpaid)",
-      remainingWork: "Remaining work",
+      committed: "Committed, unpaid",
+      remaining: "Remaining to do",
     },
     forecast: {
-      title: "Forecast",
       remainingCost: "Remaining expected cost",
       float: "Available Float",
       surplus: "Funding surplus",
@@ -73,6 +64,8 @@ export const overview = {
     invoiced: "Fee invoiced",
     received: "Fee received",
     outstanding: "Fee outstanding",
+    separate: "Separate ledger",
+    invoices: "Go to fee invoices",
     earned: "Fee earned equals fee received.",
     remaining: "Remaining fee for this stage:",
     remainingNote: "It is still counted in the project's forecast funding requirement, since the client ultimately funds it.",
@@ -80,7 +73,15 @@ export const overview = {
   stages: {
     title: "Stages",
     add: "Add stage",
-    current: "current stage",
+    current: "Current",
+    columns: {
+      stage: "Stage",
+      progress: "Progress",
+      funding: "Funding",
+      topUp: "Top-up needed",
+    },
+    topUpNone: "None",
+    topUpLink: "{name} needs a top-up of {amount}. Open its financial check.",
     tasks: "Tasks",
     edit: "Edit",
     work: "Work this stage",
