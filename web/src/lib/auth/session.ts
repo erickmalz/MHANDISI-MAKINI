@@ -47,7 +47,7 @@ export type UsableSession = {
  */
 export async function requireUsableSession(): Promise<UsableSession> {
   const result = await verifySession();
-  if (!result) redirect("/sign-in");
+  if (!result) redirect("/api/session/expired");
 
   const { session, user } = result;
   const emailGateActive =
@@ -66,7 +66,7 @@ export async function requirePlatformAdmin(): Promise<{
   user: UsableSession["user"];
 }> {
   const result = await verifySession();
-  if (!result) redirect("/sign-in");
+  if (!result) redirect("/api/session/expired");
 
   const admin = await isPlatformAdmin(result.user.id);
   if (!admin) redirect("/");

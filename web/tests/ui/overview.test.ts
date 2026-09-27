@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  pickTopAlert,
   sortAlertsBySeverity,
   statusSentence,
 } from "@/app/(app)/projects/[id]/_components/overview";
@@ -104,7 +103,6 @@ describe("alert ordering", () => {
     const input = [alert("i1", "info"), alert("c1", "critical")];
     sortAlertsBySeverity(input);
     expect(input.map((a) => a.id)).toEqual(["i1", "c1"]);
-    expect(pickTopAlert([])).toBeUndefined();
-    expect(pickTopAlert(input)?.id).toBe("c1");
+    expect(sortAlertsBySeverity([])).toEqual([]);
   });
 });

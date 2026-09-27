@@ -1,6 +1,4 @@
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
-
-import type { StageFinancials } from "@/lib/types";
+import type { Stage } from "@/lib/types";
 import {
   availableFloat,
   remainingStageRequirement,
@@ -8,83 +6,100 @@ import {
 } from "@/lib/finance";
 import { getT } from "@/lib/i18n/server";
 import { Money } from "@/components/ui/Money";
-
-function Row({
-  label,
-  amount,
-  tone,
-}: {
-  label: string;
-  amount: number;
-  tone?: "surplus";
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-b-0">
-      <span className="text-muted-foreground">{label}</span>
-      <Money
-        amount={amount}
-        className={`shrink-0 whitespace-nowrap font-bold ${
-          tone === "surplus" ? "text-health-green" : "text-card-foreground"
-        }`}
-        negativeClassName="shrink-0 whitespace-nowrap font-bold text-destructive"
-      />
-    </div>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="text-base font-bold text-card-foreground">{title}</h3>
-      <div className="mt-2">{children}</div>
-    </div>
-  );
-}
+import { OverviewPanel } from "./OverviewPanel";
 
 /**
- * The detail behind the position, closed until asked for: what is paid, what
- * is committed and what is still to come, by materials and labour. Native
- * `<details>` — keyboard and screen-reader operable with no script.
+ * The current stage's costs as a small matrix — paid, committed and still to
+ * come, by materials and labour — with the forecast underneath: the remaining
+ * expected cost against the Available Float, and the surplus or requirement
+ * that leaves. Every figure comes from `@/lib/finance`; the matrix adds none of
+ * its own (no row or column totals that could disagree with the forecast).
  */
-export async function Breakdown({ f }: { f: StageFinancials }) {
+export async function Breakdown({ stage }: { stage: Stage }) {
   const t = await getT();
+  const f = stage.financials;
   const ffr = forecastFundingRequirement(f);
   const isSurplus = ffr <= 0;
+  const subtitle = t("overview.breakdown.current", { name: stage.name });
+
+  const rows = [
+    { key: "paid", label: t("overview.breakdown.rows.paid"), materials: f.paidPurchases, labour: f.labourPayments },
+    {
+      key: "committed",
+      label: t("overview.breakdown.rows.committed"),
+      materials: f.openPurchaseCommitments,
+      labour: f.openLabourCommitments,
+    },
+    {
+      key: "remaining",
+      label: t("overview.breakdown.rows.remaining"),
+      materials: f.remainingMaterial,
+      labour: f.remainingLabour,
+    },
+  ];
 
   return (
-    <details className="group rounded-lg border border-border bg-card">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-lg px-4 py-2 outline-ring focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
-        <CaretRight
-          size={16}
-          aria-hidden="true"
-          className="shrink-0 text-muted-foreground transition-transform group-open:rotate-90 motion-reduce:transition-none"
-        />
-        <h2 className="text-xl font-bold text-card-foreground">{t("overview.breakdown.title")}</h2>
-        <span className="ml-1 text-sm text-muted-foreground">
-          {t("overview.breakdown.hint")}
-        </span>
-      </summary>
-      <div className="grid grid-cols-1 gap-6 border-t border-border p-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Panel title={t("overview.breakdown.materials.title")}>
-          <Row label={t("overview.breakdown.materials.paid")} amount={f.paidPurchases} />
-          <Row label={t("overview.breakdown.materials.open")} amount={f.openPurchaseCommitments} />
-          <Row label={t("overview.breakdown.materials.toProcure")} amount={f.remainingMaterial} />
-        </Panel>
-        <Panel title={t("overview.breakdown.labour.title")}>
-          <Row label={t("overview.breakdown.labour.paid")} amount={f.labourPayments} />
-          <Row label={t("overview.breakdown.labour.outstanding")} amount={f.openLabourCommitments} />
-          <Row label={t("overview.breakdown.labour.remainingWork")} amount={f.remainingLabour} />
-        </Panel>
-        <Panel title={t("overview.breakdown.forecast.title")}>
-          <Row label={t("overview.breakdown.forecast.remainingCost")} amount={remainingStageRequirement(f)} />
-          <Row label={t("overview.breakdown.forecast.float")} amount={availableFloat(f)} />
-          <Row
-            label={isSurplus ? t("overview.breakdown.forecast.surplus") : t("overview.breakdown.forecast.requirement")}
-            amount={Math.abs(ffr)}
-            tone={isSurplus ? "surplus" : undefined}
-          />
-        </Panel>
-      </div>
-    </details>
+    <OverviewPanel
+      headingId="overview-breakdown"
+      title={t("overview.breakdown.title")}
+      aside={<span className="text-sm">{subtitle}</span>}
+    >
+      <table className="w-full text-sm">
+        <caption className="sr-only">{subtitle}</caption>
+        <thead>
+          <tr className="border-b border-border text-muted-foreground">
+            <td />
+            <th scope="col" className="px-3 py-2.5 text-right font-bold">
+              {t("overview.breakdown.materials")}
+            </th>
+            <th scope="col" className="py-2.5 pl-3 pr-4 text-right font-bold md:pr-5">
+              {t("overview.breakdown.labour")}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} className="border-b border-border">
+              <th scope="row" className="py-2.5 pl-4 pr-3 text-left font-bold md:pl-5">
+                {row.label}
+              </th>
+              <td className="px-3 py-2.5 text-right">
+                <Money amount={row.materials} className="text-card-foreground" />
+              </td>
+              <td className="py-2.5 pl-3 pr-4 text-right md:pr-5">
+                <Money amount={row.labour} className="text-card-foreground" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <dl className="flex flex-wrap justify-end gap-x-8 gap-y-2 rounded-b-[10px] bg-muted px-4 py-3.5 text-sm md:px-5">
+        <div className="flex gap-2">
+          <dt className="text-muted-foreground">{t("overview.breakdown.forecast.remainingCost")}</dt>
+          <dd>
+            <Money amount={remainingStageRequirement(f)} className="font-bold text-card-foreground" />
+          </dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="text-muted-foreground">{t("overview.breakdown.forecast.float")}</dt>
+          <dd>
+            <Money amount={availableFloat(f)} className="font-bold text-card-foreground" />
+          </dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="text-muted-foreground">
+            {isSurplus
+              ? t("overview.breakdown.forecast.surplus")
+              : t("overview.breakdown.forecast.requirement")}
+          </dt>
+          <dd>
+            <Money
+              amount={Math.abs(ffr)}
+              className={`font-bold ${isSurplus ? "text-health-green" : "text-destructive"}`}
+            />
+          </dd>
+        </div>
+      </dl>
+    </OverviewPanel>
   );
 }
