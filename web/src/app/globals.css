@@ -153,6 +153,9 @@
   --color-health-red-bg: var(--mm-error-surface);
   --color-health-blue: var(--mm-info);
   --color-health-blue-bg: var(--mm-info-surface);
+  /* Text on a solid status fill (the task progress gauge): white on the
+     light theme's deep status colours, near-black on the dark theme's pale ones. */
+  --color-on-health: var(--mm-white);
 }
 
 @theme inline {
@@ -184,6 +187,7 @@
   --color-health-red-bg: var(--color-health-red-bg);
   --color-health-blue: var(--color-health-blue);
   --color-health-blue-bg: var(--color-health-blue-bg);
+  --color-on-health: var(--color-on-health);
 
   --font-sans: var(--mm-font-body);
   --font-heading: var(--mm-font-heading);
@@ -257,6 +261,7 @@
     --color-health-red-bg: #2c1210;
     --color-health-blue: #9cc0f4;
     --color-health-blue-bg: #101f38;
+    --color-on-health: #1b1e20;
   }
 }
 
@@ -299,6 +304,7 @@
   --color-health-red-bg: #2c1210;
   --color-health-blue: #9cc0f4;
   --color-health-blue-bg: #101f38;
+  --color-on-health: #1b1e20;
 }
 
 /* ==========================================================================
