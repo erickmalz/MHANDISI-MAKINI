@@ -13,20 +13,16 @@ import { getT, pageTitle } from "@/lib/i18n/server";
 import { estimatedMaterialCost } from "@/lib/tasks";
 import { deletePhotoAction, uploadStagePhotoAction } from "@/app/actions/photos";
 import { recordLabourPaymentAction } from "@/app/actions/tasks";
-import { RecordLabourPaymentButton } from "./_components/RecordLabourPaymentButton";
+import { TaskCard } from "./_components/TaskCard";
 import { PhotoStrip } from "@/components/photos/PhotoStrip";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { VariationStatusBadge } from "../../variations/_components/VariationStatusBadge";
 import { BudgetVarianceCard } from "./_components/BudgetVarianceCard";
 import { SiteDiarySection } from "./_components/SiteDiarySection";
 import { ActionMenu, ActionMenuItem } from "@/components/ActionMenu";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { TASK_STATUS_KEYS } from "../../../_components/status-keys";
 
 export const generateMetadata = pageTitle("stages.detail.pageTitle");
 
@@ -97,79 +93,30 @@ export default async function StageDetailPage({
           {t("stages.detail.noTasks")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {stage.tasks.map((task) => (
             <li key={task.id}>
-              <Card className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-card-foreground">
-                        {task.seq}. {task.description}
-                      </span>
-                      <StatusBadge tone="neutral" size="sm">
-                        {t(TASK_STATUS_KEYS[task.status])}
-                      </StatusBadge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {task.subcontractorName ?? t("stages.detail.task.unassigned")}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/projects/${id}/tasks/${task.id}/edit`}
-                    className="inline-flex min-h-12 shrink-0 items-center gap-1 px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-                  >
-                    <PencilSimple size={16} aria-hidden="true" />
-                    {t("stages.detail.task.edit")}
-                  </Link>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <ProgressBar
-                    percent={task.progressPercent}
-                    className="flex-1"
-                    label={t("stages.detail.task.progress", { name: task.description })}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {task.progressPercent}%
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-sm sm:grid-cols-3">
-                  <div>
-                    <p className="text-muted-foreground">{t("stages.detail.task.labourAgreement")}</p>
-                    <Money
-                      amount={task.labourAmount ?? 0}
-                      className="font-bold text-card-foreground"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">{t("stages.detail.task.outstandingLabour")}</p>
-                    <Money
-                      amount={task.outstandingLabourAmount}
-                      className="font-bold text-card-foreground"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">{t("stages.detail.task.materialEstimate")}</p>
-                    <Money
-                      amount={estimatedMaterialCost(task)}
-                      className="font-bold text-card-foreground"
-                    />
-                  </div>
-                </div>
-
-                <RecordLabourPaymentButton
-                  hasAgreement={task.labourAmount != null}
-                  action={recordLabourPaymentAction.bind(
-                    null,
-                    id,
-                    stageId,
-                    task.id,
-                    `/projects/${id}/stages/${stageId}`,
-                  )}
-                />
-              </Card>
+              <TaskCard
+                task={{
+                  id: task.id,
+                  seq: task.seq,
+                  description: task.description,
+                  status: task.status,
+                  subcontractorName: task.subcontractorName,
+                  progressPercent: task.progressPercent,
+                  labourAmount: task.labourAmount,
+                  outstandingLabourAmount: task.outstandingLabourAmount,
+                  materialEstimate: estimatedMaterialCost(task),
+                }}
+                editHref={`/projects/${id}/tasks/${task.id}/edit`}
+                recordPaymentAction={recordLabourPaymentAction.bind(
+                  null,
+                  id,
+                  stageId,
+                  task.id,
+                  `/projects/${id}/stages/${stageId}`,
+                )}
+              />
             </li>
           ))}
         </ul>
