@@ -70,7 +70,7 @@ export const overview: Widen<typeof enOverview> = {
     separate: "Hesabu tofauti",
     invoices: "Nenda kwenye ankara za ada",
     earned: "Ada iliyopatikana ni sawa na ada iliyopokelewa.",
-    remaining: "Ada iliyosalia ya hatua hii:",
+    remaining: "Ada iliyosalia ya mradi huu:",
     remainingNote: "Bado inahesabiwa katika fedha zinazohitajika za mradi zinazotabiriwa, kwa sababu mteja ndiye anayeigharamia mwishowe.",
   },
   stages: {

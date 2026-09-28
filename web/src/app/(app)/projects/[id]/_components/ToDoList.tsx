@@ -27,7 +27,9 @@ const SEVERITY_CONFIG = {
 
 /**
  * The project's unresolved alerts as a to-do list, most urgent first, each
- * with a way straight to the record it is about (guidelines §33).
+ * with a way straight to the record it is about (guidelines §33). Each "View"
+ * carries its alert's message as hidden text after the visible label, so the
+ * links stay distinct in a links list or to voice control.
  */
 export async function ToDoList({ alerts }: { alerts: ProjectAlert[] }) {
   const t = await getT();
@@ -68,6 +70,7 @@ export async function ToDoList({ alerts }: { alerts: ProjectAlert[] }) {
                     className="inline-flex min-h-11 items-center rounded-lg border border-foreground px-4 text-sm font-bold text-foreground hover:bg-muted"
                   >
                     {t("overview.alerts.view")}
+                    <span className="sr-only">: {alert.message}</span>
                   </Link>
                 )}
               </li>

@@ -11,7 +11,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
  * The supervision fee is its own ledger — the supervisor's earnings, billed
  * through Fee Invoices, never through client deposits. It is shown apart from
  * the project financial position (a dashed edge and its own label) and never
- * nets against client project funds.
+ * nets against client project funds. `f` is the whole project's fee ledger —
+ * every stage summed through `sumStageFinancials` — not one stage's share.
  */
 export async function SupervisorFee({
   projectId,

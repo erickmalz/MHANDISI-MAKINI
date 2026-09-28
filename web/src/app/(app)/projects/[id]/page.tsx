@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { getProjectOverview } from "@/lib/data";
+import { sumStageFinancials } from "@/lib/finance";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { getCurrentStage } from "@/lib/project-view";
 import { Button } from "@/components/ui/Button";
@@ -58,7 +59,10 @@ export default async function ProjectOverviewPage({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start xl:col-start-2 xl:row-start-2 xl:grid-cols-1">
             <FinancialPosition stages={project.stages} />
-            <SupervisorFee projectId={project.id} f={stage.financials} />
+            <SupervisorFee
+              projectId={project.id}
+              f={sumStageFinancials(project.stages.map((s) => s.financials))}
+            />
           </div>
         </div>
       ) : (
