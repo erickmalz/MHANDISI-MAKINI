@@ -67,7 +67,7 @@ export const overview = {
     separate: "Separate ledger",
     invoices: "Go to fee invoices",
     earned: "Fee earned equals fee received.",
-    remaining: "Remaining fee for this stage:",
+    remaining: "Remaining fee for this project:",
     remainingNote: "It is still counted in the project's forecast funding requirement, since the client ultimately funds it.",
   },
   stages: {

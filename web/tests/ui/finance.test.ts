@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateStageFinancials, forecastFundingRequirement } from "@/lib/finance";
+import {
+  aggregateStageFinancials,
+  forecastFundingRequirement,
+  sumStageFinancials,
+  supervisorFeePosition,
+} from "@/lib/finance";
 import type { StageFinancials } from "@/lib/types";
 
 const ZERO: StageFinancials = {
@@ -88,5 +93,20 @@ describe("aggregateStageFinancials", () => {
     expect(totals.remainingStageRequirement).toBe(0);
     expect(totals.availableFloat).toBe(0);
     expect(totals.forecastShortfall).toBe(0);
+  });
+});
+
+describe("supervisorFeePosition over sumStageFinancials", () => {
+  it("rolls the fee ledger up across every stage, not just one", () => {
+    const foundation = fin({ feeRecorded: 50, feeInvoiced: 300, feeReceived: 300, remainingFee: 100 });
+    const walling = fin({ feeRecorded: 0, feeInvoiced: 200, feeReceived: 50, remainingFee: 400 });
+
+    const fee = supervisorFeePosition(sumStageFinancials([foundation, walling]));
+
+    expect(fee.recorded).toBe(50);
+    expect(fee.invoiced).toBe(500);
+    expect(fee.received).toBe(350);
+    expect(fee.outstanding).toBe(150);
+    expect(fee.remaining).toBe(500);
   });
 });

@@ -22,7 +22,7 @@ const ROW_GRID =
   "@2xl:grid-cols-[minmax(11rem,1fr)_8rem_9rem_8.5rem] @2xl:gap-x-4 @2xl:gap-y-1";
 
 const ACTION =
-  "inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-sm font-bold text-muted-foreground transition-[color,background-color,transform] duration-100 hover:text-foreground active:scale-[0.97] active:bg-accent/10 active:text-foreground";
+  "inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-sm font-bold text-muted-foreground transition-[color,background-color,transform] duration-100 hover:text-foreground motion-safe:active:scale-[0.97] active:bg-accent/10 active:text-foreground";
 
 /**
  * Every stage in build order, one row each: where the work is, whether its own
@@ -30,7 +30,9 @@ const ACTION =
  * fund another stage, so the top-up is per stage and links to that stage's
  * financial check. A column table when the panel is wide; below that each row
  * becomes a small labelled card (one list either way — nothing is rendered
- * twice, so the "Work this stage" forms stay single).
+ * twice, so the "Work this stage" forms stay single). Each row action carries
+ * the stage's name as hidden text after its visible label, so a links list or
+ * a voice command can tell one row's "Edit" from the next.
  */
 export async function StageTable({
   projectId,
@@ -56,7 +58,7 @@ export async function StageTable({
       aside={
         <Link
           href={`/projects/${projectId}/stages/new`}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-bold text-on-accent hover:underline"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-bold text-card-foreground hover:underline"
         >
           <Plus size={16} aria-hidden="true" />
           {t("overview.stages.add")}
@@ -79,10 +81,11 @@ export async function StageTable({
           .map((stage) => {
             const isCurrent = stage.id === currentStageId;
             const topUp = forecastFundingRequirement(stage.financials);
+            const rowContext = <span className="sr-only">, {stage.name}</span>;
             return (
               <li
                 key={stage.id}
-                className={`grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0 last:rounded-b-[10px] md:px-5 ${ROW_GRID} ${
+                className={`grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0 last:rounded-b-[11px] md:px-5 ${ROW_GRID} ${
                   isCurrent ? "bg-muted" : ""
                 }`}
               >
@@ -146,14 +149,17 @@ export async function StageTable({
                 <div className="col-span-2 -ml-2 flex flex-wrap items-center @2xl:col-span-4">
                   <Link href={`/projects/${projectId}/stages/${stage.id}`} className={ACTION}>
                     {t("overview.stages.tasks")}
+                    {rowContext}
                   </Link>
                   <Link href={`/projects/${projectId}/stages/${stage.id}/edit`} className={ACTION}>
                     {t("overview.stages.edit")}
+                    {rowContext}
                   </Link>
                   {!isCurrent && (
                     <form action={setCurrentStageAction.bind(null, projectId, stage.id)}>
                       <button type="submit" className={ACTION}>
                         {t("overview.stages.work")}
+                    {rowContext}
                       </button>
                     </form>
                   )}
