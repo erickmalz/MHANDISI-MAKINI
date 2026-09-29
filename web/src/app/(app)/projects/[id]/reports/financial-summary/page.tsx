@@ -11,7 +11,6 @@ import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { STAGE_STATUS_LABEL } from "../../../_components/status-labels";
 import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
-import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
 import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
 import { getReportFilterState } from "@/lib/reports/filter-state";
 
@@ -56,7 +55,7 @@ export default async function FinancialSummaryReportPage({
           scopeId={id}
           basePath={`/projects/${id}/reports/financial-summary`}
           shareTitle={`${title} — ${report.projectCode}`}
-          fileStem={`${REPORT_FILE_STEM["financial-summary"]}-${report.projectCode}`}
+          scopeLabel={report.projectCode}
         />
 
         <Card className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

@@ -10,7 +10,6 @@ import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
 import { ReportToolbar } from "@/components/reports/ReportToolbar";
-import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
 import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
 import { getReportFilterState } from "@/lib/reports/filter-state";
 
@@ -60,7 +59,7 @@ export default async function SubcontractorStatementPage({
         scopeId={id}
         basePath={`/subcontractors/${id}`}
         shareTitle={`${t("subcontractors.statement.pageTitle")} — ${statement.name}`}
-        fileStem={`${REPORT_FILE_STEM["subcontractor-statement"]}-${statement.name}`}
+        scopeLabel={statement.name}
       />
 
       <Card className="mb-6 flex items-center justify-between">

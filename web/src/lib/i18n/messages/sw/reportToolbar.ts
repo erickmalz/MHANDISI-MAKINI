@@ -11,11 +11,6 @@ export const reportToolbar: Widen<typeof enreportToolbar> = {
   exportJpg: "Hamisha picha (JPG)",
   exportCsv: "Hamisha CSV (lahajedwali)",
   print: "Chapisha",
-  shareFormats: {
-    pdf: "Hati ya PDF",
-    jpg: "Picha (JPG)",
-    csv: "CSV (lahajedwali)",
-  },
   sheet: {
     title: "Chuja ripoti hii",
     close: "Funga vichujio",

@@ -625,10 +625,10 @@ export function buildStatementLedger(
       const cancelled = o.status === "cancelled";
       const type = t("reportExport.ledger.order");
       entries.push({
-        date: isoDay(o.createdAt),
+        date: isoDay(o.orderedOn),
         cells: [
           cancelled ? t("reportExport.ledger.cancelled", { type }) : type,
-          isoDay(o.createdAt),
+          isoDay(o.orderedOn),
           o.projectName,
           o.stageName,
           o.displayNumber ?? t("suppliers.statement.draft"),
@@ -656,11 +656,12 @@ export function buildStatementLedger(
     for (const x of data.statement.tasks) {
       const cancelled = x.status === "cancelled";
       const type = t("reportExport.ledger.agreement");
+      const agreedOn = isoDay(x.agreedOn);
       entries.push({
-        date: "",
+        date: agreedOn,
         cells: [
           cancelled ? t("reportExport.ledger.cancelled", { type }) : type,
-          null,
+          agreedOn,
           x.projectName,
           x.stageName,
           x.description,

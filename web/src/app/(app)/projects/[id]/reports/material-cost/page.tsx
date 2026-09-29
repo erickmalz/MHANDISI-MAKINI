@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
-import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
 import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
 import { getReportFilterState } from "@/lib/reports/filter-state";
 
@@ -49,7 +48,7 @@ export default async function MaterialCostReportPage({
         scopeId={id}
         basePath={`/projects/${id}/reports/material-cost`}
         shareTitle={`${title} — ${report.projectCode}`}
-        fileStem={`${REPORT_FILE_STEM["material-cost"]}-${report.projectCode}`}
+        scopeLabel={report.projectCode}
       />
 
       <Card>

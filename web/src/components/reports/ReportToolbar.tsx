@@ -6,14 +6,16 @@ import { controlClass } from "@/components/ui/Field";
 import { getT } from "@/lib/i18n/server";
 import type { Translator } from "@/lib/i18n/translate";
 import { reportExportHref, type ExportFormat } from "@/lib/reports/export-href";
+import { reportExportFilename } from "@/lib/reports/export-filename";
 import {
   REPORT_DIMENSIONS,
+  hasActiveFilters,
   type ActiveFilter,
   type ReportFilterState,
   type ReportKind,
 } from "@/lib/reports/filters";
 
-import { exportFilename, filteredHref, hrefWithout } from "./filter-links";
+import { filteredHref, hrefWithout } from "./filter-links";
 import { FiltersSheet } from "./FiltersSheet";
 import { MoreMenu } from "./MoreMenu";
 
@@ -26,20 +28,20 @@ const DATE_RANGE_LABEL = {
   "subcontractor-statement": "reportToolbar.dateRange.dated",
 } as const satisfies Partial<Record<ReportKind, string>>;
 
+/** The date fieldset's heading in the filter sheet, e.g. "Issued between". */
 function dateRangeLabel(kind: ReportKind, t: Translator): string {
   return kind in DATE_RANGE_LABEL
     ? t(DATE_RANGE_LABEL[kind as keyof typeof DATE_RANGE_LABEL])
     : t("reportToolbar.dimensions.from");
 }
 
-/** "Stage: Walling", or the range label for a collapsed from/to entry. */
-function describe(filter: ActiveFilter, state: ReportFilterState, t: Translator): string {
-  const collapsedRange =
-    filter.dimension === "from" && !state.active.some((a) => a.dimension === "to");
-  const name = collapsedRange
-    ? dateRangeLabel(state.kind, t)
-    : t(`reportToolbar.dimensions.${filter.dimension}`);
-  return `${name}: ${filter.label}`;
+/**
+ * "Stage: Walling". A collapsed from/to entry already reads as a whole phrase
+ * ("Issued 1–30 Sep 2026"), so it is shown as-is.
+ */
+function describe(filter: ActiveFilter, t: Translator): string {
+  if (filter.dimension === "from" || filter.dimension === "to") return filter.label;
+  return `${t(`reportToolbar.dimensions.${filter.dimension}`)}: ${filter.label}`;
 }
 
 /**
@@ -57,7 +59,7 @@ export async function ReportToolbar({
   scopeId,
   basePath,
   shareTitle,
-  fileStem,
+  scopeLabel,
 }: {
   state: ReportFilterState;
   /** The project id for a report, the supplier / subcontractor id for a statement. */
@@ -66,13 +68,14 @@ export async function ReportToolbar({
   basePath: string;
   /** Sent as the share title, e.g. "Procurement — PRJ-2026-001". */
   shareTitle: string;
-  /** Filename stem, e.g. "Procurement-PRJ-2026-001". */
-  fileStem: string;
+  /** The project code for a report, the party's name for a statement (filename). */
+  scopeLabel: string;
 }) {
   const t = await getT();
   const { kind, filters } = state;
   const href = (format: ExportFormat) => reportExportHref(kind, scopeId, format, filters);
-  const file = (format: ExportFormat) => exportFilename(fileStem, filters, format);
+  const file = (format: ExportFormat) =>
+    reportExportFilename({ kind, scopeLabel, format, filtered: hasActiveFilters(filters) });
 
   const dimensions = REPORT_DIMENSIONS[kind];
   const selectDims = dimensions.filter((d) => d !== "from" && d !== "to");
@@ -153,7 +156,7 @@ export async function ReportToolbar({
               title={shareTitle}
               files={(["pdf", "jpg", "csv"] as const).map((format) => ({
                 format,
-                label: t(`reportToolbar.shareFormats.${format}`),
+                label: t(`share.formats.${format}`),
                 href: href(format),
                 filename: file(format),
               }))}
@@ -183,7 +186,7 @@ export async function ReportToolbar({
               <li key={a.dimension}>
                 <Link
                   href={hrefWithout(basePath, filters, a.dimension)}
-                  aria-label={t("reportToolbar.removeFilter", { label: describe(a, state, t) })}
+                  aria-label={t("reportToolbar.removeFilter", { label: describe(a, t) })}
                   className="inline-flex min-h-12 items-center gap-2 rounded-full border border-foreground bg-card px-4 text-sm font-bold text-foreground hover:bg-muted"
                 >
                   {a.label}
@@ -194,7 +197,7 @@ export async function ReportToolbar({
           </ul>
           <p className="text-sm text-muted-foreground">
             <span className="font-bold text-foreground">{t("reportToolbar.filtered")}</span>{" "}
-            {state.active.map((a) => describe(a, state, t)).join(" · ")}
+            {state.active.map((a) => describe(a, t)).join(" · ")}
             {state.dateRangeActive && <> · {t("reportToolbar.asOfToday")}</>}
             {" · "}
             <Link href={filteredHref(basePath, {})} className="font-bold text-foreground underline">

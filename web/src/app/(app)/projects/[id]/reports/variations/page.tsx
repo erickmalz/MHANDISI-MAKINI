@@ -12,7 +12,6 @@ import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import type { MessageKey } from "@/lib/i18n/types";
 import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
-import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
 import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
 import { getReportFilterState } from "@/lib/reports/filter-state";
 
@@ -60,7 +59,7 @@ export default async function VariationReportPage({
         scopeId={id}
         basePath={`/projects/${id}/reports/variations`}
         shareTitle={`${title} — ${report.projectCode}`}
-        fileStem={`${REPORT_FILE_STEM.variations}-${report.projectCode}`}
+        scopeLabel={report.projectCode}
       />
 
       <Card className="mb-6 max-w-xs">

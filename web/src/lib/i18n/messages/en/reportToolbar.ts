@@ -9,11 +9,6 @@ export const reportToolbar = {
   exportJpg: "Export image (JPG)",
   exportCsv: "Export CSV (spreadsheet)",
   print: "Print",
-  shareFormats: {
-    pdf: "PDF document",
-    jpg: "Image (JPG)",
-    csv: "CSV (spreadsheet)",
-  },
   sheet: {
     title: "Filter this report",
     close: "Close filters",
