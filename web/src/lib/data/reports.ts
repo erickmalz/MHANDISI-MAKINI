@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ReportFilters } from "@/lib/reports/filters";
+
 import { sql } from "drizzle-orm";
 
 import {
@@ -126,7 +128,10 @@ export interface ProjectFinancialSummary {
  */
 export async function getProjectFinancialSummary(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<ProjectFinancialSummary | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
@@ -220,7 +225,10 @@ export interface MaterialCostReport {
  */
 export async function getMaterialCostReport(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<MaterialCostReport | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
@@ -294,7 +302,10 @@ export interface ProcurementReport {
  */
 export async function getProcurementReport(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<ProcurementReport | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
@@ -375,7 +386,10 @@ export interface LabourReport {
  */
 export async function getLabourReport(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<LabourReport | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
@@ -479,7 +493,10 @@ export interface FundingReport {
  */
 export async function getFundingReport(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<FundingReport | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 
@@ -564,7 +581,10 @@ function variationFundingStatus(
  */
 export async function getVariationReport(
   projectId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<VariationReport | null> {
+  void filters;
   const project = await getProjectOverview(projectId);
   if (!project) return null;
 

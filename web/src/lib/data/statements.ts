@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ReportFilters } from "@/lib/reports/filters";
+
 import { eq, sql } from "drizzle-orm";
 
 import { subcontractors, suppliers } from "./schema";
@@ -84,7 +86,10 @@ export interface SubcontractorStatement {
 /** One Supplier's full account-wide statement, or `null` (missing / cross-account). */
 export async function getSupplierStatement(
   supplierId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<SupplierStatement | null> {
+  void filters;
   return withAccount(async (tx) => {
     const [supplier] = await tx
       .select({ name: suppliers.name })
@@ -181,7 +186,10 @@ export async function getSupplierStatement(
 /** One Subcontractor's full account-wide statement, or `null` (missing / cross-account). */
 export async function getSubcontractorStatement(
   subcontractorId: string,
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
 ): Promise<SubcontractorStatement | null> {
+  void filters;
   return withAccount(async (tx) => {
     const [subcontractor] = await tx
       .select({ name: subcontractors.name })

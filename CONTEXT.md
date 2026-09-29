@@ -84,6 +84,18 @@ _Avoid_: revising or versioning an Ordered Purchase Order (Funding Requests vers
 The client- or supplier-facing document an Issued Funding Request, Fee Invoice or Purchase Order renders to — a PDF (authoritative) plus a JPG of the same content for inline sharing. It renders on demand and is never stored; its transactional content is the exact frozen snapshot taken at Issue, so a superseded Funding Request v1 still renders v1 forever. Only the letterhead (the Engineer's own business name, contact and logo) is drawn from the current Account profile rather than the snapshot. A Deposit, Delivery or Payment produces no Issued Document — there the Engineer is only logging the counterparty's own paperwork. The Fee Invoice carries its own per-project number, `FI-{project}-NNN`, minted when the Funding Request is issued.
 _Avoid_: calling it a "generated PDF" or "export" (it is the document of record, not a convenience copy); "stored document" (it is never persisted)
 
+**Report**:
+A live, read-only analytical view of one Project's figures (Financial Summary, Material Cost, Procurement, Labour, Funding, Variations). It always shows current figures, is never frozen, and never combines projects.
+_Avoid_: Statement (reserved for the Supplier and Subcontractor Statements), dashboard
+
+**Statement**:
+A live, read-only view of everything between the Engineer and one Supplier (orders, payments, outstanding balance) or one Subcontractor (agreed labour, payments, outstanding balance), across every Project in the Account that party works on. It shows only that party's own dealings, never project-level money.
+_Avoid_: Supplier report, account statement (it is not a bank statement)
+
+**Report Export**:
+A dated rendering of a Report's or a Statement's live figures, made on demand on the Engineer's letterhead and marked "As of" the moment it was made. It is never stored, numbered or versioned, and it is not an Issued Document: it carries no status stamp and is not a request for payment. The Engineer may send it to anyone.
+_Avoid_: Snapshot (reserved for an Issued Document's frozen Issue-time content), issued report
+
 **Retention**:
 A percentage of a Subcontractor's labour agreement withheld until a release condition is met. Whether retention is used at all, and its release conditions, is a still-open decision.
 

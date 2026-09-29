@@ -22,6 +22,11 @@ totals directly conflict with that. What does Phase 4 actually build?
 
 ## Answer
 
+> **Superseded in part (2026-09-29):** the "no PDF/JPG export" ruling below
+> is reversed by [What an exported report is](../../reports-toolbar/issues/01-what-an-exported-report-is.md)
+> on the Reports filters/export/share/print map. Reports may now leave the app
+> as a dated Report Export. The rest of this answer stands.
+
 **Per-project reports: yes, all six not already covered.** Supplier
 Statement and Subcontractor Statement already ship (Operational Control
 decision 5); Stage Closeout Report is ticket 03. This ticket builds the
