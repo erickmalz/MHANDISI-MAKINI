@@ -9,6 +9,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { TASK_STATUS_LABEL } from "../../../_components/status-labels";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("reports.labour.pageTitle");
 
@@ -20,28 +24,45 @@ export const generateMetadata = pageTitle("reports.labour.pageTitle");
  */
 export default async function LabourReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/labour">) {
   const { id } = await params;
-  const report = await getLabourReport(id);
+  const filters = parseReportFilters("labour", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getLabourReport(id, filters),
+    getReportFilterState("labour", id, filters),
+  ]);
   if (!report) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filters);
+  const title = t("reports.labour.label");
 
   return (
     <PageFrame width="working">
       <PageHeader
         crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-        title={t("reports.labour.label")}
+        title={title}
+      />
+
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/projects/${id}/reports/labour`}
+        shareTitle={`${title} — ${report.projectCode}`}
+        fileStem={`${REPORT_FILE_STEM.labour}-${report.projectCode}`}
       />
 
       <Card>
         {report.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("reports.labour.empty")}
-          </p>
+          filtered ? (
+            <NoMatch />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("reports.labour.empty")}</p>
+          )
         ) : (
           <DataTable
             caption={t("reports.labour.caption")}
-            totalLabel={t("reports.total")}
+            totalLabel={t(filtered ? "reports.totalFiltered" : "reports.total")}
             rows={report.rows}
             rowKey={(r) => r.taskId}
             columns={[

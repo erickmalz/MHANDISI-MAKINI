@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+import { ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("subcontractors.statement.pageTitle");
 
@@ -17,14 +21,24 @@ export const generateMetadata = pageTitle("subcontractors.statement.pageTitle");
  * always-live, all-time, all-project view: every Task this Subcontractor is
  * assigned, every labour Payment made, and the running Outstanding balance.
  * The "Variations" line from guidelines §Reports is omitted — Variations
- * don't exist until Phase 3. Not a rendered document.
+ * don't exist until Phase 3. It leaves the app as a dated Report Export
+ * (PDF / JPG / CSV) through the same toolbar as the Reports
+ * (reports-toolbar ticket 07).
  */
 export default async function SubcontractorStatementPage({
   params,
+  searchParams,
 }: PageProps<"/subcontractors/[id]">) {
   const { id } = await params;
-  const [statement, t, locale] = await Promise.all([getSubcontractorStatement(id), getT(), getLocale()]);
+  const filters = parseReportFilters("subcontractor-statement", await searchParams);
+  const [statement, filterState, t, locale] = await Promise.all([
+    getSubcontractorStatement(id, filters),
+    getReportFilterState("subcontractor-statement", id, filters),
+    getT(),
+    getLocale(),
+  ]);
   if (!statement) notFound();
+  const filtered = hasActiveFilters(filters);
 
   return (
     <PageFrame width="working">
@@ -41,15 +55,31 @@ export default async function SubcontractorStatementPage({
         }
       />
 
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/subcontractors/${id}`}
+        shareTitle={`${t("subcontractors.statement.pageTitle")} — ${statement.name}`}
+        fileStem={`${REPORT_FILE_STEM["subcontractor-statement"]}-${statement.name}`}
+      />
+
       <Card className="mb-6 flex items-center justify-between">
-        <span className="text-lg font-bold text-card-foreground">{t("subcontractors.statement.outstanding")}</span>
+        <span className="text-lg font-bold text-card-foreground">
+          {t(
+            filtered
+              ? "subcontractors.statement.outstandingFiltered"
+              : "subcontractors.statement.outstanding",
+          )}
+        </span>
         <Money amount={statement.outstandingBalance} className="text-xl font-bold text-card-foreground" />
       </Card>
 
       <Card className="mb-6">
         <h2 className="text-xl font-bold text-card-foreground">{t("subcontractors.statement.agreedLabour")}</h2>
         {statement.tasks.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">{t("subcontractors.statement.noTasks")}</p>
+          <p className="mt-4 text-muted-foreground">
+            {t(filtered ? "reportToolbar.noMatch" : "subcontractors.statement.noTasks")}
+          </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.tasks.map((task) => (
@@ -76,7 +106,9 @@ export default async function SubcontractorStatementPage({
       <Card>
         <h2 className="text-xl font-bold text-card-foreground">{t("subcontractors.statement.payments")}</h2>
         {statement.payments.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">{t("subcontractors.statement.noPayments")}</p>
+          <p className="mt-4 text-muted-foreground">
+            {t(filtered ? "reportToolbar.noMatch" : "subcontractors.statement.noPayments")}
+          </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.payments.map((p) => (

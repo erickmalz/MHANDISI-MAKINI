@@ -10,6 +10,10 @@ import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("reports.procurement.pageTitle");
 
@@ -22,21 +26,39 @@ export const generateMetadata = pageTitle("reports.procurement.pageTitle");
  */
 export default async function ProcurementReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/procurement">) {
   const { id } = await params;
-  const report = await getProcurementReport(id);
+  const filters = parseReportFilters("procurement", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getProcurementReport(id, filters),
+    getReportFilterState("procurement", id, filters),
+  ]);
   if (!report) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filters);
+  const title = t("reports.procurement.label");
 
   return (
     <PageFrame width="working">
       <PageHeader
         crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-        title={t("reports.procurement.label")}
+        title={title}
+      />
+
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/projects/${id}/reports/procurement`}
+        shareTitle={`${title} — ${report.projectCode}`}
+        fileStem={`${REPORT_FILE_STEM.procurement}-${report.projectCode}`}
       />
 
       <Card className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
-        <StatTile label={t("reports.procurement.required")} amount={report.required} />
+        {/* "Required" is the stage's material estimate — there is no per-supplier / status / date figure. */}
+        {!filterState.finerFilterActive && (
+          <StatTile label={t("reports.procurement.required")} amount={report.required} />
+        )}
         <StatTile label={t("reports.procurement.ordered")} amount={report.totals.ordered} />
         <StatTile label={t("reports.procurement.delivered")} amount={report.totals.delivered} />
         <StatTile label={t("reports.procurement.paid")} amount={report.totals.paid} />
@@ -45,13 +67,20 @@ export default async function ProcurementReportPage({
           amount={report.totals.outstanding}
           tone={report.totals.outstanding > 0 ? "destructive" : undefined}
         />
+        {filtered && (
+          <p className="col-span-full text-sm text-muted-foreground">
+            {t("reportToolbar.filteredTotals")}
+          </p>
+        )}
       </Card>
 
       <Card>
         {report.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("reports.procurement.empty")}
-          </p>
+          filtered ? (
+            <NoMatch />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("reports.procurement.empty")}</p>
+          )
         ) : (
           <DataTable
             caption={t("reports.procurement.caption")}

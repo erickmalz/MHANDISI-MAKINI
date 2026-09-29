@@ -28,6 +28,7 @@ export const suppliers = {
     subtitle: "Statement of account, every project",
     editDetails: "Edit details",
     outstanding: "Outstanding balance",
+    outstandingFiltered: "Outstanding (filtered)",
     orders: "Orders",
     noOrders: "No Purchase Orders yet.",
     payments: "Payments",
