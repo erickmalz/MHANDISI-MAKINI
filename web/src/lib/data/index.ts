@@ -104,6 +104,8 @@ export {
   recordDeposit,
   voidDeposit,
   markFeeInvoicePaid,
+  voidFeeInvoice,
+  correctFeeInvoice,
   listFeeInvoices,
   getFeeInvoice,
   type IssueResult,

@@ -90,12 +90,20 @@ async function seedAccountA(app: Client, acc: string): Promise<Ids> {
          VALUES ($1, $2, $3, '2026-09-01', 'bank_transfer', $4) RETURNING id`,
         [acc, frId, amount, voided ? new Date() : null],
       );
-    const feeInvoice = (stageId: string, frId: string, status: string, amount: number, n: number) =>
+    const feeInvoice = (
+      stageId: string,
+      frId: string,
+      status: string,
+      amount: number,
+      n: number,
+      originalAmount: number | null = null,
+    ) =>
       one(
         `INSERT INTO fee_invoices (account_id, stage_id, funding_request_id, status, base_number,
-                                   display_number, fee_basis, fee_amount, document_snapshot)
-         VALUES ($1, $2, $3, $4, $5, $6, 'fixed', $7, '{}'::jsonb) RETURNING id`,
-        [acc, stageId, frId, status, n, `FI-A-${n}`, amount],
+                                   display_number, fee_basis, fee_amount, original_fee_amount,
+                                   document_snapshot)
+         VALUES ($1, $2, $3, $4, $5, $6, 'fixed', $7, $8, '{}'::jsonb) RETURNING id`,
+        [acc, stageId, frId, status, n, `FI-A-${n}`, amount, originalAmount],
       );
     const po = async (stageId: string, status: string, qty: number, price: number) => {
       const id = await one(
@@ -200,11 +208,15 @@ async function seedAccountA(app: Client, acc: string): Promise<Ids> {
     await frLine(fr2, "material", 500_000);
     await frLine(fr2, "fee", 50_000);
     await deposit(fr2, 900_000);
-    await feeInvoice(s2, fr2, "issued", 50_000, 3);
+    // Billed at 50,000, then corrected down to 40,000.
+    await feeInvoice(s2, fr2, "issued", 40_000, 3, 50_000);
 
     // --- Stage 3: issued, deposit still pending (Blue).
     const fr3 = await fr(s3, "issued");
     await frLine(fr3, "material", 100_000);
+    await frLine(fr3, "fee", 70_000);
+    // Raised in error and voided.
+    await feeInvoice(s3, fr3, "void", 70_000, 4);
 
     return { projectId, s1, s2, s3 };
   });
@@ -280,6 +292,19 @@ describe("Stage Financials read model", () => {
     expect(f.fundingRequestPending).toBe(true);
     expect(f.remainingMaterial).toBe(100_000);
     expect(availableFloat(f)).toBe(0);
+  });
+
+  it("drops a voided Fee Invoice from the fee owed without re-reading its fee as still to bill", async () => {
+    const f = await read(accountA, (tx) => readStageFinancials(tx, ids.s3));
+    expect(f.feeInvoiced).toBe(0);
+    expect(f.feeReceived).toBe(0);
+    expect(f.remainingFee).toBe(0); // 70,000 on the request − 70,000 billed then voided
+  });
+
+  it("counts a corrected Fee Invoice at its corrected amount", async () => {
+    const f = await read(accountA, (tx) => readStageFinancials(tx, ids.s2));
+    expect(f.feeInvoiced).toBe(40_000);
+    expect(f.remainingFee).toBe(0); // 50,000 on the request − 50,000 first billed
   });
 
   it("returns every stage of the project in seq order, each equal to its own stage read", async () => {

@@ -5,6 +5,7 @@ export const feeInvoices = {
   status: {
     issued: "Issued",
     paid: "Paid",
+    void: "Void",
   },
   list: {
     subtitle:
@@ -24,6 +25,8 @@ export const feeInvoices = {
     stageValue: "Stage value",
     issuedOn: "Issued {date}",
     paidOn: "Paid {date}",
+    voidedOn: "Voided {date}:",
+    correctedOn: "Amount corrected {date} (was {amount}):",
     delta:
       "Delta invoice — raised for the fee added after the original was already paid.",
     paymentInstructions: "Payment instructions",
@@ -33,6 +36,21 @@ export const feeInvoices = {
       title: "Mark as paid",
       body: "Record that this Fee Invoice's fee has been received. This cannot be undone.",
       action: "Mark as paid",
+    },
+    correct: {
+      title: "Correct the amount",
+      body: "Fix a wrong fee under the same invoice number. The reason is kept and printed on the invoice.",
+      amount: "Correct fee amount",
+      reason: "Reason for the correction",
+      action: "Save correction",
+      submitting: "Saving…",
+    },
+    void: {
+      title: "Void this invoice",
+      body: "For an invoice raised in error. It stays on record, stamped VOID, and no longer counts as fee owed. This cannot be undone.",
+      reason: "Reason for voiding",
+      action: "Void invoice",
+      submitting: "Voiding…",
     },
   },
 } as const;

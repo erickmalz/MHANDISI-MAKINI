@@ -794,7 +794,7 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
       });
 
     let priorFee:
-      | { id: string; status: "issued" | "paid"; feeAmount: number; baseNumber: number; displayNumber: string }
+      | { id: string; status: "issued" | "paid" | "void"; feeAmount: number; baseNumber: number; displayNumber: string }
       | undefined;
     if (fr.supersedesId) {
       [priorFee] = await tx
@@ -841,6 +841,10 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           documentSnapshot: feeInvoiceSnapshot(priorFee.displayNumber, {
             isDelta: false,
           }),
+          // A fresh basis — an earlier correction no longer applies.
+          originalFeeAmount: null,
+          correctionReason: null,
+          correctedAt: null,
           issuedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -878,7 +882,8 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
         });
       }
     } else {
-      // Fresh Fee Invoice for a first issue or an additional request.
+      // Fresh Fee Invoice for a first issue, an additional request, or a
+      // superseding version whose predecessor's invoice was voided.
       const fiSeq = await claimDocumentNumber(
         tx,
         accountId,
@@ -1055,7 +1060,7 @@ export async function voidDeposit(
 export interface FeeInvoiceListItem {
   id: string;
   displayNumber: string;
-  status: "issued" | "paid";
+  status: "issued" | "paid" | "void";
   isDelta: boolean;
   feeAmount: number;
   stageId: string;
@@ -1073,6 +1078,12 @@ export interface FeeInvoiceDetail extends FeeInvoiceListItem {
   feePercent: string | null;
   basisValue: number | null;
   paymentInstructions: string | null;
+  voidedAt: string | null;
+  voidReason: string | null;
+  /** The amount first billed, when it has since been corrected. */
+  originalFeeAmount: number | null;
+  correctionReason: string | null;
+  correctedAt: string | null;
 }
 
 const feeInvoiceSelection = {
@@ -1092,12 +1103,17 @@ const feeInvoiceSelection = {
   fundingRequestDisplayNumber: fundingRequests.displayNumber,
   issuedAt: feeInvoices.issuedAt,
   paidAt: feeInvoices.paidAt,
+  voidedAt: feeInvoices.voidedAt,
+  voidReason: feeInvoices.voidReason,
+  originalFeeAmount: feeInvoices.originalFeeAmount,
+  correctionReason: feeInvoices.correctionReason,
+  correctedAt: feeInvoices.correctedAt,
 } as const;
 
 type FeeInvoiceRow = {
   id: string;
   displayNumber: string;
-  status: "issued" | "paid";
+  status: "issued" | "paid" | "void";
   isDelta: boolean;
   feeAmount: number;
   feeBasis: "fixed" | "percent";
@@ -1111,6 +1127,11 @@ type FeeInvoiceRow = {
   fundingRequestDisplayNumber: string | null;
   issuedAt: Date | string;
   paidAt: Date | string | null;
+  voidedAt: Date | string | null;
+  voidReason: string | null;
+  originalFeeAmount: number | null;
+  correctionReason: string | null;
+  correctedAt: Date | string | null;
 };
 
 function toFeeInvoiceListItem(r: FeeInvoiceRow): FeeInvoiceListItem {
@@ -1161,6 +1182,11 @@ export async function getFeeInvoice(feeInvoiceId: string): Promise<FeeInvoiceDet
       feePercent: row.feePercent,
       basisValue: row.basisValue,
       paymentInstructions: row.paymentInstructions,
+      voidedAt: iso(row.voidedAt),
+      voidReason: row.voidReason,
+      originalFeeAmount: row.originalFeeAmount,
+      correctionReason: row.correctionReason,
+      correctedAt: iso(row.correctedAt),
     };
   });
 }
@@ -1177,6 +1203,80 @@ export async function markFeeInvoicePaid(feeInvoiceId: string): Promise<boolean>
           eq(feeInvoices.status, "issued"),
         ),
       )
+      .returning({ id: feeInvoices.id });
+    return res.length > 0;
+  });
+}
+
+/**
+ * Void an unpaid Fee Invoice raised in error, with a recorded reason. The row
+ * and its number stay; it drops out of Fee Invoiced / Outstanding and its
+ * document is stamped VOID. `false` when missing or no longer `issued` — a paid
+ * invoice is never voided.
+ */
+export async function voidFeeInvoice(feeInvoiceId: string, reason: string): Promise<boolean> {
+  return withAccount(async (tx) => {
+    const res = await tx
+      .update(feeInvoices)
+      .set({ status: "void", voidedAt: new Date(), voidReason: reason, updatedAt: new Date() })
+      .where(and(eq(feeInvoices.id, feeInvoiceId), eq(feeInvoices.status, "issued")))
+      .returning({ id: feeInvoices.id });
+    return res.length > 0;
+  });
+}
+
+/**
+ * Correct an unpaid Fee Invoice's amount, with a recorded reason. Same row,
+ * same number; the snapshot is rebuilt at the new amount and carries the
+ * correction so the document shows it. `original_fee_amount` keeps what was
+ * first billed across repeated corrections. `false` when missing or no longer
+ * `issued` — a paid invoice is never reduced.
+ */
+export async function correctFeeInvoice(
+  feeInvoiceId: string,
+  input: { amount: number; reason: string },
+): Promise<boolean> {
+  return withAccount(async (tx) => {
+    const [fi] = await tx
+      .select({
+        status: feeInvoices.status,
+        feeAmount: feeInvoices.feeAmount,
+        originalFeeAmount: feeInvoices.originalFeeAmount,
+        documentSnapshot: feeInvoices.documentSnapshot,
+      })
+      .from(feeInvoices)
+      .where(eq(feeInvoices.id, feeInvoiceId))
+      .limit(1);
+    if (!fi || fi.status !== "issued") return false;
+
+    const originalAmount = fi.originalFeeAmount ?? fi.feeAmount;
+    const prior = fi.documentSnapshot as Extract<DocumentSnapshot, { kind: "fee_invoice" }>;
+    const snapshot: DocumentSnapshot = {
+      ...prior,
+      sections: prior.sections.map((section) => ({
+        ...section,
+        lines: section.lines.map((l) => ({ ...l, amount: input.amount })),
+        subtotal: input.amount,
+      })),
+      total: input.amount,
+      correction: {
+        originalAmount,
+        correctedOn: new Date().toISOString().slice(0, 10),
+        reason: input.reason,
+      },
+    };
+
+    const res = await tx
+      .update(feeInvoices)
+      .set({
+        feeAmount: input.amount,
+        originalFeeAmount: originalAmount,
+        correctionReason: input.reason,
+        correctedAt: new Date(),
+        documentSnapshot: snapshot,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(feeInvoices.id, feeInvoiceId), eq(feeInvoices.status, "issued")))
       .returning({ id: feeInvoices.id });
     return res.length > 0;
   });

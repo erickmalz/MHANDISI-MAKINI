@@ -74,8 +74,11 @@ function FeeInvoiceRow({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-card-foreground">{fi.displayNumber}</span>
-          <StatusBadge tone={fi.status === "paid" ? "success" : "info"} size="sm">
-            {t(fi.status === "paid" ? "feeInvoices.status.paid" : "feeInvoices.status.issued")}
+          <StatusBadge
+            tone={fi.status === "paid" ? "success" : fi.status === "void" ? "danger" : "info"}
+            size="sm"
+          >
+            {t(`feeInvoices.status.${fi.status}`)}
           </StatusBadge>
           {fi.isDelta && (
             <StatusBadge tone="neutral" size="sm">
@@ -93,7 +96,9 @@ function FeeInvoiceRow({
       <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
         <Money
           amount={fi.feeAmount}
-          className="shrink-0 whitespace-nowrap font-bold text-card-foreground"
+          className={`shrink-0 whitespace-nowrap font-bold ${
+            fi.status === "void" ? "text-muted-foreground line-through" : "text-card-foreground"
+          }`}
         />
         <span className="text-sm text-muted-foreground">
           {t(fi.status === "paid" ? "feeInvoices.detail.paidOn" : "feeInvoices.detail.issuedOn", {

@@ -116,7 +116,7 @@ export interface Deposit {
 export interface FundingRequestFeeInvoice {
   id: string;
   displayNumber: string;
-  status: "issued" | "paid";
+  status: "issued" | "paid" | "void";
   feeAmount: number;
   isDelta: boolean;
 }

@@ -52,6 +52,14 @@ export function FeeInvoiceDoc({ doc }: { doc: FeeInvoiceDocument }) {
         </Callout>
       ) : null}
 
+      {snapshot.correction ? (
+        <Callout title="Corrected invoice">
+          Amount corrected on {isoToDisplay(snapshot.correction.correctedOn)} from{" "}
+          {formatTZS(snapshot.correction.originalAmount)}:{" "}
+          {snapshot.correction.reason}
+        </Callout>
+      ) : null}
+
       {snapshot.sections.map((section) => (
         <SectionTable
           key={section.title}

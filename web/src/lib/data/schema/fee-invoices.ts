@@ -14,6 +14,17 @@
  * difference (`is_delta`, `parent_fee_invoice_id`). An unpaid original is
  * instead reissued with the new version and this row moves to `superseded`.
  *
+ * Corrections, while still `issued` (unpaid) and always with a recorded reason:
+ *  - **Void** — the invoice was raised in error. `status` → `void`, `voided_at`
+ *    + `void_reason` are set; the row and its number stay (the sequence never
+ *    has gaps) and every projection ignores it, the same append-only-with-
+ *    reversal posture as a voided Deposit.
+ *  - **Correct** — the amount was wrong. `fee_amount` is amended in place under
+ *    the same number and the snapshot rebuilt; `original_fee_amount` keeps the
+ *    amount first billed (set on the first correction only), and
+ *    `correction_reason` / `corrected_at` record the latest one.
+ * A `paid` invoice is never voided or reduced (CONTEXT.md "Fee Invoice").
+ *
  * Numbering: its own per-project sequence, `FI-{project}-NNN` (ticket 10 §8).
  *
  * RLS is applied by `app.enable_standard_rls('fee_invoices')` in the
@@ -39,7 +50,7 @@ import { fundingRequests } from "./funding-requests";
 import type { DocumentSnapshot } from "./snapshot";
 import { feeBasis, stages } from "./stages";
 
-export const feeInvoiceStatus = pgEnum("fee_invoice_status", ["issued", "paid"]);
+export const feeInvoiceStatus = pgEnum("fee_invoice_status", ["issued", "paid", "void"]);
 
 export const feeInvoices = pgTable(
   "fee_invoices",
@@ -77,6 +88,13 @@ export const feeInvoices = pgTable(
       .notNull()
       .defaultNow(),
     paidAt: timestamp("paid_at", { withTimezone: true }),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    voidReason: text("void_reason"),
+
+    // Correction trail (see file header).
+    originalFeeAmount: bigint("original_fee_amount", { mode: "number" }),
+    correctionReason: text("correction_reason"),
+    correctedAt: timestamp("corrected_at", { withTimezone: true }),
     supersededAt: timestamp("superseded_at", { withTimezone: true }),
 
     createdAt: timestamp("created_at", { withTimezone: true })
