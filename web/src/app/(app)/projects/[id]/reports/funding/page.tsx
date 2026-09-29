@@ -36,7 +36,7 @@ export default async function FundingReportPage({
   ]);
   if (!report) notFound();
   const t = await getT();
-  const filtered = hasActiveFilters(filters);
+  const filtered = hasActiveFilters(filterState.filters);
   const title = t("reports.funding.label");
 
   return (

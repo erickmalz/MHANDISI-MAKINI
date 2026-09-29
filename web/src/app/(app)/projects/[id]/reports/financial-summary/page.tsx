@@ -37,7 +37,7 @@ export default async function FinancialSummaryReportPage({
   ]);
   if (!report) notFound();
   const t = await getT();
-  const filtered = hasActiveFilters(filters);
+  const filtered = hasActiveFilters(filterState.filters);
   const title = t("reports.financialSummary.label");
 
   // Print opens the PDF (ticket "Export formats and whether filters carry into

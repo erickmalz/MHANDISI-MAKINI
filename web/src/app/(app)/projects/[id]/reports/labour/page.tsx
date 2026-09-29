@@ -34,7 +34,7 @@ export default async function LabourReportPage({
   ]);
   if (!report) notFound();
   const t = await getT();
-  const filtered = hasActiveFilters(filters);
+  const filtered = hasActiveFilters(filterState.filters);
   const title = t("reports.labour.label");
 
   return (

@@ -147,15 +147,18 @@ export async function ReportToolbar({
         </FiltersSheet>
 
         <div className="ml-auto flex items-center gap-2">
-          <ShareButton
-            title={shareTitle}
-            files={(["pdf", "jpg", "csv"] as const).map((format) => ({
-              format,
-              label: t(`reportToolbar.shareFormats.${format}`),
-              href: href(format),
-              filename: file(format),
-            }))}
-          />
+          {/* ShareButton renders nothing where the browser can't share files; its menu anchors here. */}
+          <div className="relative">
+            <ShareButton
+              title={shareTitle}
+              files={(["pdf", "jpg", "csv"] as const).map((format) => ({
+                format,
+                label: t(`reportToolbar.shareFormats.${format}`),
+                href: href(format),
+                filename: file(format),
+              }))}
+            />
+          </div>
           <MoreMenu
             label={t("reportToolbar.more")}
             items={[

@@ -34,7 +34,7 @@ export default async function MaterialCostReportPage({
   ]);
   if (!report) notFound();
   const t = await getT();
-  const filtered = hasActiveFilters(filters);
+  const filtered = hasActiveFilters(filterState.filters);
   const title = t("reports.materialCost.label");
 
   return (

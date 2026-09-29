@@ -38,7 +38,7 @@ export default async function SubcontractorStatementPage({
     getLocale(),
   ]);
   if (!statement) notFound();
-  const filtered = hasActiveFilters(filters);
+  const filtered = hasActiveFilters(filterState.filters);
 
   return (
     <PageFrame width="working">
