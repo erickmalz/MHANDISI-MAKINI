@@ -54,6 +54,9 @@ function todayEat(): string {
   }).format(new Date());
 }
 
+// TODO(integration): use reportExportFilename({ kind, scopeLabel, format, filtered })
+// from `@/lib/reports/export-filename` (Builder B's branch) so share filenames
+// match the server's Content-Disposition exactly; drop this and REPORT_FILE_STEM.
 /**
  * `{Report}-{projectCode}-{YYYY-MM-DD}[-filtered].{ext}` (ticket "Export
  * formats and whether filters carry into them"). `stem` is e.g.
