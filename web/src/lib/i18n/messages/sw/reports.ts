@@ -5,6 +5,7 @@ export const reports: Widen<typeof enReports> = {
   pageTitle: "Ripoti",
   loading: "Inapakia ripoti",
   total: "Jumla",
+  totalFiltered: "Jumla (iliyochujwa)",
   index: {
     subtitle:
       "Mwonekano wa moja kwa moja na wa sasa wa takwimu za mradi huu — huhesabiwa upya kila unapotembelea, hakuna kinachohifadhiwa. Si nyaraka zilizotolewa, kwa hivyo hakuna cha kupakua hapa.",

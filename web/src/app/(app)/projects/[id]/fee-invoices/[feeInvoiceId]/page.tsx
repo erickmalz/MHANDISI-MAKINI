@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 
-import { markFeeInvoicePaidAction } from "@/app/actions/funding";
+import {
+  correctFeeInvoiceAction,
+  markFeeInvoicePaidAction,
+  voidFeeInvoiceAction,
+} from "@/app/actions/funding";
 import { getFeeInvoice } from "@/lib/data";
 import { FeeInvoiceDetail } from "./_components/FeeInvoiceDetail";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -28,6 +32,8 @@ export default async function FeeInvoicePage({
         fi={fi}
         projectId={id}
         markPaidAction={markFeeInvoicePaidAction.bind(null, id, fi.id)}
+        correctAction={correctFeeInvoiceAction.bind(null, id, fi.id)}
+        voidAction={voidFeeInvoiceAction.bind(null, id, fi.id)}
       />
     </PageFrame>
   );

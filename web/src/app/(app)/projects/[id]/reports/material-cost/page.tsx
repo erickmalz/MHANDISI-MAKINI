@@ -7,6 +7,9 @@ import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("reports.materialCost.pageTitle");
 
@@ -20,28 +23,45 @@ export const generateMetadata = pageTitle("reports.materialCost.pageTitle");
  */
 export default async function MaterialCostReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/material-cost">) {
   const { id } = await params;
-  const report = await getMaterialCostReport(id);
+  const filters = parseReportFilters("material-cost", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getMaterialCostReport(id, filters),
+    getReportFilterState("material-cost", id, filters),
+  ]);
   if (!report) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filterState.filters);
+  const title = t("reports.materialCost.label");
 
   return (
     <PageFrame width="working">
       <PageHeader
         crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-        title={t("reports.materialCost.label")}
+        title={title}
+      />
+
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/projects/${id}/reports/material-cost`}
+        shareTitle={`${title} — ${report.projectCode}`}
+        scopeLabel={report.projectCode}
       />
 
       <Card>
         {report.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("reports.materialCost.noStages")}
-          </p>
+          filtered ? (
+            <NoMatch />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("reports.materialCost.noStages")}</p>
+          )
         ) : (
           <DataTable
             caption={t("reports.materialCost.caption")}
-            totalLabel={t("reports.total")}
+            totalLabel={t(filtered ? "reports.totalFiltered" : "reports.total")}
             rows={report.rows}
             rowKey={(r) => r.stageId}
             columns={[

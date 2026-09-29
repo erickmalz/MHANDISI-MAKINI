@@ -203,7 +203,9 @@ export async function getFeeInvoiceDocument(
     const stamp =
       row.status === "paid"
         ? `PAID — ${formatDate(row.paidAt ?? new Date())}`
-        : row.supersededAt != null
+        : row.status === "void"
+          ? "VOID"
+          : row.supersededAt != null
           ? "SUPERSEDED"
           : null;
 

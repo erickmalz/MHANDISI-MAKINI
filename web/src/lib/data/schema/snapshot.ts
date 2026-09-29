@@ -84,6 +84,11 @@ export interface FeeInvoiceSnapshot extends DocumentSnapshotBase {
   isDelta: boolean;
   /** When `isDelta`: the Fee Invoice number this one follows up. */
   parentNumber?: string;
+  /**
+   * Present once the amount has been corrected after Issue — what was first
+   * billed, the ISO date of the correction and the recorded reason.
+   */
+  correction?: { originalAmount: number; correctedOn: string; reason: string };
 }
 
 /**

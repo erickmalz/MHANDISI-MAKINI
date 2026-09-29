@@ -31,6 +31,7 @@ export const suppliers: Widen<typeof enSuppliers> = {
     subtitle: "Taarifa ya akaunti, kila mradi",
     editDetails: "Hariri maelezo",
     outstanding: "Salio lililobaki kulipwa",
+    outstandingFiltered: "Salio lililobaki (lililochujwa)",
     orders: "Oda",
     noOrders: "Hakuna Oda za ununuzi bado.",
     payments: "Malipo",

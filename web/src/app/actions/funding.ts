@@ -8,15 +8,18 @@ import {
   deleteFundingRequestDraft,
   issueFundingRequest,
   linkVariationsToFundingRequest,
+  correctFeeInvoice,
   markFeeInvoicePaid,
   recordDeposit,
   supersedeFundingRequest,
   updateFundingRequestDraft,
   voidDeposit,
+  voidFeeInvoice,
 } from "@/lib/data";
 import { type ActionState, zodFieldErrors } from "@/lib/forms/action-helpers";
 import {
   depositSchema,
+  feeInvoiceCorrectionSchema,
   fundingRequestDraftSchema,
   supersedeSchema,
   voidReasonSchema,
@@ -246,5 +249,61 @@ export async function markFeeInvoicePaidAction(
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/fee-invoices`);
   revalidatePath(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+  redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+}
+
+function revalidateFeeInvoice(projectId: string, feeInvoiceId: string) {
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/funding`);
+  revalidatePath(`/projects/${projectId}/fee-invoices`);
+  revalidatePath(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+}
+
+/** Void an unpaid Fee Invoice raised in error — a recorded reason is required. */
+export async function voidFeeInvoiceAction(
+  projectId: string,
+  feeInvoiceId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = voidReasonSchema.safeParse({
+    reason: formData.get("reason") ?? undefined,
+  });
+  if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
+
+  let ok: boolean;
+  try {
+    ok = await voidFeeInvoice(feeInvoiceId, parsed.data.reason);
+  } catch {
+    return { error: "Could not void the Fee Invoice. Try again." };
+  }
+  if (!ok) return { error: "Only an unpaid Fee Invoice can be voided." };
+
+  revalidateFeeInvoice(projectId, feeInvoiceId);
+  redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+}
+
+/** Correct an unpaid Fee Invoice's amount — a recorded reason is required. */
+export async function correctFeeInvoiceAction(
+  projectId: string,
+  feeInvoiceId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = feeInvoiceCorrectionSchema.safeParse({
+    amount: formData.get("amount") ?? undefined,
+    reason: formData.get("reason") ?? undefined,
+  });
+  if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
+
+  let ok: boolean;
+  try {
+    ok = await correctFeeInvoice(feeInvoiceId, parsed.data);
+  } catch {
+    return { error: "Could not correct the Fee Invoice. Try again." };
+  }
+  if (!ok) return { error: "Only an unpaid Fee Invoice can be corrected." };
+
+  revalidateFeeInvoice(projectId, feeInvoiceId);
   redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
 }

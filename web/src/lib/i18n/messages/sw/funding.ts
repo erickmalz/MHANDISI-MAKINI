@@ -86,6 +86,7 @@ export const funding: Widen<typeof enFunding> = {
       paid: "imelipwa",
       issuedDelta: "imetumwa, tofauti",
       paidDelta: "imelipwa, tofauti",
+      void: "imebatilishwa",
     },
     documentRequest: "Ombi la fedha {number}",
     documentFeeInvoice: "Ankara ya ada {number}",

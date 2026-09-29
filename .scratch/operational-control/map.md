@@ -127,6 +127,10 @@ snapshot at Issue" document model at all. Content per §Reports:
 PDF/JPG export is a deferred fast-follow (would reuse ticket 10's rendering
 module once there's real demand for it), not part of this slice.
 
+> **Picked up (2026-09-29):** statement export (PDF/JPG/CSV), Share and Print
+> are decided on the Reports filters/export/share/print map, in
+> [Do the Supplier and Subcontractor Statements get the report toolbar?](../reports-toolbar/issues/07-statements-join-the-toolbar.md).
+
 ## Build order
 
 No dependency runs Stage templates ↔ Budget revisions ↔ Alerts ↔ Statements

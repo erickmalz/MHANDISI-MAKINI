@@ -31,6 +31,7 @@ export const subcontractors: Widen<typeof enSubcontractors> = {
     subtitle: "Taarifa ya akaunti, kila mradi",
     editDetails: "Hariri maelezo",
     outstanding: "Salio lililobaki kulipwa",
+    outstandingFiltered: "Salio lililobaki (lililochujwa)",
     agreedLabour: "Kiasi cha fundi kilichokubaliwa",
     noTasks: "Hajapewa Kazi yoyote bado.",
     payments: "Malipo",

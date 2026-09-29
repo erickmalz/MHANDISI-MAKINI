@@ -9,24 +9,36 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/format";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { FeeInvoiceDetail as FeeInvoiceDetailModel } from "@/lib/data";
+import type { ActionState } from "@/lib/forms/action-helpers";
+import { formatTZS } from "@/lib/finance";
+import { FeeInvoiceCorrections } from "./FeeInvoiceCorrections";
+
+type Bound = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
 /**
  * A Fee Invoice's own page — the supervisor's ledger, separate from the
  * Funding Request that raised it (CONTEXT.md "Fee Invoice"). Lifecycle is
- * `issued → paid` only: the one action here is marking it paid.
+ * `issued → paid`, or `issued → void` when raised in error. While unpaid it can
+ * be marked paid, have its amount corrected, or be voided — the last two with
+ * a recorded reason.
  */
 export async function FeeInvoiceDetail({
   fi,
   projectId,
   markPaidAction,
+  correctAction,
+  voidAction,
 }: {
   fi: FeeInvoiceDetailModel;
   projectId: string;
   markPaidAction: () => Promise<void>;
+  correctAction: Bound;
+  voidAction: Bound;
 }) {
   const t = await getT();
   const locale = await getLocale();
   const isPaid = fi.status === "paid";
+  const isVoid = fi.status === "void";
 
   return (
     <div>
@@ -36,8 +48,8 @@ export async function FeeInvoiceDetail({
           <h1 className="text-[1.75rem] font-bold text-foreground">{fi.displayNumber}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <StatusBadge tone={isPaid ? "success" : "info"}>
-            {t(isPaid ? "feeInvoices.status.paid" : "feeInvoices.status.issued")}
+          <StatusBadge tone={isPaid ? "success" : isVoid ? "danger" : "info"}>
+            {t(`feeInvoices.status.${fi.status}`)}
           </StatusBadge>
           {fi.isDelta && <StatusBadge tone="neutral">{t("feeInvoices.list.delta")}</StatusBadge>}
         </div>
@@ -46,6 +58,29 @@ export async function FeeInvoiceDetail({
       {fi.isDelta && (
         <p className="mb-6 rounded-lg bg-health-amber-bg p-3 text-sm font-bold text-foreground">
           {t("feeInvoices.detail.delta")}
+        </p>
+      )}
+
+      {isVoid && (
+        <p className="mb-6 rounded-lg bg-health-red-bg p-3 text-sm text-foreground">
+          <span className="font-bold">
+            {t("feeInvoices.detail.voidedOn", {
+              date: formatDate(fi.voidedAt ?? fi.issuedAt, locale),
+            })}
+          </span>{" "}
+          {fi.voidReason}
+        </p>
+      )}
+
+      {fi.originalFeeAmount != null && fi.correctedAt && (
+        <p className="mb-6 rounded-lg bg-muted p-3 text-sm text-foreground">
+          <span className="font-bold">
+            {t("feeInvoices.detail.correctedOn", {
+              date: formatDate(fi.correctedAt, locale),
+              amount: formatTZS(fi.originalFeeAmount),
+            })}
+          </span>{" "}
+          {fi.correctionReason}
         </p>
       )}
 
@@ -105,7 +140,7 @@ export async function FeeInvoiceDetail({
         />
       </div>
 
-      {!isPaid && (
+      {fi.status === "issued" && (
         <Card className="mb-6 flex flex-col gap-3">
           <h2 className="text-xl font-bold text-card-foreground">
             {t("feeInvoices.detail.markPaid.title")}
@@ -118,6 +153,14 @@ export async function FeeInvoiceDetail({
             </Button>
           </form>
         </Card>
+      )}
+
+      {fi.status === "issued" && (
+        <FeeInvoiceCorrections
+          feeAmount={fi.feeAmount}
+          correctAction={correctAction}
+          voidAction={voidAction}
+        />
       )}
 
       <Link

@@ -110,3 +110,15 @@ export const voidReasonSchema = z.object({
 });
 
 export type VoidReasonInput = z.infer<typeof voidReasonSchema>;
+
+/** Correcting an unpaid Fee Invoice's amount — a recorded reason is required. */
+export const feeInvoiceCorrectionSchema = z.object({
+  amount: wholeAmount,
+  reason: z
+    .string()
+    .trim()
+    .min(4, { error: "Say why the amount is being corrected." })
+    .max(500, { error: "Keep the reason short." }),
+});
+
+export type FeeInvoiceCorrectionInput = z.infer<typeof feeInvoiceCorrectionSchema>;

@@ -160,7 +160,9 @@ export function FundingRequestDetail({
                   date: formatDate(fr.issuedAt, locale),
                   number: fr.feeInvoice.displayNumber,
                   state: t(
-                    fr.feeInvoice.status === "paid"
+                    fr.feeInvoice.status === "void"
+                      ? "funding.detail.invoiceState.void"
+                      : fr.feeInvoice.status === "paid"
                       ? fr.feeInvoice.isDelta
                         ? "funding.detail.invoiceState.paidDelta"
                         : "funding.detail.invoiceState.paid"

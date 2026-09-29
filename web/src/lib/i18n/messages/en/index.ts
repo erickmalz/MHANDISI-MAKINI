@@ -21,6 +21,10 @@ import { stageTemplates } from "./stageTemplates";
 import { financialCheck } from "./financialCheck";
 import { closeout } from "./closeout";
 import { status } from "./status";
+import { reportFilters } from "./reportFilters";
+import { reportExport } from "./reportExport";
+import { reportToolbar } from "./reportToolbar";
+import { share } from "./share";
 
 /** English is the source catalogue: keys are defined here, other languages must match. */
 export const en = {
@@ -47,4 +51,8 @@ export const en = {
   financialCheck,
   closeout,
   status,
+  reportFilters,
+  reportExport,
+  reportToolbar,
+  share,
 } as const;

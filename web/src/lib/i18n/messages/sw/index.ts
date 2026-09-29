@@ -22,6 +22,10 @@ import { stageTemplates } from "./stageTemplates";
 import { financialCheck } from "./financialCheck";
 import { closeout } from "./closeout";
 import { status } from "./status";
+import { reportFilters } from "./reportFilters";
+import { reportExport } from "./reportExport";
+import { reportToolbar } from "./reportToolbar";
+import { share } from "./share";
 
 /** Kiswahili. Every key in English must exist here (the type enforces it). */
 export const sw: Messages = {
@@ -48,4 +52,8 @@ export const sw: Messages = {
   financialCheck,
   closeout,
   status,
+  reportFilters,
+  reportExport,
+  reportToolbar,
+  share,
 };

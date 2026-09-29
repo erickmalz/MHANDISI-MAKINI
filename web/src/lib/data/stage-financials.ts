@@ -79,6 +79,8 @@ interface Accumulator {
   frFee: number;
   feeRecorded: number;
   feeInvoiced: number;
+  /** Fee already dealt with by a Fee Invoice, incl. voided / reduced amounts. */
+  feeBilled: number;
   feeReceived: number;
   fundingRequestPending: boolean;
   pettyCashExpenses: number;
@@ -115,6 +117,7 @@ async function readFinancials(
       fr_fee: string;
       fr_fee_draft: string;
       fee_invoiced: string;
+      fee_billed: string;
       fee_received: string;
       funding_request_pending: boolean;
       petty_cash: string;
@@ -148,6 +151,11 @@ async function readFinancials(
             AND l.category = 'fee') AS fr_fee_draft,
         (SELECT COALESCE(SUM(fi.fee_amount), 0) FROM fee_invoices fi
           WHERE fi.stage_id = s.id AND fi.status IN ('issued', 'paid')) AS fee_invoiced,
+        -- The fee each invoice was first raised for, voided ones included, so a
+        -- voided or corrected-down fee is not read back as still to be billed.
+        (SELECT COALESCE(SUM(COALESCE(fi.original_fee_amount, fi.fee_amount)), 0)
+           FROM fee_invoices fi
+          WHERE fi.stage_id = s.id) AS fee_billed,
         (SELECT COALESCE(SUM(fi.fee_amount), 0) FROM fee_invoices fi
           WHERE fi.stage_id = s.id AND fi.status = 'paid') AS fee_received,
         EXISTS (
@@ -176,6 +184,7 @@ async function readFinancials(
       frFee: Number(r.fr_fee),
       feeRecorded: Number(r.fr_fee_draft),
       feeInvoiced: Number(r.fee_invoiced),
+      feeBilled: Number(r.fee_billed),
       feeReceived: Number(r.fee_received),
       fundingRequestPending: r.funding_request_pending,
       pettyCashExpenses: Number(r.petty_cash),
@@ -323,7 +332,7 @@ function toStageFinancials(a: Accumulator): StageFinancials {
     // also yields 0 before any Funding Request is issued (ticket 08 §2).
     remainingMaterial: Math.max(0, a.frMaterial - a.openPurchaseCommitments - a.paidPurchases),
     remainingLabour: Math.max(0, a.frLabour - a.openLabourCommitments - a.labourPayments),
-    remainingFee: Math.max(0, a.frFee - a.feeInvoiced),
+    remainingFee: Math.max(0, a.frFee - a.feeBilled),
     remainingOtherApproved: 0,
 
     feeRecorded: a.feeRecorded,

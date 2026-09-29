@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { sql } from "drizzle-orm";
 
 import {
@@ -28,6 +29,21 @@ import {
   paidTotal,
   type POStatus,
 } from "@/lib/procurement";
+import {
+  FR_KIND_ORDER,
+  FR_STATUS_SLUG,
+  PO_STATUS_SLUG,
+  TASK_STATUS_ORDER,
+  VARIATION_FUNDING_SLUG,
+  VARIATION_STATUS_ORDER,
+  type FilterOptions,
+  inDateRange,
+  presentInOrder,
+  sanitizeFilters,
+  sortedByLabel,
+  toEatDate,
+} from "@/lib/reports/filter-logic";
+import type { FilterOption, ReportFilters } from "@/lib/reports/filters";
 import { taskStatusLabel, type TaskStatus } from "@/lib/tasks";
 import type { FinancialHealth, StageStatus } from "@/lib/types";
 import {
@@ -72,7 +88,36 @@ import { withAccount } from "./with-account";
  * / the DAL functions this calls scope every query to the caller's Account.
  * A missing / cross-account `projectId` resolves to `null` (via
  * `getProjectOverview`), same as every other project-scoped screen.
+ *
+ * **Filters** (`.scratch/reports-toolbar/issues/02-which-filters-each-report-gets.md`):
+ * every function takes the screen's `ReportFilters`, drops any value that
+ * doesn't occur in this project (so a foreign or stale id means "All"), and
+ * applies the rest with AND. Totals and headline sums recompute over the rows
+ * shown; figures that only exist per stage (Procurement "Required", the
+ * Financial Summary headline) follow the Stage filter only. A date range picks
+ * rows by their own date; money columns stay current. Each report also returns
+ * `filterOptions` (the choices per dimension) and `appliedFilters` (what was
+ * actually applied), which `getReportFilterState` builds on. The underlying
+ * reads are wrapped in React `cache`, so a screen that asks for both the
+ * filtered report and its filter state reads the database once per request.
  */
+
+const loadOverview = cache(getProjectOverview);
+const loadFundingRequests = cache(listFundingRequests);
+const loadPurchaseOrders = cache(listPurchaseOrders);
+
+/** Every stage of the project, in seq order, as filter options. */
+function stageOptions(project: { stages: { id: string; name: string }[] }): FilterOption[] {
+  return project.stages.map((s) => ({ value: s.id, label: s.name }));
+}
+
+/** What every filtered report carries besides its own figures. */
+export interface ReportFilterFields {
+  /** The choices per dimension — only values that occur in this project. Enum labels are raw values. */
+  filterOptions: FilterOptions;
+  /** The filters actually applied, after unknown values were dropped. */
+  appliedFilters: ReportFilters;
+}
 
 // ---------------------------------------------------------------------------
 // 1. Project Financial Summary
@@ -117,6 +162,8 @@ export interface ProjectFinancialSummary {
   stages: ProjectFinancialSummaryStageRow[];
 }
 
+export type FilteredProjectFinancialSummary = ProjectFinancialSummary & ReportFilterFields;
+
 /**
  * The project-level roll-up of every stage's already-computed
  * `StageFinancials` (via `getProjectOverview`) plus the project's Funding
@@ -126,15 +173,24 @@ export interface ProjectFinancialSummary {
  */
 export async function getProjectFinancialSummary(
   projectId: string,
-): Promise<ProjectFinancialSummary | null> {
-  const project = await getProjectOverview(projectId);
+  /** Stage only — filtered to a stage, every figure is that stage's own. */
+  filters: ReportFilters = {},
+): Promise<FilteredProjectFinancialSummary | null> {
+  const project = await loadOverview(projectId);
   if (!project) return null;
 
-  const fundingRequests = await listFundingRequests(projectId);
+  const filterOptions: FilterOptions = { stage: stageOptions(project) };
+  const appliedFilters = sanitizeFilters("financial-summary", filters, filterOptions);
+  const inScope = project.stages.filter(
+    (s) => !appliedFilters.stage || s.id === appliedFilters.stage,
+  );
+
+  const fundingRequests = await loadFundingRequests(projectId);
   let fundingRequested = 0;
   let fundingReceived = 0;
   for (const fr of fundingRequests) {
     if (fr.status === "draft" || fr.status === "cancelled") continue;
+    if (appliedFilters.stage && fr.stageId !== appliedFilters.stage) continue;
     fundingRequested += depositTarget(fr);
     fundingReceived += depositedTotal(fr);
   }
@@ -143,7 +199,7 @@ export async function getProjectFinancialSummary(
   let feesReceived = 0;
   let feesOutstanding = 0;
 
-  const stages: ProjectFinancialSummaryStageRow[] = project.stages.map((s) => {
+  const stages: ProjectFinancialSummaryStageRow[] = inScope.map((s) => {
     const f = s.financials;
     feesInvoiced += f.feeInvoiced;
     feesReceived += f.feeReceived;
@@ -162,7 +218,7 @@ export async function getProjectFinancialSummary(
     };
   });
 
-  const totals = aggregateStageFinancials(project.stages.map((s) => s.financials));
+  const totals = aggregateStageFinancials(inScope.map((s) => s.financials));
 
   return {
     projectId: project.id,
@@ -178,6 +234,8 @@ export async function getProjectFinancialSummary(
     availableFloat: totals.availableFloat,
     forecastShortfall: totals.forecastShortfall,
     stages,
+    filterOptions,
+    appliedFilters,
   };
 }
 
@@ -206,6 +264,8 @@ export interface MaterialCostReport {
   totals: Omit<MaterialCostReportRow, "stageId" | "stageName">;
 }
 
+export type FilteredMaterialCostReport = MaterialCostReport & ReportFilterFields;
+
 /**
  * Stage-level, matching Budget Variance Analysis's own granularity (Phase 3
  * ticket 03): `@/lib/finance`'s own doc comment on `materialVariance` is
@@ -220,11 +280,19 @@ export interface MaterialCostReport {
  */
 export async function getMaterialCostReport(
   projectId: string,
-): Promise<MaterialCostReport | null> {
-  const project = await getProjectOverview(projectId);
+  /** Contract: filters builder applies these (ticket "Which filters each report gets"). */
+  filters: ReportFilters = {},
+): Promise<FilteredMaterialCostReport | null> {
+  const project = await loadOverview(projectId);
   if (!project) return null;
 
-  const rows: MaterialCostReportRow[] = project.stages.map((s) => {
+  const filterOptions: FilterOptions = { stage: stageOptions(project) };
+  const appliedFilters = sanitizeFilters("material-cost", filters, filterOptions);
+
+  const inScope = project.stages.filter(
+    (s) => !appliedFilters.stage || s.id === appliedFilters.stage,
+  );
+  const rows: MaterialCostReportRow[] = inScope.map((s) => {
     const f = s.financials;
     return {
       stageId: s.id,
@@ -252,6 +320,8 @@ export async function getMaterialCostReport(
     projectName: project.name,
     rows,
     totals,
+    filterOptions,
+    appliedFilters,
   };
 }
 
@@ -263,8 +333,12 @@ export interface ProcurementReportRow {
   purchaseOrderId: string;
   displayNumber: string | null;
   status: POStatus;
+  stageId: string;
   stageName: string;
+  supplierId: string | null;
   supplierName: string;
+  /** The date the PO was issued (EAT, YYYY-MM-DD); `null` while Planned. */
+  orderedOn: string | null;
   ordered: number;
   delivered: number;
   paid: number;
@@ -281,6 +355,8 @@ export interface ProcurementReport {
   totals: { ordered: number; delivered: number; paid: number; outstanding: number };
 }
 
+export type FilteredProcurementReport = ProcurementReport & ReportFilterFields;
+
 /**
  * Pure assembly, no new calculation: every row is `listPurchaseOrders`'
  * `PurchaseOrder` view-model run through `@/lib/procurement`'s existing
@@ -294,30 +370,62 @@ export interface ProcurementReport {
  */
 export async function getProcurementReport(
   projectId: string,
-): Promise<ProcurementReport | null> {
-  const project = await getProjectOverview(projectId);
+  /** Stage · Supplier · PO status · Issued date range. "Required" follows Stage only. */
+  filters: ReportFilters = {},
+): Promise<FilteredProcurementReport | null> {
+  const project = await loadOverview(projectId);
   if (!project) return null;
 
-  const orders = await listPurchaseOrders(projectId);
-  const required = project.stages.reduce(
-    (sum, s) => sum + s.financials.materialEstimated,
-    0,
+  const orders = await loadPurchaseOrders(projectId);
+  const all = orders.map((po) => ({
+    po,
+    status: derivePOStatus(po),
+    orderedOn: toEatDate(po.orderedAt),
+  }));
+
+  const filterOptions: FilterOptions = {
+    stage: stageOptions(project),
+    supplier: sortedByLabel(
+      all
+        .filter(({ po }) => po.supplierId != null)
+        .map(({ po }) => ({ value: po.supplierId as string, label: po.supplierName })),
+    ),
+    status: presentInOrder(
+      Object.values(PO_STATUS_SLUG),
+      all.map(({ status }) => PO_STATUS_SLUG[status]),
+    ),
+  };
+  const f = sanitizeFilters("procurement", filters, filterOptions);
+
+  const shown = all.filter(
+    ({ po, status, orderedOn }) =>
+      (!f.stage || po.stageId === f.stage) &&
+      (!f.supplier || po.supplierId === f.supplier) &&
+      (!f.status || PO_STATUS_SLUG[status] === f.status) &&
+      inDateRange(orderedOn, f.from, f.to),
   );
 
-  const rows: ProcurementReportRow[] = orders.map((po) => ({
+  const required = project.stages
+    .filter((s) => !f.stage || s.id === f.stage)
+    .reduce((sum, s) => sum + s.financials.materialEstimated, 0);
+
+  const rows: ProcurementReportRow[] = shown.map(({ po, status, orderedOn }) => ({
     purchaseOrderId: po.id,
     displayNumber: po.displayNumber,
-    status: derivePOStatus(po),
+    status,
+    stageId: po.stageId,
     stageName: po.stageName,
+    supplierId: po.supplierId,
     supplierName: po.supplierName,
+    orderedOn,
     ordered: orderedTotal(po),
     delivered: acceptedValue(po),
     paid: paidTotal(po),
     outstanding: outstandingValue(po),
   }));
 
-  const totals = orders.reduce(
-    (acc, po) => {
+  const totals = shown.reduce(
+    (acc, { po }) => {
       if (po.status === "cancelled") return acc;
       return {
         ordered: acc.ordered + orderedTotal(po),
@@ -336,6 +444,8 @@ export async function getProcurementReport(
     required,
     rows,
     totals,
+    filterOptions,
+    appliedFilters: f,
   };
 }
 
@@ -345,10 +455,14 @@ export async function getProcurementReport(
 
 export interface LabourReportRow {
   taskId: string;
+  stageId: string;
   stageName: string;
+  subcontractorId: string | null;
   subcontractorName: string;
   taskDescription: string;
+  /** Display label ("On hold"); `statusValue` is the stored value. */
   status: string;
+  statusValue: TaskStatus;
   agreed: number;
   /** `null` when the task's labour has never been revised. */
   revised: number | null;
@@ -364,35 +478,29 @@ export interface LabourReport {
   totals: { agreed: number; revised: number; paid: number; outstanding: number };
 }
 
-/**
- * Every Task across every stage of the project, with its Subcontractor,
- * agreed / revised labour figure and non-voided payments — the one genuinely
- * new query in this file, since no existing DAL function lists every task in
- * a *project* (`listTasksForStage` is per-stage, `getSubcontractorStatement`
- * is per-subcontractor account-wide). The agreed/paid/outstanding math itself
- * is identical to `readStageFinancials`'s own labour query and
- * `getSubcontractorStatement`'s task rows — no new formula, just a wider scope.
- */
-export async function getLabourReport(
-  projectId: string,
-): Promise<LabourReport | null> {
-  const project = await getProjectOverview(projectId);
-  if (!project) return null;
+export type FilteredLabourReport = LabourReport & ReportFilterFields;
 
-  const taskRows = await withAccount(async (tx) => {
-    const { rows } = await tx.execute<{
-      task_id: string;
-      stage_name: string;
-      subcontractor_name: string | null;
-      description: string;
-      status: string;
-      agreed: string;
-      revised: string | null;
-      paid: string;
-    }>(sql`
+type LabourTaskRow = {
+  task_id: string;
+  stage_id: string;
+  stage_name: string;
+  subcontractor_id: string | null;
+  subcontractor_name: string | null;
+  description: string;
+  status: string;
+  agreed: string;
+  revised: string | null;
+  paid: string;
+};
+
+const loadLabourTasks = cache(async (projectId: string): Promise<LabourTaskRow[]> =>
+  withAccount(async (tx) => {
+    const { rows } = await tx.execute<LabourTaskRow>(sql`
       SELECT
         t.id AS task_id,
+        s.id AS stage_id,
         s.name AS stage_name,
+        sc.id AS subcontractor_id,
         sc.name AS subcontractor_name,
         t.description,
         t.status,
@@ -407,25 +515,66 @@ export async function getLabourReport(
       ORDER BY s.seq ASC, t.seq ASC
     `);
     return rows;
-  });
+  }),
+);
 
-  const rows: LabourReportRow[] = taskRows.map((r) => {
-    const agreed = Number(r.agreed);
-    const revised = r.revised != null ? Number(r.revised) : null;
-    const paid = Number(r.paid);
-    const outstanding = Math.max(0, (revised ?? agreed) - paid);
-    return {
-      taskId: r.task_id,
-      stageName: r.stage_name,
-      subcontractorName: r.subcontractor_name ?? "Unassigned",
-      taskDescription: r.description,
-      status: taskStatusLabel(r.status as TaskStatus),
-      agreed,
-      revised,
-      paid,
-      outstanding,
-    };
-  });
+/**
+ * Every Task across every stage of the project, with its Subcontractor,
+ * agreed / revised labour figure and non-voided payments — the one genuinely
+ * new query in this file, since no existing DAL function lists every task in
+ * a *project* (`listTasksForStage` is per-stage, `getSubcontractorStatement`
+ * is per-subcontractor account-wide). The agreed/paid/outstanding math itself
+ * is identical to `readStageFinancials`'s own labour query and
+ * `getSubcontractorStatement`'s task rows — no new formula, just a wider scope.
+ */
+export async function getLabourReport(
+  projectId: string,
+  /** Stage · Subcontractor · Task status. */
+  filters: ReportFilters = {},
+): Promise<FilteredLabourReport | null> {
+  const project = await loadOverview(projectId);
+  if (!project) return null;
+
+  const taskRows = await loadLabourTasks(projectId);
+
+  const filterOptions: FilterOptions = {
+    stage: stageOptions(project),
+    subcontractor: sortedByLabel(
+      taskRows
+        .filter((r) => r.subcontractor_id != null)
+        .map((r) => ({ value: r.subcontractor_id as string, label: r.subcontractor_name ?? "" })),
+    ),
+    status: presentInOrder(TASK_STATUS_ORDER, taskRows.map((r) => r.status)),
+  };
+  const f = sanitizeFilters("labour", filters, filterOptions);
+
+  const rows: LabourReportRow[] = taskRows
+    .filter(
+      (r) =>
+        (!f.stage || r.stage_id === f.stage) &&
+        (!f.subcontractor || r.subcontractor_id === f.subcontractor) &&
+        (!f.status || r.status === f.status),
+    )
+    .map((r) => {
+      const agreed = Number(r.agreed);
+      const revised = r.revised != null ? Number(r.revised) : null;
+      const paid = Number(r.paid);
+      const outstanding = Math.max(0, (revised ?? agreed) - paid);
+      return {
+        taskId: r.task_id,
+        stageId: r.stage_id,
+        stageName: r.stage_name,
+        subcontractorId: r.subcontractor_id,
+        subcontractorName: r.subcontractor_name ?? "Unassigned",
+        taskDescription: r.description,
+        status: taskStatusLabel(r.status as TaskStatus),
+        statusValue: r.status as TaskStatus,
+        agreed,
+        revised,
+        paid,
+        outstanding,
+      };
+    });
 
   const totals = rows.reduce(
     (acc, r) => ({
@@ -443,6 +592,8 @@ export async function getLabourReport(
     projectName: project.name,
     rows,
     totals,
+    filterOptions,
+    appliedFilters: f,
   };
 }
 
@@ -454,7 +605,10 @@ export interface FundingReportRow {
   fundingRequestId: string;
   displayNumber: string | null;
   kind: FRKind;
+  stageId: string;
   stageName: string;
+  /** The date the request was issued (EAT, YYYY-MM-DD); `null` while Draft. */
+  issuedOn: string | null;
   status: FRStatus;
   amountRequested: number;
   amountDeposited: number;
@@ -469,6 +623,8 @@ export interface FundingReport {
   totals: { requested: number; deposited: number; balance: number };
 }
 
+export type FilteredFundingReport = FundingReport & ReportFilterFields;
+
 /**
  * Pure reuse — zero new calculation. Every row is `listFundingRequests`' own
  * `FundingRequest` view-model run through `@/lib/funding`'s existing
@@ -479,21 +635,43 @@ export interface FundingReport {
  */
 export async function getFundingReport(
   projectId: string,
-): Promise<FundingReport | null> {
-  const project = await getProjectOverview(projectId);
+  /** Stage · Kind · Status · Issued date range. */
+  filters: ReportFilters = {},
+): Promise<FilteredFundingReport | null> {
+  const project = await loadOverview(projectId);
   if (!project) return null;
 
-  const requests = await listFundingRequests(projectId);
-  const rows: FundingReportRow[] = requests.map((fr) => ({
+  const requests = await loadFundingRequests(projectId);
+  const all: FundingReportRow[] = requests.map((fr) => ({
     fundingRequestId: fr.id,
     displayNumber: fr.displayNumber,
     kind: fr.kind,
+    stageId: fr.stageId,
     stageName: fr.stageName,
+    issuedOn: toEatDate(fr.issuedAt),
     status: deriveFRStatus(fr),
     amountRequested: depositTarget(fr),
     amountDeposited: depositedTotal(fr),
     balance: depositOutstanding(fr),
   }));
+
+  const filterOptions: FilterOptions = {
+    stage: stageOptions(project),
+    kind: presentInOrder(FR_KIND_ORDER, all.map((r) => r.kind)),
+    status: presentInOrder(
+      Object.values(FR_STATUS_SLUG),
+      all.map((r) => FR_STATUS_SLUG[r.status]),
+    ),
+  };
+  const f = sanitizeFilters("funding", filters, filterOptions);
+
+  const rows = all.filter(
+    (r) =>
+      (!f.stage || r.stageId === f.stage) &&
+      (!f.kind || r.kind === f.kind) &&
+      (!f.status || FR_STATUS_SLUG[r.status] === f.status) &&
+      inDateRange(r.issuedOn, f.from, f.to),
+  );
 
   const totals = rows.reduce(
     (acc, r) => {
@@ -513,6 +691,8 @@ export async function getFundingReport(
     projectName: project.name,
     rows,
     totals,
+    filterOptions,
+    appliedFilters: f,
   };
 }
 
@@ -523,6 +703,7 @@ export async function getFundingReport(
 export interface VariationReportRow {
   variationId: string;
   variationLabel: string;
+  stageId: string;
   stageName: string;
   taskDescription: string;
   /** The Variation's own description — "what changed" in the scope. */
@@ -533,6 +714,8 @@ export interface VariationReportRow {
   approvalStatus: VariationStatus;
   fundingStatus: string;
   requestedAt: string;
+  /** `requestedAt` as a calendar date in EAT (YYYY-MM-DD). */
+  requestedOn: string | null;
 }
 
 export interface VariationReport {
@@ -542,6 +725,20 @@ export interface VariationReport {
   rows: VariationReportRow[];
   totals: { additionalCostApproved: number };
 }
+
+export type FilteredVariationReport = VariationReport & ReportFilterFields;
+
+/** Keyed on the joined stage ids so React `cache` can memoise it per request. */
+const loadProjectVariations = cache(async (stageIds: string) =>
+  (
+    await Promise.all(
+      stageIds
+        .split(",")
+        .filter(Boolean)
+        .map((id) => listVariationsForStage(id)),
+    )
+  ).flat(),
+);
 
 function variationFundingStatus(
   v: Pick<Variation, "status" | "fundingRequestLinks">,
@@ -564,36 +761,60 @@ function variationFundingStatus(
  */
 export async function getVariationReport(
   projectId: string,
-): Promise<VariationReport | null> {
-  const project = await getProjectOverview(projectId);
+  /** Stage · Approval status · Funding status · Requested date range. */
+  filters: ReportFilters = {},
+): Promise<FilteredVariationReport | null> {
+  const project = await loadOverview(projectId);
   if (!project) return null;
 
-  const perStage = await Promise.all(
-    project.stages.map((s) => listVariationsForStage(s.id)),
+  const variations = await loadProjectVariations(project.stages.map((s) => s.id).join(","));
+
+  const all = variations.map((v) => {
+    const row: VariationReportRow = {
+      variationId: v.id,
+      variationLabel: v.displayNumber ?? "Draft",
+      stageId: v.stageId,
+      stageName: v.stageName,
+      taskDescription: v.taskDescription,
+      scopeImpact: v.description,
+      additionalCost: (v.materialImpact ?? 0) + (v.labourImpact ?? 0),
+      approvalStatus: v.status,
+      fundingStatus: variationFundingStatus(v),
+      requestedAt: v.requestedAt,
+      requestedOn: toEatDate(v.requestedAt),
+    };
+    return { v, row };
+  });
+
+  const filterOptions: FilterOptions = {
+    stage: stageOptions(project),
+    status: presentInOrder(VARIATION_STATUS_ORDER, all.map(({ row }) => row.approvalStatus)),
+    funding: presentInOrder(
+      Object.values(VARIATION_FUNDING_SLUG),
+      all.map(({ row }) => VARIATION_FUNDING_SLUG[row.fundingStatus]),
+    ),
+  };
+  const f = sanitizeFilters("variations", filters, filterOptions);
+
+  const shown = all.filter(
+    ({ row }) =>
+      (!f.stage || row.stageId === f.stage) &&
+      (!f.status || row.approvalStatus === f.status) &&
+      (!f.funding || VARIATION_FUNDING_SLUG[row.fundingStatus] === f.funding) &&
+      inDateRange(row.requestedOn, f.from, f.to),
   );
-  const variations = perStage.flat();
 
-  const rows: VariationReportRow[] = variations.map((v) => ({
-    variationId: v.id,
-    variationLabel: v.displayNumber ?? "Draft",
-    stageName: v.stageName,
-    taskDescription: v.taskDescription,
-    scopeImpact: v.description,
-    additionalCost: (v.materialImpact ?? 0) + (v.labourImpact ?? 0),
-    approvalStatus: v.status,
-    fundingStatus: variationFundingStatus(v),
-    requestedAt: v.requestedAt,
-  }));
-
-  const additionalCostApproved = variations
-    .filter((v) => v.status === "approved")
-    .reduce((sum, v) => sum + (v.materialImpact ?? 0) + (v.labourImpact ?? 0), 0);
+  const additionalCostApproved = shown
+    .filter(({ v }) => v.status === "approved")
+    .reduce((sum, { v }) => sum + (v.materialImpact ?? 0) + (v.labourImpact ?? 0), 0);
 
   return {
     projectId: project.id,
     projectCode: project.code,
     projectName: project.name,
-    rows,
+    rows: shown.map(({ row }) => row),
     totals: { additionalCostApproved },
+    filterOptions,
+    appliedFilters: f,
   };
 }

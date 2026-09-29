@@ -8,6 +8,7 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
   status: {
     issued: "Imetumwa",
     paid: "Imelipwa",
+    void: "Imebatilishwa",
   },
   list: {
     subtitle:
@@ -27,6 +28,8 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
     stageValue: "Thamani ya hatua",
     issuedOn: "Imetumwa {date}",
     paidOn: "Imelipwa {date}",
+    voidedOn: "Imebatilishwa {date}:",
+    correctedOn: "Kiasi kimerekebishwa {date} (kilikuwa {amount}):",
     delta:
       "Ankara ya nyongeza — imetolewa kwa ada iliyoongezwa baada ya ile ya awali kulipwa.",
     paymentInstructions: "Maelekezo ya malipo",
@@ -36,6 +39,21 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
       title: "Weka kama imelipwa",
       body: "Rekodi kuwa ada ya Ankara hii ya Ada imepokelewa. Hili haliwezi kutenduliwa.",
       action: "Weka kama imelipwa",
+    },
+    correct: {
+      title: "Rekebisha kiasi",
+      body: "Rekebisha ada isiyo sahihi kwa namba ileile ya ankara. Sababu inahifadhiwa na kuchapishwa kwenye ankara.",
+      amount: "Kiasi sahihi cha ada",
+      reason: "Sababu ya marekebisho",
+      action: "Hifadhi marekebisho",
+      submitting: "Inahifadhi…",
+    },
+    void: {
+      title: "Batilisha ankara hii",
+      body: "Kwa ankara iliyotolewa kimakosa. Inabaki kwenye kumbukumbu, imegongwa muhuri BATILI, na haihesabiwi tena kama ada inayodaiwa. Hili haliwezi kutenduliwa.",
+      reason: "Sababu ya kubatilisha",
+      action: "Batilisha ankara",
+      submitting: "Inabatilisha…",
     },
   },
 };
