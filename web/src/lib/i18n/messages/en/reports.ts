@@ -2,6 +2,7 @@ export const reports = {
   pageTitle: "Reports",
   loading: "Loading reports",
   total: "Total",
+  totalFiltered: "Total (filtered)",
   index: {
     subtitle:
       "Live, always-current views of this project’s figures — computed fresh on every visit, nothing stored. Not issued documents, so there is nothing to download here.",

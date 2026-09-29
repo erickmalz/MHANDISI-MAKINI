@@ -9,21 +9,34 @@ import { Button } from "@/components/ui/Button";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getLocale, getT, pageTitle } from "@/lib/i18n/server";
+import { ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("suppliers.statement.pageTitle");
 
 /**
  * The Supplier Statement (Operational Control decision 5) — an always-live,
  * all-time, all-project view: every Purchase Order raised against this
- * Supplier, every Payment made, and the running Outstanding balance. Not a
- * rendered document (no PDF/JPG) — see the map for why.
+ * Supplier, every Payment made, and the running Outstanding balance. It leaves
+ * the app as a dated Report Export (PDF / JPG / CSV) through the same toolbar
+ * as the Reports (reports-toolbar ticket 07).
  */
 export default async function SupplierStatementPage({
   params,
+  searchParams,
 }: PageProps<"/suppliers/[id]">) {
   const { id } = await params;
-  const [statement, t, locale] = await Promise.all([getSupplierStatement(id), getT(), getLocale()]);
+  const filters = parseReportFilters("supplier-statement", await searchParams);
+  const [statement, filterState, t, locale] = await Promise.all([
+    getSupplierStatement(id, filters),
+    getReportFilterState("supplier-statement", id, filters),
+    getT(),
+    getLocale(),
+  ]);
   if (!statement) notFound();
+  const filtered = hasActiveFilters(filterState.filters);
 
   return (
     <PageFrame width="working">
@@ -40,15 +53,27 @@ export default async function SupplierStatementPage({
         }
       />
 
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/suppliers/${id}`}
+        shareTitle={`${t("suppliers.statement.pageTitle")} — ${statement.name}`}
+        fileStem={`${REPORT_FILE_STEM["supplier-statement"]}-${statement.name}`}
+      />
+
       <Card className="mb-6 flex items-center justify-between">
-        <span className="text-lg font-bold text-card-foreground">{t("suppliers.statement.outstanding")}</span>
+        <span className="text-lg font-bold text-card-foreground">
+          {t(filtered ? "suppliers.statement.outstandingFiltered" : "suppliers.statement.outstanding")}
+        </span>
         <Money amount={statement.outstandingBalance} className="text-xl font-bold text-card-foreground" />
       </Card>
 
       <Card className="mb-6">
         <h2 className="text-xl font-bold text-card-foreground">{t("suppliers.statement.orders")}</h2>
         {statement.orders.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">{t("suppliers.statement.noOrders")}</p>
+          <p className="mt-4 text-muted-foreground">
+            {t(filtered ? "reportToolbar.noMatch" : "suppliers.statement.noOrders")}
+          </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.orders.map((o) => (
@@ -77,7 +102,9 @@ export default async function SupplierStatementPage({
       <Card>
         <h2 className="text-xl font-bold text-card-foreground">{t("suppliers.statement.payments")}</h2>
         {statement.payments.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">{t("suppliers.statement.noPayments")}</p>
+          <p className="mt-4 text-muted-foreground">
+            {t(filtered ? "reportToolbar.noMatch" : "suppliers.statement.noPayments")}
+          </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {statement.payments.map((p) => (

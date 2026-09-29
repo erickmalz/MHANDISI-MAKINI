@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getProjectFinancialSummary, getProjectOverview } from "@/lib/data";
+import { getProjectFinancialSummary } from "@/lib/data";
 import { Card } from "@/components/ui/Card";
 import { Money } from "@/components/ui/Money";
 import { StatTile } from "@/components/ui/StatTile";
@@ -10,8 +10,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import { STAGE_STATUS_LABEL } from "../../../_components/status-labels";
-import { PrintButton } from "./PrintButton";
-import { PrintSheet } from "./PrintSheet";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("reports.financialSummary.pageTitle");
 
@@ -25,21 +27,36 @@ export const generateMetadata = pageTitle("reports.financialSummary.pageTitle");
  */
 export default async function FinancialSummaryReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/financial-summary">) {
   const { id } = await params;
-  const report = await getProjectFinancialSummary(id);
+  const filters = parseReportFilters("financial-summary", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getProjectFinancialSummary(id, filters),
+    getReportFilterState("financial-summary", id, filters),
+  ]);
   if (!report) notFound();
-  const project = await getProjectOverview(id);
-  if (!project) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filterState.filters);
+  const title = t("reports.financialSummary.label");
 
+  // Print opens the PDF (ticket "Export formats and whether filters carry into
+  // them"): the old window.print() sheet is retired and its working-ledger
+  // layout lives in the PDF template.
   return (
     <PageFrame width="working">
-      <div className="print:hidden">
+      <div>
         <PageHeader
           crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-          title={t("reports.financialSummary.label")}
-          actions={<PrintButton label={t("reports.financialSummary.printSheet.action")} />}
+          title={title}
+        />
+
+        <ReportToolbar
+          state={filterState}
+          scopeId={id}
+          basePath={`/projects/${id}/reports/financial-summary`}
+          shareTitle={`${title} — ${report.projectCode}`}
+          fileStem={`${REPORT_FILE_STEM["financial-summary"]}-${report.projectCode}`}
         />
 
         <Card className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -61,6 +78,11 @@ export default async function FinancialSummaryReportPage({
             emphasis
             tone={report.forecastShortfall > 0 ? "destructive" : undefined}
           />
+          {filtered && (
+            <p className="col-span-full text-sm text-muted-foreground">
+              {t("reportToolbar.filteredTotals")}
+            </p>
+          )}
         </Card>
 
         <Card>
@@ -68,9 +90,15 @@ export default async function FinancialSummaryReportPage({
             {t("reports.financialSummary.stageByStage")}
           </h2>
           {report.stages.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {t("reports.financialSummary.noStages")}
-            </p>
+            filtered ? (
+              <div className="mt-3">
+                <NoMatch />
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {t("reports.financialSummary.noStages")}
+              </p>
+            )
           ) : (
             <DataTable
               caption={t("reports.financialSummary.caption")}
@@ -156,8 +184,6 @@ export default async function FinancialSummaryReportPage({
           )}
         </Card>
       </div>
-
-      <PrintSheet report={report} clientName={project.clientName} site={project.site} />
     </PageFrame>
   );
 }

@@ -28,6 +28,7 @@ export const subcontractors = {
     subtitle: "Statement of account, every project",
     editDetails: "Edit details",
     outstanding: "Outstanding balance",
+    outstandingFiltered: "Outstanding (filtered)",
     agreedLabour: "Agreed labour",
     noTasks: "Not assigned to any Task yet.",
     payments: "Payments",

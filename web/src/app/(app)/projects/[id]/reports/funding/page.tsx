@@ -11,6 +11,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 export const generateMetadata = pageTitle("reports.funding.pageTitle");
 
@@ -22,17 +26,32 @@ export const generateMetadata = pageTitle("reports.funding.pageTitle");
  */
 export default async function FundingReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/funding">) {
   const { id } = await params;
-  const report = await getFundingReport(id);
+  const filters = parseReportFilters("funding", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getFundingReport(id, filters),
+    getReportFilterState("funding", id, filters),
+  ]);
   if (!report) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filterState.filters);
+  const title = t("reports.funding.label");
 
   return (
     <PageFrame width="working">
       <PageHeader
         crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-        title={t("reports.funding.label")}
+        title={title}
+      />
+
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/projects/${id}/reports/funding`}
+        shareTitle={`${title} — ${report.projectCode}`}
+        fileStem={`${REPORT_FILE_STEM.funding}-${report.projectCode}`}
       />
 
       <Card className="mb-6 grid grid-cols-3 gap-4">
@@ -43,13 +62,20 @@ export default async function FundingReportPage({
           amount={report.totals.balance}
           tone={report.totals.balance > 0 ? "destructive" : undefined}
         />
+        {filtered && (
+          <p className="col-span-full text-sm text-muted-foreground">
+            {t("reportToolbar.filteredTotals")}
+          </p>
+        )}
       </Card>
 
       <Card>
         {report.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("reports.funding.empty")}
-          </p>
+          filtered ? (
+            <NoMatch />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("reports.funding.empty")}</p>
+          )
         ) : (
           <DataTable
             caption={t("reports.funding.caption")}

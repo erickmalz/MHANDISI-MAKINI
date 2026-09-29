@@ -11,6 +11,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { getT, pageTitle } from "@/lib/i18n/server";
 import type { MessageKey } from "@/lib/i18n/types";
+import { NoMatch, ReportToolbar } from "@/components/reports/ReportToolbar";
+import { REPORT_FILE_STEM } from "@/components/reports/filter-links";
+import { hasActiveFilters, parseReportFilters } from "@/lib/reports/filters";
+import { getReportFilterState } from "@/lib/reports/filter-state";
 
 /** The data layer's English funding-status text -> its label key; unknown values show as stored. */
 const FUNDING_STATUS: Record<string, MessageKey> = {
@@ -31,17 +35,32 @@ export const generateMetadata = pageTitle("reports.variations.pageTitle");
  */
 export default async function VariationReportPage({
   params,
+  searchParams,
 }: PageProps<"/projects/[id]/reports/variations">) {
   const { id } = await params;
-  const report = await getVariationReport(id);
+  const filters = parseReportFilters("variations", await searchParams);
+  const [report, filterState] = await Promise.all([
+    getVariationReport(id, filters),
+    getReportFilterState("variations", id, filters),
+  ]);
   if (!report) notFound();
   const t = await getT();
+  const filtered = hasActiveFilters(filterState.filters);
+  const title = t("reports.variations.label");
 
   return (
     <PageFrame width="working">
       <PageHeader
         crumbs={[{ label: t("reports.pageTitle"), href: `/projects/${id}/reports` }]}
-        title={t("reports.variations.label")}
+        title={title}
+      />
+
+      <ReportToolbar
+        state={filterState}
+        scopeId={id}
+        basePath={`/projects/${id}/reports/variations`}
+        shareTitle={`${title} — ${report.projectCode}`}
+        fileStem={`${REPORT_FILE_STEM.variations}-${report.projectCode}`}
       />
 
       <Card className="mb-6 max-w-xs">
@@ -50,13 +69,18 @@ export default async function VariationReportPage({
           amount={report.totals.additionalCostApproved}
           emphasis
         />
+        {filtered && (
+          <p className="mt-2 text-sm text-muted-foreground">{t("reportToolbar.filteredTotals")}</p>
+        )}
       </Card>
 
       <Card>
         {report.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("reports.variations.empty")}
-          </p>
+          filtered ? (
+            <NoMatch />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("reports.variations.empty")}</p>
+          )
         ) : (
           <DataTable
             caption={t("reports.variations.caption")}
