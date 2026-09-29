@@ -94,12 +94,18 @@ const FOOTER_TEMPLATE = `
       <span class="pageNumber"></span> / <span class="totalPages"></span></span>
   </div>`;
 
+/** Page orientation. Issued Documents are portrait; Report Exports are landscape (wide tables). */
+export interface RenderOptions {
+  landscape?: boolean;
+}
+
 /** Render an HTML string to an A4 PDF. */
-export async function renderPdf(html: string): Promise<Uint8Array> {
+export async function renderPdf(html: string, opts: RenderOptions = {}): Promise<Uint8Array> {
   return withPage(async (page) => {
     await page.setContent(html, { waitUntil: "load" });
     return page.pdf({
       format: "A4",
+      landscape: opts.landscape ?? false,
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: "<div></div>",
@@ -114,10 +120,11 @@ export async function renderPdf(html: string): Promise<Uint8Array> {
  * of page count — the WhatsApp-shareable version (ticket 10 §4). The caller
  * passes HTML built with `screenshot: true` so page furniture is suppressed.
  */
-export async function renderJpg(html: string): Promise<Uint8Array> {
+export async function renderJpg(html: string, opts: RenderOptions = {}): Promise<Uint8Array> {
   return withPage(async (page) => {
     await page.setViewport({
-      width: A4_WIDTH_PX,
+      // Landscape: the long A4 edge becomes the image width.
+      width: opts.landscape ? A4_HEIGHT_PX : A4_WIDTH_PX,
       height: A4_HEIGHT_PX,
       deviceScaleFactor: 2,
     });
