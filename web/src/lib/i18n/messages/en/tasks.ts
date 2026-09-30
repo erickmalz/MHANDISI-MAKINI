@@ -45,4 +45,19 @@ export const tasks = {
       aria: "Reason for voiding this payment",
     },
   },
+  sourced: {
+    fundingNote:
+      "Raised from a task. Its material and labour lines update every time you save the task — change them there, not here.",
+    poNote:
+      "Raised from a task. Its lines update every time you save the task — change quantities there. Choose the supplier here before issuing.",
+    viewTask: "Open the task",
+    linkedTitle: "Linked documents",
+    linkedBody:
+      "Saving this task keeps its draft funding request and planned purchase order in step with its labour and materials. Once issued, they no longer change.",
+    noneYet: "Nothing yet — add labour or material lines to raise the drafts.",
+    fundingRequest: "Funding request",
+    purchaseOrder: "Purchase order",
+    draft: "Draft",
+    noSupplier: "Supplier not chosen",
+  },
 } as const;

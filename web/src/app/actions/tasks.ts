@@ -65,6 +65,7 @@ export async function createTaskAction(
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/stages/${stageId}`);
+  revalidateTaskDrafts(projectId);
   redirect(`/projects/${projectId}/stages/${stageId}`);
 }
 
@@ -90,6 +91,7 @@ export async function updateTaskAction(
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/stages/${stageId}`);
+  revalidateTaskDrafts(projectId);
   redirect(`/projects/${projectId}/stages/${stageId}`);
 }
 
@@ -102,8 +104,15 @@ export async function deleteTaskAction(
   if (ok) {
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/stages/${stageId}`);
+    revalidateTaskDrafts(projectId);
   }
   redirect(`/projects/${projectId}/stages/${stageId}`);
+}
+
+/** A Task save re-syncs its draft Funding Request and planned Purchase Order. */
+function revalidateTaskDrafts(projectId: string) {
+  revalidatePath(`/projects/${projectId}/funding`);
+  revalidatePath(`/projects/${projectId}/procurement`);
 }
 
 function revalidateTask(projectId: string, stageId: string, taskId: string) {

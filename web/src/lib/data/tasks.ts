@@ -17,6 +17,7 @@ import type { TakeOffLineInput, TaskInput } from "@/lib/validation/tasks";
 import { getCurrentAccountId } from "./account-context";
 import { drawFromStock, type StockLine } from "./material-stock";
 import { readStageFinancials } from "./stage-financials";
+import { discardTaskDrafts, syncTaskDrafts } from "./task-drafts";
 import {
   labourPayments,
   materialLines,
@@ -618,6 +619,10 @@ export async function createTask(
     // Phase 3 ticket 06 §4: "Apply from stock" decrements the ledger for the
     // consuming side — a manual, bounded amount per line, never automatic.
     await drawFromStock(tx, accountId, stage.projectId, row.id, stockDrawsFrom(input.lines));
+    // The Task's requirements become its own draft Funding Request and
+    // planned Purchase Order (after the stock draw, so both ask only for the
+    // shortfall).
+    await syncTaskDrafts(tx, accountId, row.id);
     return row.id;
   });
 }
@@ -698,6 +703,9 @@ export async function updateTask(
     // Phase 3 ticket 06 §4: "Apply from stock" decrements the ledger for the
     // consuming side — independent of the lock branch above.
     await drawFromStock(tx, accountId, task.projectId, taskId, stockDrawsFrom(input.lines));
+    // Re-sync the Task's draft Funding Request / planned Purchase Order — a
+    // no-op once either has been Issued.
+    await syncTaskDrafts(tx, accountId, taskId);
     return true;
   });
 }
@@ -717,6 +725,7 @@ export async function deleteTask(taskId: string): Promise<boolean> {
       .limit(1);
     if (payment) return false;
 
+    await discardTaskDrafts(tx, taskId);
     const res = await tx
       .delete(tasks)
       .where(eq(tasks.id, taskId))

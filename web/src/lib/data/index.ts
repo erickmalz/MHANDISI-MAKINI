@@ -221,3 +221,4 @@ export {
   type CompleteProjectResult,
   type ArchiveProjectResult,
 } from "./project-closeout";
+export { getTaskSourcedDocumentIds } from "./task-drafts";

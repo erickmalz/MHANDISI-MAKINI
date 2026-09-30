@@ -48,4 +48,19 @@ export const tasks: Widen<typeof enTasks> = {
       aria: "Sababu ya kubatilisha malipo haya",
     },
   },
+  sourced: {
+    fundingNote:
+      "Imetokana na kazi. Mistari yake ya vifaa na ufundi husasishwa kila unapohifadhi kazi — ibadilishe huko, si hapa.",
+    poNote:
+      "Imetokana na kazi. Mistari yake husasishwa kila unapohifadhi kazi — badilisha idadi huko. Chagua msambazaji hapa kabla ya kutoa oda.",
+    viewTask: "Fungua kazi",
+    linkedTitle: "Nyaraka zilizounganishwa",
+    linkedBody:
+      "Kuhifadhi kazi hii huweka ombi lake la fedha la rasimu na oda ya ununuzi iliyopangwa sambamba na ufundi na vifaa vyake. Zikishatolewa, hazibadiliki tena.",
+    noneYet: "Bado hakuna — ongeza mistari ya ufundi au vifaa ili kuandaa rasimu.",
+    fundingRequest: "Ombi la fedha",
+    purchaseOrder: "Oda ya ununuzi",
+    draft: "Rasimu",
+    noSupplier: "Msambazaji hajachaguliwa",
+  },
 };

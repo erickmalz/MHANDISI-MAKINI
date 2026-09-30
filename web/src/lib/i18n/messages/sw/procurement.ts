@@ -178,6 +178,7 @@ export const procurement: Widen<typeof enProcurement> = {
     supplier: "Msambazaji",
     supplierHint:
       "Kutoka Orodha ya wasambazaji. Ongeza msambazaji huko kwanza ikiwa hayupo.",
+    chooseSupplier: "Chagua msambazaji",
     noSuppliers: "Hakuna wasambazaji bado",
     inactive: "hafanyi kazi",
     expectedDelivery: "Tarehe ya uwasilishaji inayotarajiwa",

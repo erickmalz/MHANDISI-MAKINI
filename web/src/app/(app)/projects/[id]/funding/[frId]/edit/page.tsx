@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { updateFundingRequestAction } from "@/app/actions/funding";
 import { getFundingRequestDraftInput } from "@/lib/data";
 import { FundingRequestForm } from "../../../../_components/FundingRequestForm";
+import { TaskSourceNote } from "../../../../_components/TaskSourceNote";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getT, pageTitle } from "@/lib/i18n/server";
@@ -32,6 +33,10 @@ export default async function EditFundingRequestPage({
             : t("funding.edit.subtitleBase")
         }
       />
+
+      {draft.sourceTaskId && (
+        <TaskSourceNote projectId={id} taskId={draft.sourceTaskId} kind="funding" />
+      )}
 
       <FundingRequestForm
         action={updateFundingRequestAction.bind(null, id, frId)}

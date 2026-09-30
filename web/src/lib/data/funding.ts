@@ -283,7 +283,7 @@ export async function getFundingRequest(
 
 // --- Draft create / edit ------------------------------------------------
 
-async function insertLines(
+export async function insertLines(
   tx: AccountTx,
   accountId: string,
   fundingRequestId: string,
@@ -352,6 +352,8 @@ export async function getFundingRequestDraftInput(frId: string): Promise<
       stageId: string;
       stageName: string;
       kind: "base" | "additional";
+      /** The Task this draft was raised from, when a Task save created it. */
+      sourceTaskId: string | undefined;
       notes: string | undefined;
       paymentInstructions: string | undefined;
       lines: FundingRequestLine[];
@@ -364,6 +366,7 @@ export async function getFundingRequestDraftInput(frId: string): Promise<
         id: fundingRequests.id,
         status: fundingRequests.status,
         kind: fundingRequests.kind,
+        sourceTaskId: fundingRequests.sourceTaskId,
         notes: fundingRequests.notes,
         paymentInstructions: fundingRequests.paymentInstructions,
         stageId: fundingRequests.stageId,
@@ -377,6 +380,7 @@ export async function getFundingRequestDraftInput(frId: string): Promise<
       id: string;
       status: FundingRequest["status"];
       kind: "base" | "additional";
+      sourceTaskId: string | null;
       notes: string | null;
       paymentInstructions: string | null;
       stageId: string;
@@ -396,6 +400,7 @@ export async function getFundingRequestDraftInput(frId: string): Promise<
       stageId: row.stageId,
       stageName: row.stageName,
       kind: row.kind,
+      sourceTaskId: row.sourceTaskId ?? undefined,
       notes: row.notes ?? undefined,
       paymentInstructions: row.paymentInstructions ?? undefined,
       lines: lineRows.map((l) => ({
@@ -697,13 +702,39 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
     const basisValue =
       materialSubtotal({ lines: asView }) + labourSubtotal({ lines: asView });
 
-    const fee = computeFee(
+    const computedFee = computeFee(
       { feeBasis: fr.feeBasis, feeAmount: fr.feeAmount, feePercent: fr.feePercent },
       basisValue,
     );
-    if (fee == null || fr.feeBasis == null)
+    if (computedFee == null || fr.feeBasis == null)
       return { ok: false as const, reason: "fee-basis-missing" as const };
     const feeBasis: "fixed" | "percent" = fr.feeBasis;
+
+    // A fixed fee is the stage's whole fee, however many requests the stage
+    // is funded through (one per Task, or a base plus Additional requests) —
+    // so a non-superseding request bills only what the stage's live Fee
+    // Invoices have not already billed. A percent fee is proportional to each
+    // request's own lines and needs no such netting. A superseding version is
+    // handled against its predecessor's invoice below.
+    let fee = computedFee;
+    let feeAlreadyBilled = false;
+    if (feeBasis === "fixed" && fr.supersedesId == null) {
+      const [billed] = await tx
+        .select({ total: sql<string>`COALESCE(SUM(${feeInvoices.feeAmount}), 0)` })
+        .from(feeInvoices)
+        .where(
+          and(
+            eq(feeInvoices.stageId, fr.stageId),
+            inArray(feeInvoices.status, ["issued", "paid"]),
+          ),
+        );
+      const alreadyBilled = Number(billed?.total ?? 0);
+      fee = Math.max(0, computedFee - alreadyBilled);
+      feeAlreadyBilled = alreadyBilled > 0 && fee === 0;
+    }
+    const feeLineDescription = feeAlreadyBilled
+      ? "Already billed on an earlier Fee Invoice for this stage."
+      : "Billed separately through the Fee Invoice.";
 
     // Base number: reuse the predecessor's for a superseding version, else claim
     // the next per-project Funding Request number.
@@ -722,7 +753,7 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
       category: "fee",
       seq: nextSeq,
       item: "Supervision fee for this stage",
-      description: "Billed separately through the Fee Invoice.",
+      description: feeLineDescription,
       amount: fee,
     });
     const feeLine: FundingRequestLine = {
@@ -730,7 +761,7 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
       category: "fee",
       seq: nextSeq,
       item: "Supervision fee for this stage",
-      description: "Billed separately through the Fee Invoice.",
+      description: feeLineDescription,
       qty: null,
       unit: null,
       unitCost: null,
@@ -905,9 +936,10 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           }),
         });
       }
-    } else {
+    } else if (fee > 0) {
       // Fresh Fee Invoice for a first issue, an additional request, or a
-      // superseding version whose predecessor's invoice was voided.
+      // superseding version whose predecessor's invoice was voided. None when
+      // a fixed stage fee was already billed in full by an earlier request.
       const fiSeq = await claimDocumentNumber(
         tx,
         accountId,

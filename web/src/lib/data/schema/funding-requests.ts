@@ -63,6 +63,14 @@ export const fundingRequests = pgTable(
     accountId: uuid("account_id").notNull(),
     stageId: uuid("stage_id").notNull(),
 
+    // The Task this request was drafted from, when a Task save created it
+    // (one draft per Task — its material + labour lines are re-synced from the
+    // Task while the request is still `draft`). A **loose column**, not a
+    // composite FK — the same call as `tasks.subcontractor_id`: an issued
+    // request must outlive its Task, and a plain SET NULL would null the
+    // NOT NULL `account_id`. `NULL` for a request entered by hand.
+    sourceTaskId: uuid("source_task_id"),
+
     kind: fundingRequestKind("kind").notNull().default("base"),
     status: fundingRequestStatus("status").notNull().default("draft"),
 

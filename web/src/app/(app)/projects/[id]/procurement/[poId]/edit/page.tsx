@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { updatePurchaseOrderAction } from "@/app/actions/procurement";
 import { getPurchaseOrderDraftInput, listSuppliers } from "@/lib/data";
 import { PurchaseOrderForm } from "../../../../_components/PurchaseOrderForm";
+import { TaskSourceNote } from "../../../../_components/TaskSourceNote";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getT, pageTitle } from "@/lib/i18n/server";
@@ -37,6 +38,10 @@ export default async function EditPurchaseOrderPage({
         title={t("procurement.edit.title")}
         subtitle={t("procurement.edit.subtitle")}
       />
+
+      {draft.sourceTaskId && (
+        <TaskSourceNote projectId={id} taskId={draft.sourceTaskId} kind="procurement" />
+      )}
 
       <PurchaseOrderForm
         action={updatePurchaseOrderAction.bind(null, id, poId)}

@@ -175,6 +175,7 @@ export const procurement = {
     supplier: "Supplier",
     supplierHint:
       "From the Supplier Register. Add a supplier there first if it is missing.",
+    chooseSupplier: "Choose a supplier",
     noSuppliers: "No suppliers yet",
     inactive: "inactive",
     expectedDelivery: "Expected delivery date",

@@ -17,6 +17,7 @@ import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TaskForm } from "../../../../_components/TaskForm";
 import { LabourPaymentsCard } from "./_components/LabourPaymentsCard";
+import { LinkedDocumentsCard } from "./_components/LinkedDocumentsCard";
 import { TASK_STATUS_KEYS } from "../../../../_components/status-keys";
 
 export default async function EditTaskPage({
@@ -73,6 +74,10 @@ export default async function EditTaskPage({
         stockBalances={stockBalances}
         knownItems={knownItems}
       />
+
+      <div className="mt-8">
+        <LinkedDocumentsCard projectId={id} taskId={taskId} />
+      </div>
 
       <div className="mt-8">
         <LabourPaymentsCard

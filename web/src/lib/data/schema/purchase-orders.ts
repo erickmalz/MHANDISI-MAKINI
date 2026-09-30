@@ -64,6 +64,12 @@ export const purchaseOrders = pgTable(
     // later broken link loses only the register cross-reference. The DAL
     // validates this points at a live supplier in the same account.
     supplierId: uuid("supplier_id"),
+    // The Task this order was drafted from, when a Task save created it (one
+    // planned order per Task, supplier left blank until the Engineer picks
+    // one — Issue refuses without it). Its lines are re-synced from the
+    // Task's take-off while the order is still `planned`. A loose column for
+    // the same reason as `supplier_id`. `NULL` for an order entered by hand.
+    sourceTaskId: uuid("source_task_id"),
 
     status: purchaseOrderStatus("status").notNull().default("planned"),
 

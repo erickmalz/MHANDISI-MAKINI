@@ -242,7 +242,7 @@ async function assemble(tx: AccountTx, poRows: PoRow[]): Promise<PurchaseOrder[]
     supplierName:
       r.documentSnapshot?.counterpartyName ??
       r.registerSupplierName ??
-      "Unlinked supplier",
+      (r.supplierId == null ? "Supplier not chosen" : "Unlinked supplier"),
     expectedDeliveryOn: r.expectedDeliveryOn,
     paymentTerms: r.paymentTerms,
     notes: r.notes,
@@ -329,7 +329,7 @@ async function supplierIsValid(
   return Boolean(row);
 }
 
-async function insertPoLines(
+export async function insertPoLines(
   tx: AccountTx,
   accountId: string,
   purchaseOrderId: string,
@@ -395,7 +395,10 @@ export async function getPurchaseOrderDraftInput(poId: string): Promise<
       projectId: string;
       stageId: string;
       stageName: string;
-      supplierId: string;
+      /** Unset on a draft raised from a Task — the Engineer picks one here. */
+      supplierId: string | undefined;
+      /** The Task this draft was raised from, when a Task save created it. */
+      sourceTaskId: string | undefined;
       expectedDeliveryOn: string | undefined;
       paymentTerms: string | undefined;
       notes: string | undefined;
@@ -418,6 +421,7 @@ export async function getPurchaseOrderDraftInput(poId: string): Promise<
         stageName: stages.name,
         projectId: stages.projectId,
         supplierId: purchaseOrders.supplierId,
+        sourceTaskId: purchaseOrders.sourceTaskId,
         expectedDeliveryOn: purchaseOrders.expectedDeliveryOn,
         paymentTerms: purchaseOrders.paymentTerms,
         notes: purchaseOrders.notes,
@@ -432,11 +436,12 @@ export async function getPurchaseOrderDraftInput(poId: string): Promise<
       stageName: string;
       projectId: string;
       supplierId: string | null;
+      sourceTaskId: string | null;
       expectedDeliveryOn: string | null;
       paymentTerms: string | null;
       notes: string | null;
     }[];
-    if (!row || row.status !== "planned" || !row.supplierId) return null;
+    if (!row || row.status !== "planned") return null;
 
     const lineRows = await tx
       .select()
@@ -448,7 +453,8 @@ export async function getPurchaseOrderDraftInput(poId: string): Promise<
       projectId: row.projectId,
       stageId: row.stageId,
       stageName: row.stageName,
-      supplierId: row.supplierId,
+      supplierId: row.supplierId ?? undefined,
+      sourceTaskId: row.sourceTaskId ?? undefined,
       expectedDeliveryOn: row.expectedDeliveryOn ?? undefined,
       paymentTerms: row.paymentTerms ?? undefined,
       notes: row.notes ?? undefined,

@@ -56,7 +56,8 @@ export function PurchaseOrderForm({
   fixedStageName?: string;
   suppliers: SupplierOption[];
   initial?: {
-    supplierId: string;
+    /** Unset on a planned order raised from a Task — the Engineer picks one. */
+    supplierId?: string;
     expectedDeliveryOn?: string;
     paymentTerms?: string;
     notes?: string;
@@ -144,10 +145,15 @@ export function PurchaseOrderForm({
         >
           <select
             name="supplierId"
-            defaultValue={initial?.supplierId ?? suppliers[0]?.id ?? ""}
+            defaultValue={initial ? (initial.supplierId ?? "") : (suppliers[0]?.id ?? "")}
             className={`${controlClass} cursor-pointer`}
           >
             {suppliers.length === 0 && <option value="">{t("procurement.form.noSuppliers")}</option>}
+            {suppliers.length > 0 && initial && !initial.supplierId && (
+              <option value="" disabled>
+                {t("procurement.form.chooseSupplier")}
+              </option>
+            )}
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
