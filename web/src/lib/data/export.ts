@@ -9,6 +9,7 @@ import {
   deliveryRecords,
   deposits,
   documentNumberSequences,
+  feeInvoicePayments,
   feeInvoices,
   fundingRequestLines,
   fundingRequests,
@@ -66,6 +67,7 @@ export interface AccountDataExport {
   fundingRequests: unknown[];
   fundingRequestLines: unknown[];
   feeInvoices: unknown[];
+  feeInvoicePayments: unknown[];
   deposits: unknown[];
   purchaseOrders: unknown[];
   purchaseOrderLines: unknown[];
@@ -120,6 +122,7 @@ export async function exportAccountData(): Promise<AccountDataExport | null> {
       fundingRequests: await tx.select().from(fundingRequests),
       fundingRequestLines: await tx.select().from(fundingRequestLines),
       feeInvoices: await tx.select().from(feeInvoices),
+      feeInvoicePayments: await tx.select().from(feeInvoicePayments),
       deposits: await tx.select().from(deposits),
       purchaseOrders: await tx.select().from(purchaseOrders),
       purchaseOrderLines: await tx.select().from(purchaseOrderLines),

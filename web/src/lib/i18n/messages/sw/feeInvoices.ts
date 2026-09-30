@@ -8,6 +8,7 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
   status: {
     issued: "Imetumwa",
     paid: "Imelipwa",
+    partiallyPaid: "Imelipwa kiasi",
     void: "Imebatilishwa",
   },
   list: {
@@ -17,11 +18,14 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
       "Hakuna Ankara za Ada bado. Moja inatolewa kiotomatiki ombi la fedha la hatua linapotumwa.",
     delta: "Nyongeza",
     forRequest: "{stage} · {number}",
+    balance: "{amount} bado inadaiwa",
   },
   detail: {
     stage: "Hatua",
     fundingRequest: "Ombi la fedha",
     amount: "Kiasi cha ada",
+    received: "Kilichopokelewa",
+    balance: "Salio linalodaiwa",
     basis: "Msingi wa ada",
     basisFixed: "Ada maalum ya usimamizi kwa hatua hii",
     basisPercent: "{percent}% ya thamani ya hatua",
@@ -35,10 +39,19 @@ export const feeInvoices: Widen<typeof enFeeInvoices> = {
     paymentInstructions: "Maelekezo ya malipo",
     document: "Ankara ya Ada {number}",
     backToAll: "Rudi kwenye ankara zote za ada",
-    markPaid: {
-      title: "Weka kama imelipwa",
-      body: "Rekodi kuwa ada ya Ankara hii ya Ada imepokelewa. Hili haliwezi kutenduliwa.",
-      action: "Weka kama imelipwa",
+    payments: {
+      title: "Malipo yaliyopokelewa",
+      marked: "Imewekwa kama imelipwa",
+    },
+    recordPayment: {
+      title: "Rekodi malipo",
+      body: "Weka salio lote ili ankara iwe imelipwa, au kiasi kidogo kwa malipo ya sehemu — kinachobaki kinaendelea kudaiwa. Malipo yakisharekodiwa, ankara haiwezi tena kurekebishwa wala kubatilishwa.",
+      amount: "Kiasi kilichopokelewa",
+      receivedOn: "Tarehe ya kupokea",
+      method: "Njia",
+      reference: "Kumbukumbu",
+      action: "Rekodi malipo",
+      submitting: "Inarekodi…",
     },
     correct: {
       title: "Rekebisha kiasi",

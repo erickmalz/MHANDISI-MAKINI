@@ -118,6 +118,8 @@ export interface FundingRequestFeeInvoice {
   displayNumber: string;
   status: "issued" | "paid" | "void";
   feeAmount: number;
+  /** Sum of payments so far — between 0 and `feeAmount` while `issued`. */
+  amountReceived: number;
   isDelta: boolean;
 }
 

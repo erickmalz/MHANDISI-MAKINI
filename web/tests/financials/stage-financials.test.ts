@@ -105,6 +105,12 @@ async function seedAccountA(app: Client, acc: string): Promise<Ids> {
          VALUES ($1, $2, $3, $4, $5, $6, 'fixed', $7, $8, '{}'::jsonb) RETURNING id`,
         [acc, stageId, frId, status, n, `FI-A-${n}`, amount, originalAmount],
       );
+    const feePayment = (feeInvoiceId: string, amount: number) =>
+      one(
+        `INSERT INTO fee_invoice_payments (account_id, fee_invoice_id, amount, received_on, method)
+         VALUES ($1, $2, $3, '2026-09-03', 'mobile_money') RETURNING id`,
+        [acc, feeInvoiceId, amount],
+      );
     const po = async (stageId: string, status: string, qty: number, price: number) => {
       const id = await one(
         `INSERT INTO purchase_orders (account_id, stage_id, supplier_id, status)
@@ -175,8 +181,12 @@ async function seedAccountA(app: Client, acc: string): Promise<Ids> {
     const fr1Draft = await fr(s1, "draft", "additional");
     await frLine(fr1Draft, "fee", 80_000); // Fee Recorded
     await frLine(fr1Draft, "material", 5_555); // draft: not scoped cost
-    await feeInvoice(s1, fr1v2, "paid", 200_000, 1);
-    await feeInvoice(s1, fr1v2, "issued", 100_000, 2);
+    const fi1 = await feeInvoice(s1, fr1v2, "paid", 200_000, 1);
+    await feePayment(fi1, 120_000);
+    await feePayment(fi1, 80_000);
+    // Part-paid: still `issued`, but what has come in counts as received.
+    const fi2 = await feeInvoice(s1, fr1v2, "issued", 100_000, 2);
+    await feePayment(fi2, 30_000);
 
     const po1 = await po(s1, "ordered", 10, 50_000); // 500,000
     await poPayment(po1, 200_000);
@@ -278,8 +288,8 @@ describe("Stage Financials read model", () => {
       remainingFee: 0, // 300,000 − 300,000 invoiced
       remainingOtherApproved: 0,
       feeRecorded: 80_000, // the draft request's fee line
-      feeInvoiced: 300_000, // paid 200,000 + issued 100,000
-      feeReceived: 200_000,
+      feeInvoiced: 300_000, // paid 200,000 + part-paid 100,000
+      feeReceived: 230_000, // paid 120,000 + 80,000; part-paid 30,000
       fundingRequestPending: false,
     });
     // 3,000,000 − 300,000 − 630,000 − 700,000 − 950,000 − 40,000 − 60,000

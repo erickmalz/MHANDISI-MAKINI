@@ -166,6 +166,10 @@ export function FundingRequestDetail({
                       ? fr.feeInvoice.isDelta
                         ? "funding.detail.invoiceState.paidDelta"
                         : "funding.detail.invoiceState.paid"
+                      : fr.feeInvoice.amountReceived > 0
+                      ? fr.feeInvoice.isDelta
+                        ? "funding.detail.invoiceState.partiallyPaidDelta"
+                        : "funding.detail.invoiceState.partiallyPaid"
                       : fr.feeInvoice.isDelta
                         ? "funding.detail.invoiceState.issuedDelta"
                         : "funding.detail.invoiceState.issued",

@@ -86,6 +86,8 @@ export const funding: Widen<typeof enFunding> = {
       paid: "imelipwa",
       issuedDelta: "imetumwa, tofauti",
       paidDelta: "imelipwa, tofauti",
+      partiallyPaid: "imelipwa kiasi",
+      partiallyPaidDelta: "imelipwa kiasi, tofauti",
       void: "imebatilishwa",
     },
     documentRequest: "Ombi la fedha {number}",

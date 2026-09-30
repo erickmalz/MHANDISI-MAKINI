@@ -9,8 +9,8 @@ import {
   issueFundingRequest,
   linkVariationsToFundingRequest,
   correctFeeInvoice,
-  markFeeInvoicePaid,
   recordDeposit,
+  recordFeeInvoicePayment,
   supersedeFundingRequest,
   updateFundingRequestDraft,
   voidDeposit,
@@ -20,6 +20,7 @@ import { type ActionState, zodFieldErrors } from "@/lib/forms/action-helpers";
 import {
   depositSchema,
   feeInvoiceCorrectionSchema,
+  feeInvoicePaymentSchema,
   fundingRequestDraftSchema,
   supersedeSchema,
   voidReasonSchema,
@@ -240,23 +241,46 @@ export async function voidDepositAction(
   redirect(`/projects/${projectId}/funding/${frId}`);
 }
 
-/** Mark an Issued Fee Invoice paid — the supervisor's own ledger, separate from Deposits. */
-export async function markFeeInvoicePaidAction(
-  projectId: string,
-  feeInvoiceId: string,
-): Promise<void> {
-  await markFeeInvoicePaid(feeInvoiceId);
-  revalidatePath(`/projects/${projectId}`);
-  revalidatePath(`/projects/${projectId}/fee-invoices`);
-  revalidatePath(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
-  redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
-}
-
 function revalidateFeeInvoice(projectId: string, feeInvoiceId: string) {
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/funding`);
   revalidatePath(`/projects/${projectId}/fee-invoices`);
   revalidatePath(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
+}
+
+/**
+ * Record a full or part payment against an Issued Fee Invoice — the
+ * supervisor's own ledger, separate from Deposits. Paying the whole balance
+ * marks it paid.
+ */
+export async function recordFeeInvoicePaymentAction(
+  projectId: string,
+  feeInvoiceId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = feeInvoicePaymentSchema.safeParse({
+    amount: formData.get("amount") ?? undefined,
+    receivedOn: formData.get("receivedOn") ?? undefined,
+    method: formData.get("method") ?? undefined,
+    reference: formData.get("reference") ?? undefined,
+  });
+  if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
+
+  let result;
+  try {
+    result = await recordFeeInvoicePayment(feeInvoiceId, parsed.data);
+  } catch {
+    return { error: "Could not record the payment. Try again." };
+  }
+  if (result === "not_found") return { error: "That Fee Invoice could not be found." };
+  if (result === "not_open") return { error: "Only an unpaid Fee Invoice can take a payment." };
+  if (result === "exceeds_balance") {
+    return { fieldErrors: { amount: "That is more than the balance still owed." } };
+  }
+
+  revalidateFeeInvoice(projectId, feeInvoiceId);
+  redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
 }
 
 /** Void an unpaid Fee Invoice raised in error — a recorded reason is required. */
@@ -277,7 +301,7 @@ export async function voidFeeInvoiceAction(
   } catch {
     return { error: "Could not void the Fee Invoice. Try again." };
   }
-  if (!ok) return { error: "Only an unpaid Fee Invoice can be voided." };
+  if (!ok) return { error: "Only an unpaid Fee Invoice with no payments can be voided." };
 
   revalidateFeeInvoice(projectId, feeInvoiceId);
   redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);
@@ -302,7 +326,7 @@ export async function correctFeeInvoiceAction(
   } catch {
     return { error: "Could not correct the Fee Invoice. Try again." };
   }
-  if (!ok) return { error: "Only an unpaid Fee Invoice can be corrected." };
+  if (!ok) return { error: "Only an unpaid Fee Invoice with no payments can be corrected." };
 
   revalidateFeeInvoice(projectId, feeInvoiceId);
   redirect(`/projects/${projectId}/fee-invoices/${feeInvoiceId}`);

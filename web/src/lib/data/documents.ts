@@ -1,6 +1,6 @@
 import "server-only";
 
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 
 import { formatDate } from "@/lib/format";
 
@@ -186,6 +186,9 @@ export async function getFeeInvoiceDocument(
       .select({
         status: feeInvoices.status,
         paidAt: feeInvoices.paidAt,
+        hasPayments: sql<boolean>`EXISTS (
+          SELECT 1 FROM fee_invoice_payments p WHERE p.fee_invoice_id = ${feeInvoices.id}
+        )`,
         supersededAt: feeInvoices.supersededAt,
         documentSnapshot: feeInvoices.documentSnapshot,
         projectId: stages.projectId,
@@ -205,6 +208,8 @@ export async function getFeeInvoiceDocument(
         ? `PAID — ${formatDate(row.paidAt ?? new Date())}`
         : row.status === "void"
           ? "VOID"
+          : row.hasPayments
+          ? "PART-PAID"
           : row.supersededAt != null
           ? "SUPERSEDED"
           : null;

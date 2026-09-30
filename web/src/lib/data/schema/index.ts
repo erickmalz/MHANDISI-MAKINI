@@ -28,6 +28,7 @@ export * from "./document-numbers";
 export * from "./funding-requests";
 export * from "./funding-request-lines";
 export * from "./fee-invoices";
+export * from "./fee-invoice-payments";
 export * from "./deposits";
 export * from "./purchase-orders";
 export * from "./purchase-order-lines";

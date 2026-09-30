@@ -4,6 +4,7 @@ import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 
 import { getProjectOverview, listFeeInvoices, type FeeInvoiceListItem } from "@/lib/data";
 import { Money } from "@/components/ui/Money";
+import { formatTZS } from "@/lib/finance";
 import { PageFrame } from "@/components/ui/PageFrame";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -66,6 +67,7 @@ function FeeInvoiceRow({
   t: Translator;
   locale: Locale;
 }) {
+  const isPartial = fi.status === "issued" && fi.amountReceived > 0;
   return (
     <Link
       href={`/projects/${projectId}/fee-invoices/${fi.id}`}
@@ -75,10 +77,18 @@ function FeeInvoiceRow({
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-card-foreground">{fi.displayNumber}</span>
           <StatusBadge
-            tone={fi.status === "paid" ? "success" : fi.status === "void" ? "danger" : "info"}
+            tone={
+              fi.status === "paid"
+                ? "success"
+                : fi.status === "void"
+                  ? "danger"
+                  : isPartial
+                    ? "warning"
+                    : "info"
+            }
             size="sm"
           >
-            {t(`feeInvoices.status.${fi.status}`)}
+            {t(isPartial ? "feeInvoices.status.partiallyPaid" : `feeInvoices.status.${fi.status}`)}
           </StatusBadge>
           {fi.isDelta && (
             <StatusBadge tone="neutral" size="sm">
@@ -101,9 +111,11 @@ function FeeInvoiceRow({
           }`}
         />
         <span className="text-sm text-muted-foreground">
-          {t(fi.status === "paid" ? "feeInvoices.detail.paidOn" : "feeInvoices.detail.issuedOn", {
-            date: formatDate(fi.status === "paid" && fi.paidAt ? fi.paidAt : fi.issuedAt, locale),
-          })}
+          {isPartial
+            ? t("feeInvoices.list.balance", { amount: formatTZS(fi.feeAmount - fi.amountReceived) })
+            : t(fi.status === "paid" ? "feeInvoices.detail.paidOn" : "feeInvoices.detail.issuedOn", {
+                date: formatDate(fi.status === "paid" && fi.paidAt ? fi.paidAt : fi.issuedAt, locale),
+              })}
         </span>
       </div>
       <CaretRight

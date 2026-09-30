@@ -83,6 +83,8 @@ export const funding = {
       paid: "paid",
       issuedDelta: "issued, delta",
       paidDelta: "paid, delta",
+      partiallyPaid: "partially paid",
+      partiallyPaidDelta: "partially paid, delta",
       void: "void",
     },
     documentRequest: "Funding request {number}",

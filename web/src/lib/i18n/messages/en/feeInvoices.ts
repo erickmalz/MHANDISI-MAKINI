@@ -5,6 +5,7 @@ export const feeInvoices = {
   status: {
     issued: "Issued",
     paid: "Paid",
+    partiallyPaid: "Partially paid",
     void: "Void",
   },
   list: {
@@ -14,11 +15,14 @@ export const feeInvoices = {
       "No Fee Invoices yet. One is raised automatically when a stage's funding request is issued.",
     delta: "Delta",
     forRequest: "{stage} · {number}",
+    balance: "{amount} still owed",
   },
   detail: {
     stage: "Stage",
     fundingRequest: "Funding request",
     amount: "Fee amount",
+    received: "Received",
+    balance: "Balance owed",
     basis: "Fee basis",
     basisFixed: "Fixed supervision fee for this stage",
     basisPercent: "{percent}% of the stage value",
@@ -32,10 +36,19 @@ export const feeInvoices = {
     paymentInstructions: "Payment instructions",
     document: "Fee Invoice {number}",
     backToAll: "Back to all fee invoices",
-    markPaid: {
-      title: "Mark as paid",
-      body: "Record that this Fee Invoice's fee has been received. This cannot be undone.",
-      action: "Mark as paid",
+    payments: {
+      title: "Payments received",
+      marked: "Marked paid",
+    },
+    recordPayment: {
+      title: "Record a payment",
+      body: "Enter the full balance to mark the invoice paid, or a smaller amount for a part-payment — the rest stays owed. Once a payment is recorded the invoice can no longer be corrected or voided.",
+      amount: "Amount received",
+      receivedOn: "Date received",
+      method: "Method",
+      reference: "Reference",
+      action: "Record payment",
+      submitting: "Recording…",
     },
     correct: {
       title: "Correct the amount",

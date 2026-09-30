@@ -122,3 +122,15 @@ export const feeInvoiceCorrectionSchema = z.object({
 });
 
 export type FeeInvoiceCorrectionInput = z.infer<typeof feeInvoiceCorrectionSchema>;
+
+/** Recording a full or part payment against an Issued Fee Invoice. */
+export const feeInvoicePaymentSchema = z.object({
+  amount: wholeAmount,
+  receivedOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Enter the date it was received." }),
+  method: z.enum(["bank_transfer", "cash", "mobile_money", "cheque", "other"]),
+  reference: optText(120),
+});
+
+export type FeeInvoicePaymentInput = z.infer<typeof feeInvoicePaymentSchema>;

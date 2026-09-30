@@ -11,6 +11,7 @@ import {
 } from "@/lib/funding";
 import type {
   DepositInput,
+  FeeInvoicePaymentInput,
   FundingLineInput,
   FundingRequestDraftInput,
   SupersedeInput,
@@ -20,6 +21,7 @@ import { getCurrentAccountId } from "./account-context";
 import { claimDocumentNumber, pad3 } from "./document-numbers";
 import {
   deposits,
+  feeInvoicePayments,
   feeInvoices,
   fundingRequestLines,
   fundingRequests,
@@ -51,6 +53,12 @@ const PAYMENT_METHOD_LABELS: Record<string, PaymentMethod> = {
   cheque: "Cheque",
   other: "Other",
 };
+
+/** Total paid so far against the Fee Invoice in scope — a correlated sum. */
+const feeAmountReceived = sql<number>`(
+  SELECT COALESCE(SUM(p.amount), 0) FROM fee_invoice_payments p
+   WHERE p.fee_invoice_id = ${feeInvoices.id}
+)`.mapWith(Number);
 
 const iso = (v: Date | string | null): string | null =>
   v == null ? null : v instanceof Date ? v.toISOString() : v;
@@ -133,6 +141,7 @@ async function assemble(
       displayNumber: feeInvoices.displayNumber,
       status: feeInvoices.status,
       feeAmount: feeInvoices.feeAmount,
+      amountReceived: feeAmountReceived,
       isDelta: feeInvoices.isDelta,
     })
     .from(feeInvoices)
@@ -204,6 +213,7 @@ async function assemble(
       displayNumber: f.displayNumber,
       status: f.status,
       feeAmount: f.feeAmount,
+      amountReceived: f.amountReceived,
       isDelta: f.isDelta,
     });
   }
@@ -794,7 +804,14 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
       });
 
     let priorFee:
-      | { id: string; status: "issued" | "paid" | "void"; feeAmount: number; baseNumber: number; displayNumber: string }
+      | {
+          id: string;
+          status: "issued" | "paid" | "void";
+          feeAmount: number;
+          amountReceived: number;
+          baseNumber: number;
+          displayNumber: string;
+        }
       | undefined;
     if (fr.supersedesId) {
       [priorFee] = await tx
@@ -802,6 +819,7 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           id: feeInvoices.id,
           status: feeInvoices.status,
           feeAmount: feeInvoices.feeAmount,
+          amountReceived: feeAmountReceived,
           baseNumber: feeInvoices.baseNumber,
           displayNumber: feeInvoices.displayNumber,
         })
@@ -826,7 +844,12 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
         );
     }
 
-    if (priorFee && priorFee.status === "issued") {
+    // Any payment at all pins the predecessor like a fully paid one: its
+    // amount is never rewritten under money already received.
+    const priorFeeHasPayments =
+      priorFee != null && (priorFee.status === "paid" || priorFee.amountReceived > 0);
+
+    if (priorFee && priorFee.status === "issued" && !priorFeeHasPayments) {
       // Unpaid predecessor invoice — reissue it onto this version (§1). Number
       // and row id are kept; nothing was paid, so no double-count.
       await tx
@@ -849,8 +872,9 @@ export async function issueFundingRequest(frId: string): Promise<IssueResult> {
           updatedAt: new Date(),
         })
         .where(eq(feeInvoices.id, priorFee.id));
-    } else if (priorFee && priorFee.status === "paid") {
-      // Paid predecessor — never touched. Raise a delta invoice for the increase.
+    } else if (priorFee && priorFeeHasPayments) {
+      // Paid or part-paid predecessor — never touched (a part-paid one keeps
+      // collecting its own balance). Raise a delta invoice for the increase.
       const delta = fee - priorFee.feeAmount;
       if (delta > 0) {
         const fiSeq = await claimDocumentNumber(
@@ -1063,12 +1087,23 @@ export interface FeeInvoiceListItem {
   status: "issued" | "paid" | "void";
   isDelta: boolean;
   feeAmount: number;
+  /** Sum of payments so far; `0 < amountReceived < feeAmount` is "Partially paid". */
+  amountReceived: number;
   stageId: string;
   stageName: string;
   fundingRequestId: string;
   fundingRequestDisplayNumber: string | null;
   issuedAt: string;
   paidAt: string | null;
+}
+
+/** One payment received against a Fee Invoice. */
+export interface FeeInvoicePayment {
+  id: string;
+  amount: number;
+  receivedOn: string;
+  method: PaymentMethod | null;
+  reference: string | null;
 }
 
 /** A Fee Invoice's full detail, for its own page. */
@@ -1084,6 +1119,8 @@ export interface FeeInvoiceDetail extends FeeInvoiceListItem {
   originalFeeAmount: number | null;
   correctionReason: string | null;
   correctedAt: string | null;
+  /** Every payment received, oldest first. */
+  payments: FeeInvoicePayment[];
 }
 
 const feeInvoiceSelection = {
@@ -1092,6 +1129,7 @@ const feeInvoiceSelection = {
   status: feeInvoices.status,
   isDelta: feeInvoices.isDelta,
   feeAmount: feeInvoices.feeAmount,
+  amountReceived: feeAmountReceived,
   feeBasis: feeInvoices.feeBasis,
   feePercent: feeInvoices.feePercent,
   basisValue: feeInvoices.basisValue,
@@ -1116,6 +1154,7 @@ type FeeInvoiceRow = {
   status: "issued" | "paid" | "void";
   isDelta: boolean;
   feeAmount: number;
+  amountReceived: number;
   feeBasis: "fixed" | "percent";
   feePercent: string | null;
   basisValue: number | null;
@@ -1141,6 +1180,7 @@ function toFeeInvoiceListItem(r: FeeInvoiceRow): FeeInvoiceListItem {
     status: r.status,
     isDelta: r.isDelta,
     feeAmount: r.feeAmount,
+    amountReceived: r.amountReceived,
     stageId: r.stageId,
     stageName: r.stageName,
     fundingRequestId: r.fundingRequestId,
@@ -1175,6 +1215,11 @@ export async function getFeeInvoice(feeInvoiceId: string): Promise<FeeInvoiceDet
       .where(eq(feeInvoices.id, feeInvoiceId))
       .limit(1)) as FeeInvoiceRow[];
     if (!row) return null;
+    const paymentRows = await tx
+      .select()
+      .from(feeInvoicePayments)
+      .where(eq(feeInvoicePayments.feeInvoiceId, feeInvoiceId))
+      .orderBy(asc(feeInvoicePayments.receivedOn), asc(feeInvoicePayments.createdAt));
     return {
       ...toFeeInvoiceListItem(row),
       projectId: row.projectId,
@@ -1187,39 +1232,94 @@ export async function getFeeInvoice(feeInvoiceId: string): Promise<FeeInvoiceDet
       originalFeeAmount: row.originalFeeAmount,
       correctionReason: row.correctionReason,
       correctedAt: iso(row.correctedAt),
+      payments: paymentRows.map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        receivedOn: p.receivedOn,
+        method: p.method ? PAYMENT_METHOD_LABELS[p.method] : null,
+        reference: p.reference,
+      })),
     };
   });
 }
 
-/** Mark an Issued Fee Invoice paid. `false` when missing / already paid. */
-export async function markFeeInvoicePaid(feeInvoiceId: string): Promise<boolean> {
+/** Why a Fee Invoice payment was refused, or `ok`. */
+export type RecordFeeInvoicePaymentResult = "ok" | "not_found" | "not_open" | "exceeds_balance";
+
+/**
+ * Record money received against an Issued Fee Invoice — the whole balance or
+ * part of it. The invoice row is locked so two payments recorded at once
+ * cannot together overshoot the amount; once the payments reach the invoice
+ * amount it becomes `paid`, stamped with the moment of the payment that
+ * cleared it.
+ */
+export async function recordFeeInvoicePayment(
+  feeInvoiceId: string,
+  input: FeeInvoicePaymentInput,
+): Promise<RecordFeeInvoicePaymentResult> {
   return withAccount(async (tx) => {
-    const res = await tx
-      .update(feeInvoices)
-      .set({ status: "paid", paidAt: new Date(), updatedAt: new Date() })
-      .where(
-        and(
-          eq(feeInvoices.id, feeInvoiceId),
-          eq(feeInvoices.status, "issued"),
-        ),
-      )
-      .returning({ id: feeInvoices.id });
-    return res.length > 0;
+    const [fi] = await tx
+      .select({
+        accountId: feeInvoices.accountId,
+        status: feeInvoices.status,
+        feeAmount: feeInvoices.feeAmount,
+      })
+      .from(feeInvoices)
+      .where(eq(feeInvoices.id, feeInvoiceId))
+      .for("update")
+      .limit(1);
+    if (!fi) return "not_found";
+    if (fi.status !== "issued") return "not_open";
+
+    const [{ received }] = await tx
+      .select({ received: sql<number>`COALESCE(SUM(${feeInvoicePayments.amount}), 0)`.mapWith(Number) })
+      .from(feeInvoicePayments)
+      .where(eq(feeInvoicePayments.feeInvoiceId, feeInvoiceId));
+    const balance = fi.feeAmount - received;
+    if (input.amount > balance) return "exceeds_balance";
+
+    await tx.insert(feeInvoicePayments).values({
+      accountId: fi.accountId,
+      feeInvoiceId,
+      amount: input.amount,
+      receivedOn: input.receivedOn,
+      method: input.method,
+      reference: input.reference ?? null,
+    });
+
+    if (input.amount === balance) {
+      await tx
+        .update(feeInvoices)
+        .set({ status: "paid", paidAt: new Date(), updatedAt: new Date() })
+        .where(eq(feeInvoices.id, feeInvoiceId));
+    } else {
+      await tx
+        .update(feeInvoices)
+        .set({ updatedAt: new Date() })
+        .where(eq(feeInvoices.id, feeInvoiceId));
+    }
+    return "ok";
   });
 }
 
 /**
  * Void an unpaid Fee Invoice raised in error, with a recorded reason. The row
  * and its number stay; it drops out of Fee Invoiced / Outstanding and its
- * document is stamped VOID. `false` when missing or no longer `issued` — a paid
- * invoice is never voided.
+ * document is stamped VOID. `false` when missing, no longer `issued`, or any
+ * payment has been received against it — money received is never voided.
  */
 export async function voidFeeInvoice(feeInvoiceId: string, reason: string): Promise<boolean> {
   return withAccount(async (tx) => {
     const res = await tx
       .update(feeInvoices)
       .set({ status: "void", voidedAt: new Date(), voidReason: reason, updatedAt: new Date() })
-      .where(and(eq(feeInvoices.id, feeInvoiceId), eq(feeInvoices.status, "issued")))
+      .where(
+        and(
+          eq(feeInvoices.id, feeInvoiceId),
+          eq(feeInvoices.status, "issued"),
+          sql`NOT EXISTS (SELECT 1 FROM fee_invoice_payments p WHERE p.fee_invoice_id = ${feeInvoices.id})`,
+        ),
+      )
       .returning({ id: feeInvoices.id });
     return res.length > 0;
   });
@@ -1229,8 +1329,8 @@ export async function voidFeeInvoice(feeInvoiceId: string, reason: string): Prom
  * Correct an unpaid Fee Invoice's amount, with a recorded reason. Same row,
  * same number; the snapshot is rebuilt at the new amount and carries the
  * correction so the document shows it. `original_fee_amount` keeps what was
- * first billed across repeated corrections. `false` when missing or no longer
- * `issued` — a paid invoice is never reduced.
+ * first billed across repeated corrections. `false` when missing, no longer
+ * `issued`, or any payment has been received against it.
  */
 export async function correctFeeInvoice(
   feeInvoiceId: string,
@@ -1276,7 +1376,13 @@ export async function correctFeeInvoice(
         documentSnapshot: snapshot,
         updatedAt: new Date(),
       })
-      .where(and(eq(feeInvoices.id, feeInvoiceId), eq(feeInvoices.status, "issued")))
+      .where(
+        and(
+          eq(feeInvoices.id, feeInvoiceId),
+          eq(feeInvoices.status, "issued"),
+          sql`NOT EXISTS (SELECT 1 FROM fee_invoice_payments p WHERE p.fee_invoice_id = ${feeInvoices.id})`,
+        ),
+      )
       .returning({ id: feeInvoices.id });
     return res.length > 0;
   });

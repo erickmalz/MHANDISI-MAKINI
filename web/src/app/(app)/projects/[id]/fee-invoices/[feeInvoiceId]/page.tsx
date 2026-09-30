@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import {
   correctFeeInvoiceAction,
-  markFeeInvoicePaidAction,
+  recordFeeInvoicePaymentAction,
   voidFeeInvoiceAction,
 } from "@/app/actions/funding";
 import { getFeeInvoice } from "@/lib/data";
@@ -31,7 +31,7 @@ export default async function FeeInvoicePage({
       <FeeInvoiceDetail
         fi={fi}
         projectId={id}
-        markPaidAction={markFeeInvoicePaidAction.bind(null, id, fi.id)}
+        paymentAction={recordFeeInvoicePaymentAction.bind(null, id, fi.id)}
         correctAction={correctFeeInvoiceAction.bind(null, id, fi.id)}
         voidAction={voidFeeInvoiceAction.bind(null, id, fi.id)}
       />

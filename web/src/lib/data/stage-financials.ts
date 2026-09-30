@@ -156,8 +156,12 @@ async function readFinancials(
         (SELECT COALESCE(SUM(COALESCE(fi.original_fee_amount, fi.fee_amount)), 0)
            FROM fee_invoices fi
           WHERE fi.stage_id = s.id) AS fee_billed,
-        (SELECT COALESCE(SUM(fi.fee_amount), 0) FROM fee_invoices fi
-          WHERE fi.stage_id = s.id AND fi.status = 'paid') AS fee_received,
+        -- Every payment on a live invoice, so a part-paid invoice counts what
+        -- has actually come in (a voided invoice never carries a payment).
+        (SELECT COALESCE(SUM(p.amount), 0)
+           FROM fee_invoice_payments p
+           JOIN fee_invoices fi ON fi.id = p.fee_invoice_id
+          WHERE fi.stage_id = s.id AND fi.status IN ('issued', 'paid')) AS fee_received,
         EXISTS (
           SELECT 1 FROM funding_requests fr
            WHERE fr.stage_id = s.id AND fr.status = 'issued'

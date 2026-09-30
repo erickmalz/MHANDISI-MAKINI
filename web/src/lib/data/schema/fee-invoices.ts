@@ -5,16 +5,18 @@
  *
  * Raised inside the Funding Request Issue transaction (multi-tenancy ticket 09
  * §1), so a row here always has a number and a snapshot — there is no `draft`
- * Fee Invoice. Lifecycle is `issued → paid` only, no partial-payment states.
- * `Fee Earned` and `Fee Received` both move the instant `status` becomes
- * `paid` (that is what `paid_at` records).
+ * Fee Invoice. Lifecycle is `issued → paid`. Money received is logged in
+ * `fee_invoice_payments`, possibly across several part-payments: the invoice
+ * stays `issued` ("Partially paid" once any payment exists) until the payments
+ * reach `fee_amount`, then becomes `paid` (`paid_at` records that moment).
+ * `Fee Received` / `Fee Earned` move with each payment.
  *
  * Follow-ups: if a superseding Funding Request version raises the fee after the
  * original was already `paid`, a **delta** Fee Invoice is raised for the
  * difference (`is_delta`, `parent_fee_invoice_id`). An unpaid original is
  * instead reissued with the new version and this row moves to `superseded`.
  *
- * Corrections, while still `issued` (unpaid) and always with a recorded reason:
+ * Corrections, while still `issued` with nothing received, and always with a recorded reason:
  *  - **Void** — the invoice was raised in error. `status` → `void`, `voided_at`
  *    + `void_reason` are set; the row and its number stay (the sequence never
  *    has gaps) and every projection ignores it, the same append-only-with-
@@ -23,7 +25,8 @@
  *    the same number and the snapshot rebuilt; `original_fee_amount` keeps the
  *    amount first billed (set on the first correction only), and
  *    `correction_reason` / `corrected_at` record the latest one.
- * A `paid` invoice is never voided or reduced (CONTEXT.md "Fee Invoice").
+ * An invoice with any payment against it is never voided or corrected
+ * (CONTEXT.md "Fee Invoice").
  *
  * Numbering: its own per-project sequence, `FI-{project}-NNN` (ticket 10 §8).
  *
