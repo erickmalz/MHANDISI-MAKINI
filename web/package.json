@@ -13,7 +13,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "node scripts/migrate.mjs",
     "db:studio": "drizzle-kit studio",
     "db:sweep": "tsx scripts/sweep-deletions.ts",
     "db:seed:smoke": "tsx scripts/seed-document-smoke-test.ts"

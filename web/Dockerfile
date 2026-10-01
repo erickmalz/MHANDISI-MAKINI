@@ -79,6 +79,11 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.cache/puppeteer ./.cache/puppeteer
 
+# Fly's `release_command` (`node scripts/migrate.mjs`, fly.toml) runs in this
+# image before new machines start, so it needs the migrations and the runner.
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/scripts/migrate.mjs ./scripts/migrate.mjs
+
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

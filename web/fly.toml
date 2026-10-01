@@ -26,3 +26,8 @@ primary_region = 'jnb'
   policy = 'always'
   processes = ['app']
   retries = 10
+
+# Apply pending migrations before any machine runs the new code. A failed
+# migration fails the release, and the deploy stops with the old version live.
+[deploy]
+  release_command = "node scripts/migrate.mjs"
