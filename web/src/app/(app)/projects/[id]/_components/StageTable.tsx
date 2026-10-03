@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
 
@@ -9,6 +10,7 @@ import { HealthBadge } from "@/components/ui/HealthBadge";
 import { Money } from "@/components/ui/Money";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { STAGE_STATUS_KEYS } from "../../_components/status-keys";
+import motion from "./motion.module.css";
 import { OverviewPanel } from "./OverviewPanel";
 
 /**
@@ -78,15 +80,16 @@ export async function StageTable({
         {stages
           .slice()
           .sort((a, b) => a.seq - b.seq)
-          .map((stage) => {
+          .map((stage, i) => {
             const isCurrent = stage.id === currentStageId;
             const topUp = forecastFundingRequirement(stage.financials);
             const rowContext = <span className="sr-only">, {stage.name}</span>;
             return (
               <li
                 key={stage.id}
-                className={`grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0 last:rounded-b-[11px] md:px-5 ${ROW_GRID} ${
-                  isCurrent ? "bg-muted" : ""
+                style={{ "--i": i } as CSSProperties}
+                className={`grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0 last:rounded-b-[11px] md:px-5 ${ROW_GRID} ${motion.stageRow} ${
+                  isCurrent ? `bg-muted ${motion.currentStageRow}` : ""
                 }`}
               >
                 <div className="col-span-2 min-w-0 [overflow-wrap:anywhere] @2xl:col-span-1">

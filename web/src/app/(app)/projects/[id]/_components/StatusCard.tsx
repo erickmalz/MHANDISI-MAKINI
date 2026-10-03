@@ -5,7 +5,8 @@ import { getT } from "@/lib/i18n/server";
 import type { Stage } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { HealthBadge } from "@/components/ui/HealthBadge";
-import { Money } from "@/components/ui/Money";
+import { CountUpMoney } from "./CountUpMoney";
+import motion from "./motion.module.css";
 import { statusSentence } from "./overview";
 
 /**
@@ -42,16 +43,22 @@ export async function StatusCard({
       <h2 id="overview-status" className="sr-only">
         {t("overview.status.label")}
       </h2>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className={`flex flex-wrap items-center justify-between gap-2 ${motion.statusBadge}`}>
         <HealthBadge health={health} />
         <span className="text-sm text-on-inverse/75">{stage.name}</span>
       </div>
-      <p className="font-heading text-xl font-bold">{statusSentence(f, health, t)}</p>
+      <p className={`font-heading text-xl font-bold ${motion.statusSentence}`}>
+        {statusSentence(f, health, t)}
+      </p>
       <dl className="grid grid-cols-2 gap-3 border-t border-on-inverse/20 pt-4">
         <div>
           <dt className="text-sm text-on-inverse/75">{t("overview.breakdown.forecast.float")}</dt>
           <dd className="mt-0.5">
-            <Money amount={availableFloat(f)} className="font-bold" negativeClassName="font-bold" />
+            <CountUpMoney
+              amount={availableFloat(f)}
+              className="font-bold"
+              negativeClassName="font-bold"
+            />
           </dd>
         </div>
         <div>
@@ -59,7 +66,7 @@ export async function StatusCard({
             {t("overview.breakdown.forecast.remainingCost")}
           </dt>
           <dd className="mt-0.5">
-            <Money amount={remainingStageRequirement(f)} className="font-bold" />
+            <CountUpMoney amount={remainingStageRequirement(f)} className="font-bold" />
           </dd>
         </div>
       </dl>

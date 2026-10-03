@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Warning, WarningCircle, Info } from "@phosphor-icons/react/dist/ssr";
 
 import type { ProjectAlert } from "@/lib/types";
 import type { MessageKey } from "@/lib/i18n/types";
 import { getT } from "@/lib/i18n/server";
+import motion from "./motion.module.css";
 import { OverviewPanel } from "./OverviewPanel";
 import { sortAlertsBySeverity } from "./overview";
 
@@ -50,15 +52,18 @@ export async function ToDoList({ alerts }: { alerts: ProjectAlert[] }) {
         <p className="px-4 py-5 text-muted-foreground md:px-5">{t("overview.alerts.none")}</p>
       ) : (
         <ol>
-          {sortAlertsBySeverity(alerts).map((alert) => {
+          {sortAlertsBySeverity(alerts).map((alert, i) => {
             const { Icon, labelKey, className } = SEVERITY_CONFIG[alert.severity];
             return (
               <li
                 key={alert.id}
-                className="flex flex-col items-start gap-2 border-b border-border px-4 py-3 last:border-b-0 md:px-5 @lg:grid @lg:grid-cols-[9rem_minmax(0,1fr)_auto] @lg:items-center @lg:gap-4"
+                style={{ "--i": i } as CSSProperties}
+                className={`flex flex-col items-start gap-2 border-b border-border px-4 py-3 last:border-b-0 md:px-5 @lg:grid @lg:grid-cols-[9rem_minmax(0,1fr)_auto] @lg:items-center @lg:gap-4 ${motion.alertRow}`}
               >
                 <span
-                  className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm font-bold ${className}`}
+                  className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm font-bold ${className} ${
+                    alert.severity === "critical" ? motion.criticalChip : ""
+                  }`}
                 >
                   <Icon size={14} aria-hidden="true" />
                   {t(labelKey)}

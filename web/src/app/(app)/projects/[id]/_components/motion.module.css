@@ -1,0 +1,78 @@
+/*
+ * The overview's arrival motion: it plays once when the page mounts and then
+ * stays still, because the page is a working desk, not a showcase. Everything
+ * sits inside `no-preference`, so with reduced motion there is no animation at
+ * all — and `CountUpMoney` reads that absence to skip its count as well.
+ *
+ * Rows stagger by `--i` (set inline per row), capped so a long list never
+ * keeps someone waiting.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Status card: badge, then the sentence, then the two figures. */
+  .statusBadge {
+    animation: rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .statusSentence {
+    animation: rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms backwards;
+  }
+
+  .statusFigure {
+    animation: fade 300ms ease-out 240ms backwards;
+  }
+
+  /* Stages: each bar fills from empty, a row after the one above. */
+  .stageRow [role="progressbar"] > div {
+    transform-origin: left center;
+    animation: fill 600ms cubic-bezier(0.2, 0.8, 0.2, 1)
+      calc(min(var(--i, 0), 8) * 60ms + 100ms) backwards;
+  }
+
+  /* The current stage takes one soft accent wash that settles to its muted fill. */
+  .currentStageRow {
+    animation: wash 1400ms ease-out 300ms backwards;
+  }
+
+  /* To-do: rows slide up in order (most urgent first, as sorted)… */
+  .alertRow {
+    animation: rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(min(var(--i, 0), 8) * 40ms)
+      backwards;
+  }
+
+  /* …and a critical chip gives one pulse once its row has landed. */
+  .criticalChip {
+    animation: pulse 420ms ease-in-out calc(min(var(--i, 0), 8) * 40ms + 320ms);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes wash {
+  from {
+    background-color: color-mix(in oklab, var(--color-accent) 22%, var(--color-muted));
+  }
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
