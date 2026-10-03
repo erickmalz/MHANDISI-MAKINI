@@ -2,6 +2,7 @@ import "server-only";
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { sql } from "drizzle-orm";
 
@@ -9,12 +10,18 @@ import { db } from "@/lib/data/db";
 import * as schema from "@/lib/data/schema";
 
 import { hashPassword, verifyPassword } from "./argon2";
+import { isBreachedPassword } from "./breached-passwords";
 import { sendResetPasswordEmail, sendVerificationEmail } from "./emails";
 
 const SECONDS = 1;
 const MINUTES = 60 * SECONDS;
 const HOURS = 60 * MINUTES;
 const DAYS = 24 * HOURS;
+
+// Endpoints that set a new password from `body.newPassword` (better-auth 1.7
+// `/reset-password` and `/change-password`). Sign-up is covered by the
+// signup action's Zod schema instead.
+const NEW_PASSWORD_PATHS = new Set(["/reset-password", "/change-password"]);
 
 function build() {
   if (!process.env.BETTER_AUTH_SECRET) {
@@ -34,6 +41,13 @@ function build() {
     trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
       .map((origin) => origin.trim())
       .filter(Boolean),
+
+    // Sign-up goes only through the `signup()` Server Action, which runs
+    // signupSchema (breached password, phone, name, terms) and records terms
+    // acceptance. `disabledPaths` 404s the public HTTP route in the router's
+    // onRequest; the action's direct `api.signUpEmail` call doesn't hit the
+    // router, so it keeps working.
+    disabledPaths: ["/sign-up/email"],
 
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -89,6 +103,30 @@ function build() {
       enabled: true,
       storage: "database",
       modelName: "auth_rate_limit",
+    },
+
+    advanced: {
+      // Fly's edge sets `Fly-Client-IP` to the real client address. The
+      // default `x-forwarded-for` is client-appendable, and a spoofed
+      // multi-hop value resolves to no IP — collapsing everyone into one
+      // shared rate-limit bucket. In dev/test with no header better-auth
+      // falls back to 127.0.0.1.
+      ipAddress: { ipAddressHeaders: ["fly-client-ip"] },
+    },
+
+    hooks: {
+      // The breached-password rule (./password-schema.ts) otherwise only runs
+      // at sign-up; apply it wherever better-auth accepts a new password.
+      // Throws the i18n key, same as the Zod schema's error.
+      before: createAuthMiddleware(async (ctx) => {
+        if (!NEW_PASSWORD_PATHS.has(ctx.path)) return;
+        const pw: unknown = ctx.body?.newPassword;
+        if (typeof pw === "string" && isBreachedPassword(pw)) {
+          throw new APIError("BAD_REQUEST", {
+            message: "auth.validation.passwordCommon",
+          });
+        }
+      }),
     },
 
     databaseHooks: {

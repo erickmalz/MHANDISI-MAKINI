@@ -43,7 +43,7 @@ export async function renderDocumentHtml(
 
   return (
     `<!doctype html><html lang="en"><head><meta charset="utf-8">` +
-    `<title>${doc.snapshot.displayNumber}</title>` +
+    `<title>${doc.snapshot.displayNumber.replace(/</g, "&lt;")}</title>` +
     `<style>${PRINT_CSS}</style></head>` +
     `<body class="${opts.screenshot ? "screenshot" : ""}">${inner}</body></html>`
   );

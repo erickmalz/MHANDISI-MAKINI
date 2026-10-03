@@ -35,6 +35,7 @@ export const auth: Widen<typeof enAuth> = {
     haveAccount: "Tayari una akaunti? Ingia",
     failed: "Akaunti haikufunguliwa. Jaribu tena.",
     emailTaken: "Tayari kuna akaunti yenye barua pepe hii. Ingia badala yake.",
+    tooMany: "Majaribio mengi ya kujisajili. Jaribu tena baadaye.",
   },
   validation: {
     passwordTooShort: "Tumia angalau herufi 10.",

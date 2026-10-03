@@ -32,6 +32,7 @@ export const auth = {
     haveAccount: "Already have an account? Sign in",
     failed: "Could not create your account. Try again.",
     emailTaken: "An account with this email already exists. Sign in instead.",
+    tooMany: "Too many sign-up attempts. Try again later.",
   },
   validation: {
     passwordTooShort: "Use at least 10 characters.",

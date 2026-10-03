@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { signupSchema } from "@/lib/auth/password-schema";
 import { verifySession } from "@/lib/auth/session";
+import { consumeSignupAttempt } from "@/lib/auth/signup-rate-limit";
 import { db } from "@/lib/data/db";
 import { isPlatformAdmin } from "@/lib/data/platform-admin";
 import { ACCEPTED_LEGAL_VERSION } from "@/lib/legal";
@@ -47,6 +48,12 @@ export async function signup(
   }
 
   const { fullName, email, phone, password } = parsed.data;
+
+  // better-auth's rate limiter doesn't cover server-side api calls; only
+  // well-formed attempts count toward the per-IP limit.
+  if (!(await consumeSignupAttempt())) {
+    return { error: "auth.signUp.tooMany" };
+  }
 
   try {
     const result = await getAuth().api.signUpEmail({

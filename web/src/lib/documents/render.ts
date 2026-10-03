@@ -57,6 +57,34 @@ function release(): void {
   }
 }
 
+/**
+ * Defense in depth for the render page: templates escape all user text, but if
+ * raw HTML ever slipped through it must not be able to run script or reach the
+ * network (e.g. Fly's internal network — SSRF baked into a downloadable file).
+ *
+ * Everything the documents need is inline: CSS in a `<style>` block, the logo
+ * as a `data:` URL, fonts from the system (`fonts-dejavu-core`). So page script
+ * is disabled and every request except `data:` is aborted. `setContent` writes
+ * via `document.write` into the existing about:blank frame (no navigation
+ * request), Puppeteer's own `evaluate` calls go over CDP and are unaffected by
+ * the script switch, and the PDF footer's `pageNumber`/`totalPages` are filled
+ * in by Chromium's print pipeline, not page script. The page is fresh per
+ * render and closed afterwards, so the listener dies with it.
+ */
+async function lockDown(page: Page): Promise<void> {
+  await page.setJavaScriptEnabled(false);
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    if (request.isInterceptResolutionHandled()) return;
+    const url = request.url();
+    if (url.startsWith("data:") || url === "about:blank") {
+      void request.continue().catch(() => {});
+    } else {
+      void request.abort("blockedbyclient").catch(() => {});
+    }
+  });
+}
+
 async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
   await acquire();
   let page: Page | undefined;
@@ -64,6 +92,7 @@ async function withPage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
   try {
     const browser = await getBrowser();
     page = await browser.newPage();
+    await lockDown(page);
     const scopedPage = page;
     return await Promise.race([
       fn(scopedPage),
